@@ -1,6 +1,6 @@
 export type CodexAccess = "read-write" | "protected" | "unclassified";
 export type ValueState = "empty" | "present";
-export type AgentIntegrationId = "codex" | "claude-code" | "github-copilot";
+export type AgentIntegrationId = "codex" | "claude-code" | "github-copilot" | "cursor";
 export type AgentProtection = "broker" | "guarded" | "inactive";
 export type AgentIntegrationBlocker = "tool-not-found" | "broker-unavailable" | "bundle-unavailable";
 export type GitSafetyState = "protected" | "needs-attention" | "not-repository" | "unavailable";
@@ -229,9 +229,11 @@ export interface AgentIntegrationStatus {
   installed: boolean;
   installedVersion: string | null;
   legacyVersion: boolean;
+  migrationPending?: boolean;
   currentVersion: string;
   updateAvailable: boolean;
   needsRepair: boolean;
+  activationUnverified: boolean;
   protection: AgentProtection;
   detail: string;
   canInstall: boolean;
@@ -308,6 +310,11 @@ export interface FileProjection {
   displayName: string;
   groups: GroupProjection[];
   warnings: string[];
+}
+
+export interface RenameEnvFileSummary {
+  oldFile: string;
+  newFile: string;
 }
 
 export interface ExportResult {
@@ -402,19 +409,6 @@ export interface AgentActivityEvent {
 export interface MutationSummary {
   affectedFiles: string[];
   keys: string[];
-}
-
-export interface MigrationPlanProjection {
-  planId: string;
-  expiresInSeconds: number;
-  preview: {
-    file: string;
-    summary: string;
-    suggestions: Array<{
-      currentMarker: string;
-      groupName: string;
-    }>;
-  };
 }
 
 export interface CommandError {

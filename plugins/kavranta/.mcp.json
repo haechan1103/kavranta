@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "kavranta": {
+      "command": "kavranta-broker"
+    }
+  }
+}

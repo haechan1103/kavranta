@@ -33,7 +33,7 @@ Kavranta is a local-first desktop app. Register a project and it discovers the r
 
 | Keep your current workflow | Update linked values once | Work with AI more safely |
 | --- | --- | --- |
-| Your existing files and commands remain authoritative. Kavranta preserves paths, comments, ordering, and unrelated formatting. | Explicitly link the same key across two, three, or more files. Edit from any member and save every linked occurrence together. | Codex, Claude Code, and Copilot can inspect structure and perform approved operations through a redacted local broker. Protected values stay out of normal inspection responses. |
+| Your existing files and commands remain authoritative. Kavranta preserves paths, comments, ordering, and unrelated formatting. | Explicitly link the same key across two, three, or more files. Edit from any member and save every linked occurrence together. | Codex, Claude Code, Copilot, and Cursor can inspect structure and perform approved operations through a redacted local broker. Protected values stay out of normal inspection responses. |
 | **Share without committing env files** | **Deploy only what you select** | **Catch Git mistakes early** |
 | Export all or selected variables as a passphrase-encrypted package, or publish immutable packages through a mounted team folder. | Send selected values to GitHub Actions, Cloudflare Workers, Expo EAS, AWS, or a locally installed CLI Pack without creating a temporary env file. | Detect missing ignore rules, already tracked env files, historical paths, and suspicious public frontend variable names. |
 | **Finish incomplete setup faster** | **Keep reusable accounts out of project files** | **Grant access per project** |
@@ -63,7 +63,7 @@ Kavranta is a local-first desktop app. Register a project and it discovers the r
 
 - **Expo EAS deployment:** send selected values to `development`, `preview`, and `production` through the EAS CLI hidden-value prompt. Values never enter command arguments, temporary files, or Kavranta output.
 - **Project-aware checks:** Kavranta detects the nearest EAS project, confirms the signed-in Expo account and project identity, and applies `Sensitive` or `Plain text` visibility per variable.
-- **AI-safe EAS operations:** Codex, Claude Code, and Copilot use the same redacted Broker plan and activity trail as the desktop app.
+- **AI-safe EAS operations:** Codex, Claude Code, Copilot, and Cursor use the same redacted Broker plan and activity trail as the desktop app.
 
 ## New in 0.6.4
 
@@ -150,7 +150,7 @@ Install and sign in to [`gh`](https://cli.github.com/manual/gh_secret_set), [Wra
 
 ## Connect your AI coding agent
 
-One independently versioned local bundle supports **Codex**, **Claude Code**, and **GitHub Copilot / VS Code**. The app detects supported tools and installs or updates their Kavranta connection. Its single `manage-project-env` Skill recognizes both English and Korean env-management requests, so separate language-specific installations are not required.
+One independently versioned local bundle supports **Codex**, **Claude Code**, **GitHub Copilot / VS Code**, and **Cursor**. The app detects supported tools and installs or updates their Kavranta configuration. Its single `kavranta-env` Skill recognizes both English and Korean env-management requests, so separate language-specific installations are not required.
 
 <table>
   <tr>
@@ -158,7 +158,7 @@ One independently versioned local bundle supports **Codex**, **Claude Code**, an
     <td width="50%"><strong>Value-free activity history</strong><br />See broker structure checks, value-read attempts, mutations, provider checks, and allowed/blocked results. Values and value fragments are never logged.</td>
   </tr>
   <tr>
-    <td><img src="assets/screenshots/kavranta-ai-integrations.png" alt="Kavranta connections for Codex, Claude Code, and GitHub Copilot" /></td>
+    <td><img src="assets/screenshots/kavranta-ai-integrations.png" alt="Kavranta connections for Codex, Claude Code, GitHub Copilot, and Cursor" /></td>
     <td><img src="assets/screenshots/kavranta-ai-activity.png" alt="Value-free AI broker activity with allowed and blocked outcomes" /></td>
   </tr>
 </table>
@@ -170,7 +170,7 @@ You can also install the integration from a terminal:
 
 ```bash
 codex plugin marketplace add haechan1103/kavranta
-codex plugin add env-manager@env-manager
+codex plugin add kavranta@kavranta
 ```
 </details>
 
@@ -179,7 +179,7 @@ codex plugin add env-manager@env-manager
 
 ```bash
 claude plugin marketplace add haechan1103/kavranta
-claude plugin install env-manager@env-manager
+claude plugin install kavranta@kavranta
 ```
 </details>
 
@@ -188,8 +188,22 @@ claude plugin install env-manager@env-manager
 
 ```bash
 copilot plugin marketplace add haechan1103/kavranta
-copilot plugin install env-manager@env-manager
+copilot plugin install kavranta@kavranta
 ```
+</details>
+
+<details>
+  <summary><strong>Cursor</strong></summary>
+
+Install Cursor, then choose **Install connection** on Kavranta's AI tools screen.
+Kavranta installs the native plugin under Cursor's documented per-user local plugin
+directory. Its fail-closed guards cover Agent tools, Agent context reads, and inline
+Tab reads. Run **Developer: Reload Window** in Cursor if it was already open.
+
+Team and Enterprise administrators can disable local plugin imports. A Marketplace
+plugin with the same name can also take precedence. Kavranta therefore reports this
+as **Configured** rather than claiming Cursor activated it; confirm Kavranta in
+Cursor's Customize screen after reload.
 </details>
 
 Register the project in Kavranta first, start a new agent session, and ask naturally:

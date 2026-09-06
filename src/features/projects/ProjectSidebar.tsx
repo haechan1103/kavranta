@@ -1,6 +1,6 @@
-import { useState } from "react";
+import "./ProjectSidebar.css";
+import { useState, type ReactNode } from "react";
 
-import { RenameModal } from "../../components/RenameModal";
 import type { ProjectProjection, ProjectSummary } from "../../lib/types";
 import { supportedLocales, useI18n, type Locale } from "../../i18n";
 import {
@@ -9,11 +9,13 @@ import {
   type FontSize,
 } from "../../preferences/DisplayPreferences";
 import { AppUpdater } from "../updater/AppUpdater";
+import { EnvFileActions } from "./EnvFileActions";
 import { useAgentIntegrationStatus } from "../integrations/AgentIntegrationStatusProvider";
+import { SidebarNavIcon } from "./SidebarNavIcon";
 import { ProjectSwitcherModal } from "./ProjectSwitcherModal";
 
 interface View {
-  kind: "overview" | "file" | "integrations" | "activity" | "review" | "accounts";
+  kind: "overview" | "file" | "integrations" | "activity" | "accounts";
   path?: string;
 }
 
@@ -24,10 +26,12 @@ interface Props {
   view: View;
   onSelectProject: (projectId: string) => void;
   onSelectView: (
-    view: { kind: "overview" } | { kind: "file"; path: string } | { kind: "integrations" } | { kind: "activity" } | { kind: "review" } | { kind: "accounts" },
+    view: { kind: "overview" } | { kind: "file"; path: string } | { kind: "integrations" } | { kind: "activity" } | { kind: "accounts" },
   ) => void;
   onRegister: () => void;
-  onRenameFile: (projectId: string, path: string, name: string) => void;
+  onRenameFileLabel: (projectId: string, path: string, name: string) => void;
+  onRenameFileOnDisk: (projectId: string, path: string, newName: string) => void;
+  projectActions?: ReactNode;
 }
 
 export function ProjectSidebar({
@@ -38,16 +42,14 @@ export function ProjectSidebar({
   onSelectProject,
   onSelectView,
   onRegister,
-  onRenameFile,
+  onRenameFileLabel,
+  onRenameFileOnDisk,
+  projectActions,
 }: Props) {
   const { locale, setLocale, t } = useI18n();
   const { fontSize, setFontSize } = useDisplayPreferences();
   const { needsAttention: agentIntegrationNeedsAttention } = useAgentIntegrationStatus();
   const [switchingProject, setSwitchingProject] = useState(false);
-  const [renameTarget, setRenameTarget] = useState<
-    { kind: "file"; projectId: string; path: string; name: string }
-    | null
-  >(null);
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null;
   return (
     <aside className="sidebar">
@@ -81,50 +83,46 @@ export function ProjectSidebar({
             className={view.kind === "overview" ? "nav-item active" : "nav-item"}
             onClick={() => onSelectView({ kind: "overview" })}
           >
-            <span>⌁</span> Overview
-            {(projection.issueCount > 0 || projection.accessReviewCount > 0) && (
-              <b>{projection.issueCount + projection.accessReviewCount}</b>
-            )}
-          </button>
-          <button
-            className={view.kind === "review" ? "nav-item active" : "nav-item"}
-            onClick={() => onSelectView({ kind: "review" })}
-          >
-            <span>◇</span> {t("sidebar.review")}
-            {projection.accessReviewCount > 0 && <b>{projection.accessReviewCount}</b>}
+            <SidebarNavIcon name="overview" /> Overview
+            {projection.issueCount > 0 && <b>{projection.issueCount}</b>}
           </button>
           <button
             className={view.kind === "activity" ? "nav-item active" : "nav-item"}
             onClick={() => onSelectView({ kind: "activity" })}
           >
-            <span>◷</span> {t("sidebar.activity")}
+            <SidebarNavIcon name="activity" /> {t("sidebar.activity")}
           </button>
           <button
             className={view.kind === "accounts" ? "nav-item active" : "nav-item"}
             onClick={() => onSelectView({ kind: "accounts" })}
           >
-            <span>⌾</span> {t("sidebar.accounts")}
+            <SidebarNavIcon name="accounts" /> {t("sidebar.accounts")}
           </button>
+          {selectedProject && projectActions}
           <p className="file-label">ENV FILES</p>
           {projection.files.map((file) => (
-            <button
-              key={file.path}
-              className={view.kind === "file" && view.path === file.path ? "nav-item active" : "nav-item"}
-              onClick={() => onSelectView({ kind: "file", path: file.path })}
-              onDoubleClick={() => {
-                if (selectedProjectId) {
-                  setRenameTarget({ kind: "file", projectId: selectedProjectId, path: file.path, name: file.displayName });
-                }
-              }}
-              title={`${file.displayName}\n${file.path}\n${t("sidebar.renameHint")}`}
-            >
-              <span className="file-dot" />
-              <span className="sidebar-file-copy">
-                <span className="truncate">{file.displayName}</span>
-                {file.displayName !== file.path && <small className="truncate">{file.path}</small>}
-              </span>
-              {file.warnings.length > 0 && <b>!</b>}
-            </button>
+            <div className="sidebar-file-row" key={file.path}>
+              <button
+                className={view.kind === "file" && view.path === file.path ? "nav-item sidebar-file-button active" : "nav-item sidebar-file-button"}
+                onClick={() => onSelectView({ kind: "file", path: file.path })}
+                title={`${file.displayName}\n${file.path}`}
+              >
+                <span className="file-dot" />
+                <span className="sidebar-file-copy">
+                  <span className="truncate">{file.displayName}</span>
+                  {file.displayName !== file.path && <small className="truncate">{file.path}</small>}
+                </span>
+                {file.warnings.length > 0 && <b>!</b>}
+              </button>
+              {selectedProjectId && (
+                <EnvFileActions
+                  path={file.path}
+                  displayName={file.displayName}
+                  onRenameLabel={(path, name) => onRenameFileLabel(selectedProjectId, path, name)}
+                  onRenameFile={(path, newName) => onRenameFileOnDisk(selectedProjectId, path, newName)}
+                />
+              )}
+            </div>
           ))}
         </nav>
       )}
@@ -135,7 +133,7 @@ export function ProjectSidebar({
             className={view.kind === "integrations" ? "nav-item active" : "nav-item"}
             onClick={() => onSelectView({ kind: "integrations" })}
           >
-            <span>◇</span>
+            <SidebarNavIcon name="integrations" />
             <span className="agent-nav-label">{t("sidebar.aiConnections")}</span>
             {agentIntegrationNeedsAttention && (
               <span className="attention-dot" aria-label={t("integration.attentionNeeded")} />
@@ -172,16 +170,6 @@ export function ProjectSidebar({
         </div>
         <AppUpdater />
       </div>
-      {renameTarget && (
-        <RenameModal
-          title={t("sidebar.fileNamePrompt")}
-          currentName={renameTarget.name}
-          onClose={() => setRenameTarget(null)}
-          onRename={(name) => {
-            onRenameFile(renameTarget.projectId, renameTarget.path, name);
-          }}
-        />
-      )}
       {switchingProject && (
         <ProjectSwitcherModal
           projects={projects}

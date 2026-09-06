@@ -8,7 +8,7 @@ use super::super::model::{CODEX_MARKETPLACE_NAME, agent_bundle_version};
 fn codex_materialized_marketplace_gets_the_app_owned_name() {
     let directory = tempfile::tempdir().expect("temporary directory");
     let marketplace = directory.path().join("marketplace.json");
-    fs::write(&marketplace, r#"{"name":"env-manager","plugins":[]}"#).expect("marketplace fixture");
+    fs::write(&marketplace, r#"{"name":"kavranta","plugins":[]}"#).expect("marketplace fixture");
 
     rewrite_marketplace_name(&marketplace, CODEX_MARKETPLACE_NAME)
         .expect("marketplace name rewrite");
@@ -18,7 +18,7 @@ fn codex_materialized_marketplace_gets_the_app_owned_name() {
 }
 
 #[test]
-fn catalog_validation_requires_both_agent_manifests() {
+fn catalog_validation_requires_every_agent_manifest() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .expect("workspace root");
@@ -27,6 +27,6 @@ fn catalog_validation_requires_both_agent_manifests() {
 
 #[test]
 fn agent_bundle_version_is_independent_from_the_app_release() {
-    assert_eq!(agent_bundle_version(), "1.9.2");
+    assert_eq!(agent_bundle_version(), "2.1.1");
     assert_ne!(agent_bundle_version(), env!("CARGO_PKG_VERSION"));
 }

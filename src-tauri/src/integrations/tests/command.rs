@@ -1,4 +1,6 @@
-use super::super::command::executable_file_names;
+use std::path::Path;
+
+use super::super::command::{cursor_user_app_candidates, executable_file_names};
 
 #[test]
 fn windows_agent_cli_candidates_include_native_and_script_launchers() {
@@ -7,6 +9,24 @@ fn windows_agent_cli_candidates_include_native_and_script_launchers() {
         vec!["codex.exe", "codex.cmd", "codex.bat"]
     );
     assert_eq!(executable_file_names("codex", false), vec!["codex"]);
+}
+
+#[test]
+fn cursor_app_candidates_cover_user_installs_on_macos_and_windows() {
+    let home = Path::new("/synthetic/home");
+    let local = Path::new("C:/synthetic/AppData/Local");
+
+    assert_eq!(
+        cursor_user_app_candidates(home, local, true, false),
+        vec![home.join("Applications/Cursor.app")]
+    );
+    assert_eq!(
+        cursor_user_app_candidates(home, local, false, true),
+        vec![
+            local.join("Programs/Cursor/Cursor.exe"),
+            local.join("Cursor/Cursor.exe"),
+        ]
+    );
 }
 
 #[cfg(windows)]

@@ -1,7 +1,0 @@
-{
-  "mcpServers": {
-    "env-manager": {
-      "command": "env-manager-broker"
-    }
-  }
-}

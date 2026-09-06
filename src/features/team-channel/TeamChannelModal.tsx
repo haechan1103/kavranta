@@ -1,3 +1,4 @@
+import "./TeamChannelModal.css";
 import { useCallback, useEffect, useState } from "react";
 
 import { Modal } from "../../components/Modal";

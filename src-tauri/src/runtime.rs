@@ -7,8 +7,9 @@ use std::time::{Duration, Instant};
 
 use env_core::{
     ClassificationReviewReason, ClassificationSource, DiscoveryOptions, EnvError, EnvErrorCode,
-    EnvResult, MigrationPlan, MigrationPreview, MutationSummary, ProjectService, TeamImportPlan,
-    TeamImportPreview, TeamImportSummary, TeamImportValueSide, is_env_candidate,
+    EnvResult, MigrationPlan, MigrationPreview, MutationSummary, ProjectService,
+    RenameEnvFileRequest, RenameEnvFileSummary, TeamImportPlan, TeamImportPreview,
+    TeamImportSummary, TeamImportValueSide, is_env_candidate,
 };
 use env_registry::{ProjectRegistration, RegistryData};
 use notify::{

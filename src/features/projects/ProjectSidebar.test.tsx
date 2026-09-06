@@ -42,7 +42,9 @@ describe("ProjectSidebar", () => {
           onSelectProject={selectProject}
           onSelectView={vi.fn()}
           onRegister={vi.fn()}
-          onRenameFile={vi.fn()}
+          onRenameFileLabel={vi.fn()}
+          onRenameFileOnDisk={vi.fn()}
+          projectActions={<button type="button">Project actions</button>}
         />
       </AgentIntegrationStatusProvider>,
     );
@@ -50,6 +52,9 @@ describe("ProjectSidebar", () => {
     expect(screen.getByLabelText("Current project")).toHaveTextContent("demo");
     expect(screen.queryByText("second")).not.toBeInTheDocument();
     expect(screen.queryByText("PROJECTS")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Access review" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Current project")).not.toHaveTextContent("Project actions");
+    expect(screen.getByRole("navigation", { name: "Project views" })).toHaveTextContent("Project actions");
 
     await user.click(screen.getByRole("button", { name: "Change" }));
     expect(screen.getByRole("heading", { name: "Switch project" })).toBeInTheDocument();
@@ -73,7 +78,8 @@ describe("ProjectSidebar", () => {
           onSelectProject={vi.fn()}
           onSelectView={vi.fn()}
           onRegister={register}
-          onRenameFile={vi.fn()}
+          onRenameFileLabel={vi.fn()}
+          onRenameFileOnDisk={vi.fn()}
         />
       </AgentIntegrationStatusProvider>,
     );
@@ -98,7 +104,8 @@ describe("ProjectSidebar", () => {
             onSelectProject={vi.fn()}
             onSelectView={vi.fn()}
             onRegister={vi.fn()}
-            onRenameFile={vi.fn()}
+            onRenameFileLabel={vi.fn()}
+            onRenameFileOnDisk={vi.fn()}
           />
         </AgentIntegrationStatusProvider>,
       );

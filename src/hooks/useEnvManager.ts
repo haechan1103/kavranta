@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import * as api from "../lib/api";
 import { localizeError, useI18n } from "../i18n";
-import type { ProjectProjection, ProjectSummary } from "../lib/types";
+import type { ProjectProjection, ProjectSummary, RenameEnvFileSummary } from "../lib/types";
 
 export function useEnvManager() {
   const { locale, t } = useI18n();
@@ -122,13 +122,70 @@ export function useEnvManager() {
     }
   }, [locale, t]);
 
-  const renameEnvFile = useCallback(async (projectId: string, file: string, name: string) => {
+  const renameEnvFileLabel = useCallback(async (projectId: string, file: string, name: string) => {
     try {
-      await api.renameEnvFile(projectId, file, name);
+      await api.renameEnvFileLabel(projectId, file, name);
       await refreshProject(projectId);
-      setNotice(t("notice.fileRenamed", { name }));
+      setNotice(t("notice.fileLabelRenamed", { name }));
     } catch (cause) {
       setError(localizeError(cause, locale, "error.rename"));
+    }
+  }, [locale, refreshProject, t]);
+
+  const renameEnvFileOnDisk = useCallback(async (
+    projectId: string,
+    file: string,
+    newName: string,
+  ): Promise<RenameEnvFileSummary | null> => {
+    try {
+      const summary = await api.renameEnvFileOnDisk(projectId, file, newName);
+      if (api.isTauriRuntime) {
+        await refreshProject(projectId);
+      } else {
+        setProjections((current) => {
+          const projection = current[projectId];
+          if (!projection) return current;
+          return {
+            ...current,
+            [projectId]: {
+              ...projection,
+              classificationReview: projection.classificationReview.map((item) => ({
+                ...item,
+                files: item.files.map((candidate) => replacePath(candidate, summary)),
+              })),
+              gitSafety: {
+                ...projection.gitSafety,
+                ignoredFiles: projection.gitSafety.ignoredFiles.map((candidate) => replacePath(candidate, summary)),
+                missingIgnoreFiles: projection.gitSafety.missingIgnoreFiles.map((candidate) => replacePath(candidate, summary)),
+                trackedFiles: projection.gitSafety.trackedFiles.map((candidate) => replacePath(candidate, summary)),
+                historyFiles: projection.gitSafety.historyFiles.map((candidate) => replacePath(candidate, summary)),
+                remoteHistoryFiles: projection.gitSafety.remoteHistoryFiles.map((candidate) => replacePath(candidate, summary)),
+              },
+              files: projection.files.map((candidate) => candidate.path === summary.oldFile ? {
+                ...candidate,
+                path: summary.newFile,
+                displayName: candidate.displayName === summary.oldFile
+                  ? summary.newFile
+                  : candidate.displayName,
+                groups: candidate.groups.map((group) => ({
+                  ...group,
+                  variables: group.variables.map((variable) => ({
+                    ...variable,
+                    linkedFiles: variable.linkedFiles.map((linkedFile) => (
+                      linkedFile === summary.oldFile ? summary.newFile : linkedFile
+                    )),
+                  })),
+                })),
+              } : candidate),
+            },
+          };
+        });
+      }
+      setNotice(t("notice.fileRenamedOnDisk", { name: summary.newFile }));
+      return summary;
+    } catch (cause) {
+      setError(localizeError(cause, locale, "error.renameFileOnDisk"));
+      return null;
     }
   }, [locale, refreshProject, t]);
 
@@ -172,7 +229,8 @@ export function useEnvManager() {
     register,
     remove,
     renameProject,
-    renameEnvFile,
+    renameEnvFileLabel,
+    renameEnvFileOnDisk,
     applyGitignoreGuard,
     refreshProject,
     clearError,
@@ -180,6 +238,10 @@ export function useEnvManager() {
     showError: setError,
     showNotice: setNotice,
   };
+}
+
+function replacePath(path: string, summary: RenameEnvFileSummary) {
+  return path === summary.oldFile ? summary.newFile : path;
 }
 
 export function resolveSelectedProjectId(

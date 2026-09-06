@@ -60,7 +60,8 @@ pub(crate) fn append_audit_event(
         },
         result_code,
     };
-    let directory = std::env::var_os("ENV_MANAGER_AUDIT_DIR")
+    let directory = std::env::var_os("KAVRANTA_AUDIT_DIR")
+        .or_else(|| std::env::var_os("ENV_MANAGER_AUDIT_DIR"))
         .map(PathBuf::from)
         .or_else(|| app_data.map(|path| path.join("agent-activity")))
         .unwrap_or_else(|| std::env::temp_dir().join("env-manager-audit"));
@@ -110,6 +111,8 @@ pub(crate) fn normalize_agent_host(client_name: &str) -> Option<&'static str> {
         Some("claude-code")
     } else if normalized.contains("copilot") {
         Some("github-copilot")
+    } else if normalized.contains("cursor") {
+        Some("cursor")
     } else {
         None
     }

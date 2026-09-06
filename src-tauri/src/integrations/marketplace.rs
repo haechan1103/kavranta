@@ -2,10 +2,10 @@ use std::ffi::OsString;
 use std::path::Path;
 
 use super::command::run_agent_command;
-use super::installation::legacy_codex_bundle_is_official;
+use super::installation::official_legacy_cached_marketplaces;
 use super::model::{
     AgentIntegrationId, CODEX_MARKETPLACE_NAME, CodexMarketplaceAlias, IntegrationError,
-    MARKETPLACE_NAME, PLUGIN_NAME, marketplace_name,
+    LEGACY_PLUGIN_NAME, PLUGIN_NAME, marketplace_name,
 };
 
 pub(super) fn marketplace_add_args(_id: AgentIntegrationId, catalog: OsString) -> Vec<OsString> {
@@ -48,15 +48,11 @@ pub(super) fn install_or_update(executable: &Path, id: AgentIntegrationId) -> bo
         || run_agent_command(executable, update_args(id))
 }
 
-pub(super) fn refresh_owned_codex_marketplace(
+pub(super) fn stage_owned_codex_marketplace(
     executable: &Path,
     catalog: OsString,
-    legacy_aliases: &[CodexMarketplaceAlias],
 ) -> Result<(), IntegrationError> {
-    let remove_legacy_plugin = legacy_codex_bundle_is_official();
-    if refresh_owned_codex_marketplace_with(catalog, legacy_aliases, remove_legacy_plugin, |args| {
-        run_agent_command(executable, args)
-    }) {
+    if stage_owned_codex_marketplace_with(catalog, |args| run_agent_command(executable, args)) {
         Ok(())
     } else {
         Err(IntegrationError {
@@ -66,38 +62,65 @@ pub(super) fn refresh_owned_codex_marketplace(
     }
 }
 
-pub(super) fn refresh_owned_codex_marketplace_with(
+pub(super) fn stage_owned_codex_marketplace_with(
     catalog: OsString,
-    legacy_aliases: &[CodexMarketplaceAlias],
-    remove_legacy_plugin: bool,
     mut run: impl FnMut(Vec<OsString>) -> bool,
 ) -> bool {
     let id = AgentIntegrationId::Codex;
 
-    // Older builds used a legacy config key and versioned catalog paths. Remove
-    // only installations already proven to be app-owned, then add one source.
+    // Refresh only the new Kavranta identity. A legacy Env Manager installation
+    // remains usable until this new plugin has been installed and validated.
     let _ = run(remove_args(id));
-    if remove_legacy_plugin
-        && !legacy_aliases
-            .iter()
-            .any(|alias| alias.name == MARKETPLACE_NAME)
-    {
-        let legacy = format!("{PLUGIN_NAME}@{MARKETPLACE_NAME}");
-        let _ = run(vec!["plugin".into(), "remove".into(), legacy.into()]);
-    }
-    for alias in legacy_aliases {
-        let selector = format!("{PLUGIN_NAME}@{}", alias.name);
-        let _ = run(vec!["plugin".into(), "remove".into(), selector.into()]);
-    }
     let _ = run(marketplace_remove_named_args(CODEX_MARKETPLACE_NAME));
-    for alias in legacy_aliases
-        .iter()
-        .filter(|alias| alias.remove_marketplace)
-    {
-        let _ = run(marketplace_remove_named_args(&alias.name));
+    run(marketplace_add_args(id, catalog)) && run(install_args(id))
+}
+
+pub(super) fn cleanup_legacy_connections(
+    executable: &Path,
+    id: AgentIntegrationId,
+    codex_aliases: &[CodexMarketplaceAlias],
+) -> bool {
+    cleanup_legacy_connections_with(
+        id,
+        codex_aliases,
+        &official_legacy_cached_marketplaces(id),
+        |args| run_agent_command(executable, args),
+    )
+}
+
+pub(super) fn cleanup_legacy_connections_with(
+    id: AgentIntegrationId,
+    codex_aliases: &[CodexMarketplaceAlias],
+    official_legacy_marketplaces: &[String],
+    mut run: impl FnMut(Vec<OsString>) -> bool,
+) -> bool {
+    let mut cleaned = true;
+    if id == AgentIntegrationId::Codex {
+        let mut handled = std::collections::BTreeSet::new();
+        for alias in codex_aliases {
+            handled.insert(alias.name.clone());
+            let selector = legacy_plugin_selector(&alias.name);
+            let plugin_removed = run(remove_plugin_args(id, selector));
+            if alias.remove_marketplace {
+                cleaned &= run(marketplace_remove_named_args(&alias.name));
+            } else {
+                cleaned &= plugin_removed;
+            }
+        }
+        for marketplace in official_legacy_marketplaces {
+            if handled.insert(marketplace.clone()) {
+                let selector = legacy_plugin_selector(marketplace);
+                cleaned &= run(remove_plugin_args(id, selector));
+            }
+        }
+        return cleaned;
     }
 
-    run(marketplace_add_args(id, catalog)) && run(install_args(id))
+    for marketplace in official_legacy_marketplaces {
+        let selector = legacy_plugin_selector(marketplace);
+        cleaned &= run(remove_plugin_args(id, selector));
+    }
+    cleaned
 }
 
 pub(super) fn refresh_after_marketplace_reconnect(
@@ -123,7 +146,9 @@ fn install_args(id: AgentIntegrationId) -> Vec<OsString> {
     let plugin = plugin_selector(id);
     match id {
         AgentIntegrationId::Codex => vec!["plugin".into(), "add".into(), plugin.into()],
-        AgentIntegrationId::ClaudeCode | AgentIntegrationId::GithubCopilot => {
+        AgentIntegrationId::ClaudeCode
+        | AgentIntegrationId::GithubCopilot
+        | AgentIntegrationId::Cursor => {
             vec!["plugin".into(), "install".into(), plugin.into()]
         }
     }
@@ -133,7 +158,9 @@ fn update_args(id: AgentIntegrationId) -> Vec<OsString> {
     let plugin = plugin_selector(id);
     match id {
         AgentIntegrationId::Codex => vec!["plugin".into(), "add".into(), plugin.into()],
-        AgentIntegrationId::ClaudeCode | AgentIntegrationId::GithubCopilot => {
+        AgentIntegrationId::ClaudeCode
+        | AgentIntegrationId::GithubCopilot
+        | AgentIntegrationId::Cursor => {
             vec!["plugin".into(), "update".into(), plugin.into()]
         }
     }
@@ -141,12 +168,22 @@ fn update_args(id: AgentIntegrationId) -> Vec<OsString> {
 
 fn remove_args(id: AgentIntegrationId) -> Vec<OsString> {
     let plugin = plugin_selector(id);
+    remove_plugin_args(id, plugin)
+}
+
+fn remove_plugin_args(id: AgentIntegrationId, plugin: String) -> Vec<OsString> {
     match id {
         AgentIntegrationId::Codex => vec!["plugin".into(), "remove".into(), plugin.into()],
-        AgentIntegrationId::ClaudeCode | AgentIntegrationId::GithubCopilot => {
+        AgentIntegrationId::ClaudeCode
+        | AgentIntegrationId::GithubCopilot
+        | AgentIntegrationId::Cursor => {
             vec!["plugin".into(), "uninstall".into(), plugin.into()]
         }
     }
+}
+
+fn legacy_plugin_selector(marketplace: &str) -> String {
+    format!("{LEGACY_PLUGIN_NAME}@{marketplace}")
 }
 
 pub(super) fn plugin_selector(id: AgentIntegrationId) -> String {

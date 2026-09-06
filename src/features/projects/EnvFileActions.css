@@ -1,0 +1,89 @@
+.sidebar-file-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sidebar-file-button {
+  min-width: 0;
+  flex: 1;
+}
+
+.env-file-actions {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.env-file-menu-trigger {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  color: #7f8a84;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: calc(16px * var(--font-scale));
+}
+
+.env-file-menu-trigger:hover,
+.env-file-menu-trigger[aria-expanded="true"] {
+  color: #f3f7f5;
+  background: var(--sidebar-hover);
+}
+
+.env-file-action-popover {
+  position: absolute;
+  z-index: 45;
+  top: calc(100% + 5px);
+  right: 0;
+  width: 230px;
+  padding: 7px;
+  background: rgba(255, 255, 255, 0.99);
+  border: 1px solid #d6ded9;
+  border-radius: 11px;
+  box-shadow: 0 18px 45px rgba(18, 33, 27, 0.18);
+}
+
+.env-file-action-popover button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  color: #35413c;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.env-file-action-popover button:hover,
+.env-file-action-popover button:focus-visible {
+  background: #f1f5f2;
+}
+
+.env-file-action-popover strong,
+.env-file-action-popover small {
+  display: block;
+}
+
+.env-file-action-popover strong {
+  font-size: calc(10px * var(--font-scale));
+}
+
+.env-file-action-popover small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: calc(8px * var(--font-scale));
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .env-file-actions {
+    display: none;
+  }
+}

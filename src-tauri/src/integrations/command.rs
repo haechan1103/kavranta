@@ -19,6 +19,7 @@ fn executable_candidates(id: AgentIntegrationId) -> Vec<PathBuf> {
         AgentIntegrationId::Codex => "codex",
         AgentIntegrationId::ClaudeCode => "claude",
         AgentIntegrationId::GithubCopilot => "copilot",
+        AgentIntegrationId::Cursor => "cursor",
     };
     let mut candidates = executable_candidates_named(name);
     if cfg!(target_os = "macos") && id == AgentIntegrationId::Codex {
@@ -54,6 +55,46 @@ pub(super) fn detect_vscode() -> bool {
         .any(|path| path.is_file());
     }
     false
+}
+
+pub(super) fn detect_cursor() -> bool {
+    if find_executable("cursor").is_some() {
+        return true;
+    }
+    let mut candidates = Vec::new();
+    if cfg!(target_os = "macos") {
+        candidates.push(PathBuf::from("/Applications/Cursor.app"));
+    }
+    if let Some(base) = BaseDirs::new() {
+        candidates.extend(cursor_user_app_candidates(
+            base.home_dir(),
+            base.data_local_dir(),
+            cfg!(target_os = "macos"),
+            cfg!(windows),
+        ));
+    }
+    candidates
+        .iter()
+        .any(|path| path.is_file() || path.is_dir())
+}
+
+pub(super) fn cursor_user_app_candidates(
+    home: &Path,
+    data_local: &Path,
+    macos: bool,
+    windows: bool,
+) -> Vec<PathBuf> {
+    let mut candidates = Vec::new();
+    if macos {
+        candidates.push(home.join("Applications/Cursor.app"));
+    }
+    if windows {
+        candidates.extend([
+            data_local.join("Programs/Cursor/Cursor.exe"),
+            data_local.join("Cursor/Cursor.exe"),
+        ]);
+    }
+    candidates
 }
 
 pub(super) fn find_executable(name: &str) -> Option<PathBuf> {

@@ -7,10 +7,10 @@ use tauri::{AppHandle, Manager};
 
 use super::catalog::source_repository_root;
 use super::command::{background_command, find_executable};
-use super::model::{APP_VERSION, IntegrationError};
+use super::model::{APP_VERSION, BROKER_EXECUTABLE, IntegrationError};
 
 fn find_broker() -> Option<PathBuf> {
-    if let Some(path) = find_executable("env-manager-broker") {
+    if let Some(path) = find_executable(BROKER_EXECUTABLE) {
         return Some(path);
     }
     let base = BaseDirs::new()?;
@@ -69,9 +69,9 @@ pub(super) fn ensure_current_broker(app: &AppHandle) -> Result<PathBuf, Integrat
 
 fn broker_file_name() -> &'static str {
     if cfg!(windows) {
-        "env-manager-broker.exe"
+        "kavranta-broker.exe"
     } else {
-        "env-manager-broker"
+        "kavranta-broker"
     }
 }
 

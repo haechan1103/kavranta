@@ -6,7 +6,9 @@ import { chromium } from "@playwright/test";
 
 const execFileAsync = promisify(execFile);
 const root = process.cwd();
-const baseUrl = process.env.ENV_MANAGER_MEDIA_URL ?? "http://127.0.0.1:1420";
+const baseUrl = process.env.KAVRANTA_MEDIA_URL
+  ?? process.env.ENV_MANAGER_MEDIA_URL
+  ?? "http://127.0.0.1:1420";
 const chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const outputDir = path.join(root, "assets", "screenshots");
 const brandDir = path.join(root, "assets", "brand");
@@ -31,6 +33,11 @@ await mkdir(workDir, { recursive: true });
 
 const browser = await chromium.launch({ executablePath: chromePath });
 
+async function openProjectAction(page, name) {
+  await page.getByRole("button", { name: "Project actions" }).click();
+  await page.getByRole("menuitem", { name }).click();
+}
+
 async function captureScreenshots() {
   const context = await browser.newContext({ viewport: { width: 1440, height: 940 } });
   const page = await context.newPage();
@@ -42,7 +49,7 @@ async function captureScreenshots() {
   await page.getByRole("heading", { name: "Local environment" }).waitFor();
   await page.screenshot({ path: heroPath, fullPage: true });
 
-  await page.getByRole("button", { name: "Push variables" }).click();
+  await openProjectAction(page, "Push variables");
   await page.getByRole("heading", { name: "Push variables" }).waitFor();
   await page.getByRole("button", { name: /Cloudflare Workers/ }).click();
   await page.getByRole("textbox", { name: "Cloudflare Worker", exact: true }).fill("sample-worker");
@@ -51,7 +58,7 @@ async function captureScreenshots() {
   await page.getByRole("button", { name: "Cancel" }).click();
 
   await page.setViewportSize({ width: 1440, height: 1200 });
-  await page.getByRole("button", { name: "Push variables" }).click();
+  await openProjectAction(page, "Push variables");
   await page.getByRole("heading", { name: "Push variables" }).waitFor();
   await page.getByRole("button", { name: /AWS Secrets Manager/ }).click();
   await page.getByLabel("Secret path prefix").fill("sample-saas/staging");
@@ -62,7 +69,7 @@ async function captureScreenshots() {
   await page.screenshot({ path: awsPath, fullPage: true });
   await page.getByRole("button", { name: "Cancel" }).click();
 
-  await page.getByRole("button", { name: "Push variables" }).click();
+  await openProjectAction(page, "Push variables");
   await page.getByRole("heading", { name: "Push variables" }).waitFor();
   await page.getByRole("button", { name: /Remote Runtime/ }).click();
   await page.locator('select').filter({ has: page.locator('option[value="demo-runtime-staging"]') }).waitFor();
@@ -73,20 +80,20 @@ async function captureScreenshots() {
   await page.getByRole("button", { name: "Cancel" }).click();
   await page.setViewportSize({ width: 1440, height: 940 });
 
-  await page.getByRole("button", { name: "Export" }).click();
+  await openProjectAction(page, "Export");
   await page.getByRole("heading", { name: "Export env files" }).waitFor();
   await page.getByText("Choose what to share").click();
   await page.getByRole("dialog").locator(".share-variable-select").filter({ hasText: "GPT_API_KEY" }).first().click();
   await page.screenshot({ path: sharingPath, fullPage: true });
   await page.getByRole("button", { name: "Cancel" }).click();
 
-  await page.getByRole("button", { name: "Team sharing" }).click();
+  await openProjectAction(page, "Team sharing");
   await page.getByRole("heading", { name: "Team sharing" }).waitFor();
   await page.getByText("Product team · shared folder").waitFor();
   await page.screenshot({ path: teamChannelPath, fullPage: true });
   await page.getByRole("button", { name: "Close", exact: true }).click();
 
-  await page.getByRole("button", { name: "Import share" }).click();
+  await openProjectAction(page, "Import share");
   await page.getByRole("heading", { name: "Import encrypted env share" }).waitFor();
   await page.getByLabel("Share passphrase").fill("fake-readme-passphrase");
   await page.getByRole("button", { name: "Choose encrypted file" }).click();
@@ -96,11 +103,11 @@ async function captureScreenshots() {
 
   await page.getByRole("button", { name: "AI activity" }).click();
   await page.getByRole("heading", { name: "AI activity" }).waitFor();
-  await page.getByText("inspect_project").waitFor();
+  await page.locator(".activity-item").first().waitFor();
   await page.screenshot({ path: activityPath, fullPage: true });
 
   await page.getByRole("button", { name: "AI tool connections" }).click();
-  await page.getByRole("heading", { name: "AI tool connections" }).waitFor();
+  await page.locator(".integration-page").waitFor();
   await page.screenshot({ path: integrationsPath, fullPage: true });
   await context.close();
 }
@@ -126,19 +133,19 @@ async function captureDemoFrames() {
   await page.getByRole("button", { name: /Local environment.*\.env\.local/ }).click();
   await page.getByRole("heading", { name: "Local environment" }).waitFor();
   await capture(6);
-  await page.getByRole("button", { name: "Push variables" }).click();
+  await openProjectAction(page, "Push variables");
   await page.getByRole("heading", { name: "Push variables" }).waitFor();
   await page.getByRole("button", { name: /AWS Secrets Manager/ }).click();
   await capture(6);
   await page.getByRole("button", { name: "Cancel" }).click();
-  await page.getByRole("button", { name: "Team sharing" }).click();
+  await openProjectAction(page, "Team sharing");
   await page.getByRole("heading", { name: "Team sharing" }).waitFor();
   await capture(6);
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("button", { name: "AI tool connections" }).hover();
   await capture(2);
   await page.getByRole("button", { name: "AI tool connections" }).click();
-  await page.getByRole("heading", { name: "AI tool connections" }).waitFor();
+  await page.locator(".integration-page").waitFor();
   await capture(6);
   const overviewButton = page.locator('nav[aria-label="Project views"] button').first();
   await overviewButton.hover();

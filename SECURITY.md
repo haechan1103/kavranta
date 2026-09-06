@@ -53,7 +53,7 @@ Kavranta is a local file manager, not a secret vault or operating-system sandbox
   single-use plan and stdin-only Broker command. The agent receives the key and
   affected paths but not the generated value; the selected producer and local Rust
   process necessarily receive it.
-- Claude Code and GitHub Copilot integrations install a direct `.env*` access guard, but tool prompts and hooks are not an OS-level isolation boundary.
+- Claude Code, GitHub Copilot, and Cursor integrations install a direct `.env*` access guard, but tool prompts and hooks are not an OS-level isolation boundary. Cursor local plugin activation can also be restricted by organization policy.
 - Codex direct-file protection depends on the host's permissions and sandbox configuration.
 - Provider push runs only after a user or an explicitly requested agent plan starts
   it. Selected values are sent to the displayed GitHub Actions, Cloudflare Workers,

@@ -1,6 +1,7 @@
 mod broker;
 mod catalog;
 mod command;
+mod cursor;
 mod installation;
 mod marketplace;
 mod model;
@@ -11,15 +12,17 @@ use tauri::AppHandle;
 
 use broker::ensure_current_broker;
 use catalog::{catalog_source, materialize_catalog};
-use command::{detect_vscode, integration_executable, run_agent_command};
+use command::{detect_cursor, detect_vscode, integration_executable, run_agent_command};
+use cursor::install_cursor_plugin;
 use installation::{
     cached_bundle_is_official, connection_configuration_is_current, current_bundle_is_cached,
-    installed_version, marker_version, official_codex_marketplace_aliases, persist_marker,
-    remove_legacy_codex_plugin,
+    installed_version, legacy_bundle_is_official, marker_version,
+    official_legacy_codex_marketplace_aliases, persist_marker,
 };
 use marketplace::{
-    install_or_update, marketplace_add_args, reconnect_owned_marketplace,
-    refresh_after_marketplace_reconnect, refresh_owned_codex_marketplace,
+    cleanup_legacy_connections, install_or_update, marketplace_add_args,
+    reconnect_owned_marketplace, refresh_after_marketplace_reconnect,
+    stage_owned_codex_marketplace,
 };
 use model::{
     agent_bundle_version, integration_name, is_legacy_bundle_version, is_update_available,
@@ -37,6 +40,7 @@ pub fn list(app: &AppHandle) -> Vec<AgentIntegrationStatus> {
         AgentIntegrationId::Codex,
         AgentIntegrationId::ClaudeCode,
         AgentIntegrationId::GithubCopilot,
+        AgentIntegrationId::Cursor,
     ]
     .into_iter()
     .map(|id| status(app, id, broker.as_deref(), catalog_available))
@@ -48,25 +52,39 @@ pub fn install(
     app: &AppHandle,
     id: AgentIntegrationId,
 ) -> Result<AgentIntegrationStatus, IntegrationError> {
+    let host_detected = if id == AgentIntegrationId::Cursor {
+        detect_cursor()
+    } else {
+        integration_executable(id).is_some()
+    };
+    if !host_detected {
+        return Err(IntegrationError {
+            code: "AGENT_NOT_FOUND",
+            message: "먼저 해당 AI 코딩 도구를 설치해주세요.",
+        });
+    }
+    let broker = ensure_current_broker(app)?;
+    let catalog = materialize_catalog(app, &broker, id)?;
+    if id == AgentIntegrationId::Cursor {
+        install_cursor_plugin(&catalog)?;
+        validate_installed_connection(app, id, &broker)?;
+        persist_marker(app, id)?;
+        return Ok(status(app, id, Some(&broker), true));
+    }
     let executable = integration_executable(id).ok_or(IntegrationError {
         code: "AGENT_NOT_FOUND",
         message: "먼저 해당 AI 코딩 도구를 설치해주세요.",
     })?;
-    let broker = ensure_current_broker(app)?;
-    let catalog = materialize_catalog(app, &broker, id)?;
-    let owned_codex_aliases = (id == AgentIntegrationId::Codex)
-        .then(official_codex_marketplace_aliases)
+    let legacy_codex_aliases = (id == AgentIntegrationId::Codex)
+        .then(official_legacy_codex_marketplace_aliases)
         .unwrap_or_default();
     let owns_existing_installation = marker_version(app, id).is_some()
         || cached_bundle_is_official(id)
-        || !owned_codex_aliases.is_empty();
+        || legacy_bundle_is_official(id)
+        || !legacy_codex_aliases.is_empty();
 
     if id == AgentIntegrationId::Codex && owns_existing_installation {
-        refresh_owned_codex_marketplace(
-            &executable,
-            catalog.as_os_str().to_owned(),
-            &owned_codex_aliases,
-        )?;
+        stage_owned_codex_marketplace(&executable, catalog.as_os_str().to_owned())?;
     } else {
         let _ = run_agent_command(
             &executable,
@@ -96,7 +114,12 @@ pub fn install(
         }
     }
     validate_installed_connection(app, id, &broker)?;
-    remove_legacy_codex_plugin(&executable, id);
+    if !cleanup_legacy_connections(&executable, id, &legacy_codex_aliases) {
+        return Err(IntegrationError {
+            code: "AGENT_LEGACY_CLEANUP_PENDING",
+            message: "새 Kavranta 연결은 정상입니다. 기존 Env Manager 연결 정리가 완료되지 않아 업데이트를 다시 실행할 수 있습니다.",
+        });
+    }
     persist_marker(app, id)?;
     Ok(status(app, id, Some(&broker), true))
 }
@@ -110,6 +133,12 @@ fn validate_installed_connection(
         return Err(IntegrationError {
             code: "AGENT_BUNDLE_NOT_UPDATED",
             message: "AI 도구가 새 연동 번들을 적용하지 않았습니다. 기존 marketplace 연결을 확인해주세요.",
+        });
+    }
+    if !cached_bundle_is_official(id) {
+        return Err(IntegrationError {
+            code: "AGENT_PLUGIN_UNTRUSTED",
+            message: "설치된 플러그인이 공식 Kavranta 번들인지 확인하지 못했습니다.",
         });
     }
     if !connection_configuration_is_current(app, id, broker) {
@@ -129,9 +158,13 @@ fn status(
 ) -> AgentIntegrationStatus {
     let cli_detected = integration_executable(id).is_some();
     let vscode_detected = id == AgentIntegrationId::GithubCopilot && detect_vscode();
-    let detected = cli_detected || vscode_detected;
+    let cursor_detected = id == AgentIntegrationId::Cursor && detect_cursor();
+    let detected = cli_detected || vscode_detected || cursor_detected;
     let installed_version = installed_version(app, id);
     let installed = installed_version.is_some();
+    let migration_pending = legacy_bundle_is_official(id)
+        || (id == AgentIntegrationId::Codex
+            && !official_legacy_codex_marketplace_aliases().is_empty());
     let legacy_version = installed_version
         .as_deref()
         .is_some_and(is_legacy_bundle_version);
@@ -142,9 +175,18 @@ fn status(
         broker.is_some_and(|broker| connection_configuration_is_current(app, id, broker));
     let needs_repair =
         integration_requires_repair(installed, update_available, configuration_current);
-    let action_blocker = action_blocker(cli_detected, broker.is_some(), catalog_available);
-    let (protection, detail) =
-        integration_detail(id, installed, needs_repair, cli_detected, vscode_detected);
+    let activation_unverified = id == AgentIntegrationId::Cursor && installed && !needs_repair;
+    let install_host_available = cli_detected || cursor_detected;
+    let action_blocker =
+        action_blocker(install_host_available, broker.is_some(), catalog_available);
+    let (protection, detail) = integration_detail(
+        id,
+        installed,
+        needs_repair,
+        cli_detected,
+        vscode_detected,
+        cursor_detected,
+    );
 
     AgentIntegrationStatus {
         id,
@@ -153,9 +195,11 @@ fn status(
         installed,
         installed_version,
         legacy_version,
+        migration_pending,
         current_version: agent_bundle_version(),
         update_available,
         needs_repair,
+        activation_unverified,
         protection,
         detail,
         can_install: action_blocker.is_none(),
@@ -185,13 +229,14 @@ fn integration_detail(
     needs_repair: bool,
     cli_detected: bool,
     vscode_detected: bool,
+    cursor_detected: bool,
 ) -> (&'static str, String) {
-    match (id, installed, needs_repair, cli_detected, vscode_detected) {
-        (_, true, true, _, _) => (
+    match (id, installed, needs_repair, cli_detected, vscode_detected, cursor_detected) {
+        (_, true, true, _, _, _) => (
             "inactive",
             "플러그인은 있지만 broker 실행 경로나 감사 기록 설정이 현재 앱과 맞지 않아 복구가 필요합니다.".to_owned(),
         ),
-        (AgentIntegrationId::Codex, true, false, _, _) => (
+        (AgentIntegrationId::Codex, true, false, _, _, _) => (
             "broker",
             "Redacted broker가 연결되어 있습니다. 직접 파일 차단 수준은 Codex 권한 프로필에 따라 달라집니다.".to_owned(),
         ),
@@ -201,15 +246,20 @@ fn integration_detail(
             false,
             _,
             _,
+            _,
         ) => (
             "guarded",
             "공통 Skill, MCP broker, 직접 env 접근 Guard가 연결되어 있습니다.".to_owned(),
         ),
-        (AgentIntegrationId::GithubCopilot, false, false, false, true) => (
+        (AgentIntegrationId::Cursor, true, false, _, _, _) => (
+            "guarded",
+            "공통 Skill, MCP broker, Cursor fail-closed env 접근 Guard가 연결되어 있습니다.".to_owned(),
+        ),
+        (AgentIntegrationId::GithubCopilot, false, false, false, true, _) => (
             "inactive",
             "VS Code는 감지했지만 Copilot CLI가 필요합니다. CLI 설치 후 여기서 한 번에 연결할 수 있습니다.".to_owned(),
         ),
-        (_, false, false, true, _) => (
+        (_, false, false, true, _, _) | (AgentIntegrationId::Cursor, false, false, _, _, true) => (
             "inactive",
             "도구를 감지했습니다. Kavranta 연동을 설치할 수 있습니다.".to_owned(),
         ),

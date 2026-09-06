@@ -14,6 +14,7 @@ vi.mock("../../lib/api", () => ({
   copyValue: vi.fn(async () => undefined),
   copyKey: vi.fn(async () => undefined),
   detachLink: vi.fn(async () => undefined),
+  moveVariable: vi.fn(async () => undefined),
 }));
 
 const variable: OccurrenceProjection = {
@@ -216,5 +217,34 @@ describe("VariableRow", () => {
     expect(screen.queryByText("They are managed separately. Link them to save one input across every selected file.")).not.toBeInTheDocument();
     expect(document.querySelector(".relationship-icon")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Manage together" })).toBeInTheDocument();
+  });
+
+  it("moves a variable through an application dialog", async () => {
+    const user = userEvent.setup();
+    render(
+      <VariableRow
+        projectId="demo"
+        file="fixture-one"
+        variable={variable}
+        currentGroup="GPT"
+        groups={["GPT", "App", "Database"]}
+        sameKeyFiles={["fixture-one", "fixture-two"]}
+        onMutate={async (operation) => {
+          await operation();
+        }}
+        onLink={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Move" }));
+    expect(screen.getByRole("dialog", { name: "Move GPT_API_KEY" })).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: /Database/ }));
+    await user.click(screen.getByRole("button", { name: "Move variable" }));
+
+    expect(api.moveVariable).toHaveBeenCalledWith("demo", {
+      file: "fixture-one",
+      key: "GPT_API_KEY",
+      targetGroup: "Database",
+    });
   });
 });

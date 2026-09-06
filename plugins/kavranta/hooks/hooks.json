@@ -1,0 +1,18 @@
+{
+  "description": "Redirect direct env-file access to the Kavranta MCP broker.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|Glob|Grep|Bash|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "kavranta-broker guard-hook",
+            "timeout": 5,
+            "statusMessage": "Checking Kavranta file boundary"
+          }
+        ]
+      }
+    ]
+  }
+}

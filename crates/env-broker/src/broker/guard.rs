@@ -2,15 +2,50 @@ use super::super::*;
 
 pub fn guard_hook_decision(input: &Value) -> Value {
     if hook_requests_direct_env_access(input) {
+        if is_cursor_hook(input) {
+            return cursor_denied_decision(input);
+        }
         return json!({
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
-                "permissionDecisionReason": "Direct env-file access is blocked by Kavranta. Use the env-manager MCP tools instead."
+                "permissionDecisionReason": "Direct env-file access is blocked by Kavranta. Use the kavranta MCP tools instead."
             }
         });
     }
-    json!({})
+    if is_cursor_hook(input) {
+        json!({ "permission": "allow" })
+    } else {
+        json!({})
+    }
+}
+
+fn cursor_denied_decision(input: &Value) -> Value {
+    match input.get("hook_event_name").and_then(Value::as_str) {
+        Some("beforeTabFileRead") => json!({ "permission": "deny" }),
+        Some("beforeReadFile") => json!({
+            "permission": "deny",
+            "user_message": "Direct env-file access is blocked by Kavranta. Use the Kavranta tools instead."
+        }),
+        _ => json!({
+            "permission": "deny",
+            "user_message": "Direct env-file access is blocked by Kavranta. Use the Kavranta tools instead.",
+            "agent_message": "Use the Kavranta MCP tools for redacted env inspection and request-scoped changes."
+        }),
+    }
+}
+
+fn is_cursor_hook(input: &Value) -> bool {
+    input.get("cursor_version").is_some()
+        || input
+            .get("hook_event_name")
+            .and_then(Value::as_str)
+            .is_some_and(|name| {
+                matches!(
+                    name,
+                    "preToolUse" | "beforeShellExecution" | "beforeReadFile" | "beforeTabFileRead"
+                )
+            })
 }
 
 fn hook_requests_direct_env_access(input: &Value) -> bool {
@@ -20,12 +55,9 @@ fn hook_requests_direct_env_access(input: &Value) -> bool {
         .and_then(Value::as_str)
         .unwrap_or_default()
         .to_ascii_lowercase();
-    let tool_input = input
-        .get("tool_input")
-        .or_else(|| input.get("toolInput"))
-        .unwrap_or(&Value::Null);
-
-    if contains_env_path_field(tool_input) {
+    // Cursor file-read hooks place `file_path` and attachments at the event root.
+    // Inspect only allowlisted path fields so the full `content` payload is ignored.
+    if contains_env_path_field(input) {
         return true;
     }
 
@@ -35,7 +67,11 @@ fn hook_requests_direct_env_access(input: &Value) -> bool {
         || tool_name.contains("command")
         || tool_name.contains("apply_patch")
         || tool_name == "applypatch";
-    command_like && contains_env_command_field(tool_input)
+    let shell_event = input
+        .get("hook_event_name")
+        .and_then(Value::as_str)
+        .is_some_and(|name| name == "beforeShellExecution");
+    (command_like || shell_event) && contains_env_command_field(input)
 }
 
 fn contains_env_path_field(value: &Value) -> bool {
@@ -90,34 +126,48 @@ fn value_contains_env_reference(value: &Value) -> bool {
 }
 
 fn contains_env_reference(text: &str) -> bool {
-    contains_bounded_env_reference(text, ".env")
-        || contains_bounded_env_reference(text, ".dev.vars")
+    text.split(is_reference_separator)
+        .flat_map(|part| part.split(['/', '\\']))
+        .map(|part| {
+            part.trim_matches(|character: char| {
+                matches!(character, '*' | '?' | '!' | '+' | '@' | '$')
+            })
+        })
+        .any(is_env_data_name)
 }
 
-fn contains_bounded_env_reference(text: &str, marker: &str) -> bool {
-    text.match_indices(marker).any(|(index, _)| {
-        let previous = text[..index].chars().next_back();
-        let next = text[index + marker.len()..].chars().next();
-        is_env_boundary_before(previous) && is_env_boundary_after(next)
-    })
+fn is_reference_separator(character: char) -> bool {
+    character.is_whitespace()
+        || matches!(
+            character,
+            '/' | '\\'
+                | '\''
+                | '"'
+                | '`'
+                | '='
+                | ':'
+                | ';'
+                | ','
+                | '('
+                | ')'
+                | '['
+                | ']'
+                | '{'
+                | '}'
+                | '<'
+                | '>'
+                | '|'
+                | '&'
+        )
 }
 
-fn is_env_boundary_before(character: Option<char>) -> bool {
-    character.is_none_or(|character| {
-        character.is_whitespace()
-            || matches!(
-                character,
-                '/' | '\\' | '\'' | '"' | '`' | '=' | ':' | '(' | '[' | '{'
-            )
-    })
-}
-
-fn is_env_boundary_after(character: Option<char>) -> bool {
-    character.is_none_or(|character| {
-        character.is_whitespace()
-            || matches!(
-                character,
-                '.' | '/' | '\\' | '\'' | '"' | '`' | ':' | ')' | ']' | '}' | ','
-            )
+fn is_env_data_name(candidate: &str) -> bool {
+    let normalized = candidate.to_ascii_lowercase();
+    if normalized == ".dev.vars" || normalized.starts_with(".dev.vars.") {
+        return true;
+    }
+    normalized.match_indices(".env").any(|(index, _)| {
+        let suffix = &normalized[index..];
+        suffix == ".env" || suffix.starts_with(".env.")
     })
 }

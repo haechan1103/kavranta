@@ -103,6 +103,72 @@ fn guard_denies_direct_env_paths_without_echoing_input() {
 }
 
 #[test]
+fn cursor_guard_uses_cursor_permission_schema_without_echoing_input() {
+    let denied = json!({
+        "hook_event_name": "preToolUse",
+        "cursor_version": "2.6.0",
+        "tool_name": "Read",
+        "tool_input": {
+            "path": "/tmp/project/.env.local",
+            "content": CANARY
+        }
+    });
+    let allowed = json!({
+        "hook_event_name": "preToolUse",
+        "cursor_version": "2.6.0",
+        "tool_name": "Read",
+        "tool_input": { "path": "/tmp/project/src/main.rs" }
+    });
+
+    let decision = guard_hook_decision(&denied);
+    assert_eq!(decision["permission"], "deny");
+    assert!(!decision.to_string().contains(CANARY));
+    assert!(!decision.to_string().contains("/tmp/project"));
+    assert_eq!(guard_hook_decision(&allowed)["permission"], "allow");
+}
+
+#[test]
+fn cursor_file_context_and_tab_guards_block_supported_env_names_without_echoing_content() {
+    for (event, path) in [
+        ("beforeReadFile", "/tmp/project/secrets/runtime.env.staging"),
+        (
+            "beforeTabFileRead",
+            "C:\\fake-project\\workers\\.dev.vars.preview",
+        ),
+    ] {
+        let denied = json!({
+            "hook_event_name": event,
+            "cursor_version": "2.6.0",
+            "file_path": path,
+            "content": CANARY,
+            "attachments": [{ "type": "file", "file_path": path }]
+        });
+        let decision = guard_hook_decision(&denied);
+
+        assert_eq!(decision["permission"], "deny");
+        assert!(!decision.to_string().contains(CANARY));
+        assert!(!decision.to_string().contains("project"));
+    }
+}
+
+#[test]
+fn cursor_file_guards_ignore_non_path_content_and_allow_source_files() {
+    for event in ["beforeReadFile", "beforeTabFileRead"] {
+        let allowed = json!({
+            "hook_event_name": event,
+            "cursor_version": "2.6.0",
+            "file_path": "/tmp/project/src/main.rs",
+            "content": "Documentation can mention .env.local and runtime.env safely."
+        });
+
+        assert_eq!(
+            guard_hook_decision(&allowed),
+            json!({ "permission": "allow" })
+        );
+    }
+}
+
+#[test]
 fn guard_denies_shell_and_patch_env_access() {
     for input in [
         json!({
@@ -121,6 +187,14 @@ fn guard_denies_shell_and_patch_env_access() {
             "tool_name": "Write",
             "tool_input": { "file_path": "workers/api/.dev.vars.production" }
         }),
+        json!({
+            "tool_name": "Read",
+            "tool_input": { "file_path": "secrets/mobile/runtime.env.production" }
+        }),
+        json!({
+            "tool_name": "Grep",
+            "tool_input": { "glob": "**/*.env*" }
+        }),
     ] {
         assert_eq!(
             guard_hook_decision(&input)["hookSpecificOutput"]["permissionDecision"],
@@ -137,6 +211,10 @@ fn guard_allows_unrelated_source_operations_and_env_mentions_in_content() {
             "tool_input": { "file_path": "src/main.ts" }
         }),
         json!({
+            "tool_name": "Read",
+            "tool_input": { "file_path": ".env-manager.json" }
+        }),
+        json!({
             "tool_name": "Write",
             "tool_input": {
                 "file_path": "README.md",
@@ -150,7 +228,7 @@ fn guard_allows_unrelated_source_operations_and_env_mentions_in_content() {
         json!({
             "tool_name": "Bash",
             "tool_input": {
-                "command": "openssl rand -base64 32 | env-manager-broker value apply-stdin --plan stdin-plan-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --trim-final-newline"
+                "command": "openssl rand -base64 32 | kavranta-broker value apply-stdin --plan stdin-plan-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --trim-final-newline"
             }
         }),
     ] {

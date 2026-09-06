@@ -228,7 +228,9 @@ impl Broker {
     }
 
     pub(super) fn registry_path(&self) -> Result<PathBuf, EnvError> {
-        if let Some(path) = std::env::var_os("ENV_MANAGER_REGISTRY_PATH") {
+        if let Some(path) = std::env::var_os("KAVRANTA_REGISTRY_PATH")
+            .or_else(|| std::env::var_os("ENV_MANAGER_REGISTRY_PATH"))
+        {
             return Ok(PathBuf::from(path));
         }
         Ok(self.provider_app_data()?.join("projects.json"))
@@ -270,7 +272,9 @@ pub(super) fn plan_expired() -> EnvError {
 }
 
 pub(crate) fn provider_app_data() -> Result<PathBuf, EnvError> {
-    if let Some(path) = std::env::var_os("ENV_MANAGER_APP_DATA_DIR") {
+    if let Some(path) = std::env::var_os("KAVRANTA_APP_DATA_DIR")
+        .or_else(|| std::env::var_os("ENV_MANAGER_APP_DATA_DIR"))
+    {
         return Ok(PathBuf::from(path));
     }
     let base = directories::BaseDirs::new()

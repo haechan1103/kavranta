@@ -19,7 +19,7 @@ assert(
   "The legacy bundle identifier must remain stable so existing app data is preserved.",
 );
 assert(
-  appConfig.bundle?.externalBin?.includes("binaries/env-manager-broker"),
+  appConfig.bundle?.externalBin?.includes("binaries/kavranta-broker"),
   "The legacy broker binary name must remain stable for installed agent connections.",
 );
 assert(

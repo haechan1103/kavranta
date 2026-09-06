@@ -5,19 +5,32 @@ import { Modal } from "./Modal";
 
 interface Props {
   title: string;
+  description?: string;
   currentName: string;
+  inputLabel?: string;
+  submitLabel?: string;
+  maxLength?: number;
   onClose: () => void;
   onRename: (name: string) => void;
 }
 
-export function RenameModal({ title, currentName, onClose, onRename }: Props) {
+export function RenameModal({
+  title,
+  description,
+  currentName,
+  inputLabel,
+  submitLabel,
+  maxLength,
+  onClose,
+  onRename,
+}: Props) {
   const { t } = useI18n();
   const [name, setName] = useState(currentName);
   const trimmedName = name.trim();
   const canSave = trimmedName.length > 0 && trimmedName !== currentName;
 
   return (
-    <Modal title={title} onClose={onClose}>
+    <Modal title={title} description={description} onClose={onClose}>
       <form
         className="modal-form"
         onSubmit={(event) => {
@@ -28,17 +41,18 @@ export function RenameModal({ title, currentName, onClose, onRename }: Props) {
         }}
       >
         <label>
-          {t("common.newName")}
+          {inputLabel ?? t("common.newName")}
           <input
             autoFocus
             value={name}
+            maxLength={maxLength}
             onChange={(event) => setName(event.target.value)}
             onFocus={(event) => event.currentTarget.select()}
           />
         </label>
         <div className="modal-actions">
           <button type="button" className="quiet-button" onClick={onClose}>{t("common.cancel")}</button>
-          <button className="primary-button" disabled={!canSave}>{t("common.save")}</button>
+          <button className="primary-button" disabled={!canSave}>{submitLabel ?? t("common.save")}</button>
         </div>
       </form>
     </Modal>

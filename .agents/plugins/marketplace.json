@@ -1,14 +1,14 @@
 {
-  "name": "env-manager",
+  "name": "kavranta",
   "interface": {
     "displayName": "Kavranta"
   },
   "plugins": [
     {
-      "name": "env-manager",
+      "name": "kavranta",
       "source": {
         "source": "local",
-        "path": "./plugins/env-manager"
+        "path": "./plugins/kavranta"
       },
       "policy": {
         "installation": "AVAILABLE",

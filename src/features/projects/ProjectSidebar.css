@@ -1,0 +1,450 @@
+.sidebar {
+  --sidebar-border: #29302d;
+  --sidebar-surface: #181e1b;
+  --sidebar-hover: #1c2320;
+  --sidebar-active: #222a26;
+  --sidebar-text: #aeb8b3;
+  --sidebar-muted: #747e79;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px 12px 14px;
+  color: #e8eeeb;
+  background: var(--sidebar);
+  border-right: 1px solid var(--sidebar-border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 7px;
+  font-size: calc(14px * var(--font-scale));
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.brand-mark {
+  display: block;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+}
+
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.version {
+  margin-left: auto;
+  padding: 4px 6px;
+  color: #79837e;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: calc(10px * var(--font-scale));
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.version:hover {
+  color: #c5cec9;
+  background: var(--sidebar-hover);
+}
+
+.version:disabled {
+  cursor: wait;
+}
+
+.sidebar-footer > .version {
+  width: max-content;
+  margin: 0;
+  padding: 3px 1px;
+  color: #78827e;
+  text-align: left;
+}
+
+.sidebar-footer > .version:hover {
+  color: #c5cec9;
+  background: transparent;
+}
+
+.update-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 5px;
+  background: #e45b55;
+  border-radius: 50%;
+}
+
+.attention-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  margin-left: auto;
+  background: #e45b55;
+  border-radius: 50%;
+}
+
+.update-panel {
+  position: fixed;
+  z-index: 50;
+  right: 22px;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  max-width: 430px;
+  padding: 16px 17px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #d7ded9;
+  border-radius: 13px;
+  box-shadow: 0 18px 55px rgba(20, 34, 28, 0.18);
+}
+
+.update-panel > div {
+  min-width: 0;
+}
+
+.update-panel strong {
+  display: block;
+  font-size: calc(13px * var(--font-scale));
+}
+
+.update-panel p {
+  display: -webkit-box;
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale));
+  line-height: 1.45;
+  white-space: pre-line;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.update-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--green);
+  font-size: calc(9px * var(--font-scale));
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.update-panel button {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  color: white;
+  background: var(--green);
+  border: 0;
+  border-radius: 8px;
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.update-panel button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.update-panel .update-close {
+  color: var(--muted);
+  background: #eef1ee;
+}
+
+.file-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.current-project-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 7px 6px;
+  background: var(--sidebar-surface);
+  border: 0;
+  border-radius: 6px;
+}
+
+.current-project-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  color: var(--sidebar-text);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.project-glyph {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  color: #aab4af;
+  background: #252c29;
+  border-radius: 5px;
+  font-size: calc(10px * var(--font-scale));
+  font-weight: 800;
+}
+
+.current-project-panel .project-glyph {
+  color: var(--green-bright);
+  background: #222b27;
+}
+
+.current-project-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.current-project-copy strong {
+  overflow: hidden;
+  color: #f1f5f3;
+  font-size: calc(11px * var(--font-scale));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-change-button {
+  min-height: 27px;
+  padding: 0 8px;
+  color: #9ea9a4;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: calc(8px * var(--font-scale));
+  font-weight: 750;
+}
+
+.project-change-button:hover {
+  color: white;
+  background: #252d29;
+}
+
+.project-change-icon {
+  display: none;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-navigation {
+  margin-top: 19px;
+  padding-top: 15px;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.agent-navigation {
+  margin-top: 16px;
+  padding-top: 13px;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.footer-agent-navigation {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 9px;
+  border-top: 0;
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.agent-navigation .nav-item {
+  color: var(--sidebar-text);
+}
+
+.nav-item {
+  min-height: 34px;
+  gap: 10px;
+  padding: 7px 9px;
+  font-size: calc(11px * var(--font-scale));
+}
+
+.sidebar-nav-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  color: #89938e;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: #f6faf8;
+  background: var(--sidebar-hover);
+}
+
+.nav-item.active {
+  background: var(--sidebar-active);
+  font-weight: 650;
+}
+
+.nav-item.active .sidebar-nav-icon {
+  color: var(--green-bright);
+}
+
+.nav-item b {
+  display: grid;
+  min-width: 17px;
+  height: 17px;
+  margin-left: auto;
+  place-items: center;
+  color: #dfb66e;
+  background: #352d20;
+  border-radius: 999px;
+  font-size: calc(9px * var(--font-scale));
+}
+
+.file-label {
+  margin: 19px 9px 5px;
+  color: var(--sidebar-muted);
+  font-size: calc(9px * var(--font-scale));
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+.file-dot {
+  width: 7px !important;
+  height: 7px;
+  flex: 0 0 7px;
+  background: #65706a;
+  border-radius: 2px;
+}
+
+.nav-item.active .file-dot {
+  background: var(--green-bright);
+}
+
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 8px 2px;
+  color: var(--sidebar-muted);
+  border-top: 1px solid var(--sidebar-border);
+  font-size: calc(10px * var(--font-scale));
+}
+
+.sidebar-file-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-file-copy small {
+  color: #69746f;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: calc(7px * var(--font-scale));
+}
+
+.sidebar-preferences {
+  display: grid;
+  gap: 8px;
+}
+
+.sidebar-select-control {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sidebar-select-control > span {
+  color: #929c97;
+  font-weight: 650;
+}
+
+.sidebar-select-control select {
+  min-width: 92px;
+  padding: 5px 22px 5px 8px;
+  color: #dce5e1;
+  background: var(--sidebar-surface);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 5px;
+  font-size: calc(10px * var(--font-scale));
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+
+  .brand > span:not(.brand-mark),
+  .current-project-copy,
+  .project-change-label,
+  .file-navigation,
+  .sidebar-select-control > span,
+  .agent-nav-label {
+    display: none;
+  }
+
+  .brand,
+  .current-project-identity {
+    justify-content: center;
+  }
+
+  .current-project-panel {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding-inline: 5px;
+  }
+
+  .project-change-button {
+    width: 27px;
+    padding: 0;
+  }
+
+  .project-change-icon {
+    display: inline;
+  }
+
+  .agent-navigation .nav-item {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .sidebar-footer {
+    padding-inline: 0;
+  }
+
+  .sidebar-select-control select {
+    width: 48px;
+    min-width: 48px;
+    padding-inline: 5px;
+  }
+
+  .sidebar-footer > .version {
+    width: 100%;
+    text-align: center;
+  }
+}

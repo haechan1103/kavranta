@@ -6,6 +6,53 @@ use env_registry::{ProjectRegistration, RegistryData};
 use env_test_support::SyntheticProject;
 use serde_json::{Value, json};
 
+const GUARD_CANARY: &str = "fake_cursor_guard_canary_7d91";
+
+#[test]
+fn cursor_hook_cli_blocks_agent_context_and_tab_env_reads_without_echoing_input() {
+    let binary = env!("CARGO_BIN_EXE_kavranta-broker");
+    for input in [
+        json!({
+            "hook_event_name": "preToolUse",
+            "cursor_version": "2.6.0",
+            "tool_name": "Read",
+            "tool_input": { "path": "/tmp/fake-project/.env.local" }
+        }),
+        json!({
+            "hook_event_name": "beforeReadFile",
+            "cursor_version": "2.6.0",
+            "file_path": "/tmp/fake-project/runtime.env.staging",
+            "content": GUARD_CANARY
+        }),
+        json!({
+            "hook_event_name": "beforeTabFileRead",
+            "cursor_version": "2.6.0",
+            "file_path": "C:\\fake-project\\.dev.vars.preview",
+            "content": GUARD_CANARY
+        }),
+    ] {
+        let mut process = Command::new(binary)
+            .arg("guard-hook")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("spawn Guard hook");
+        serde_json::to_writer(process.stdin.as_mut().expect("Guard stdin"), &input)
+            .expect("write Guard input");
+        drop(process.stdin.take());
+
+        let output = process.wait_with_output().expect("wait for Guard hook");
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        let response: Value = serde_json::from_slice(&output.stdout).expect("Guard response");
+        assert_eq!(response["permission"], "deny");
+        let serialized = String::from_utf8(output.stdout).expect("UTF-8 Guard response");
+        assert!(!serialized.contains(GUARD_CANARY));
+        assert!(!serialized.contains("fake-project"));
+    }
+}
+
 #[test]
 fn broker_plan_and_separate_cli_process_complete_an_opaque_stdin_write() {
     let project = SyntheticProject::new();
@@ -29,12 +76,12 @@ fn broker_plan_and_separate_cli_process_complete_an_opaque_stdin_write() {
     )
     .expect("registry");
 
-    let binary = env!("CARGO_BIN_EXE_env-manager-broker");
+    let binary = env!("CARGO_BIN_EXE_kavranta-broker");
     let mut mcp = Command::new(binary)
         .current_dir(project.root())
-        .env("ENV_MANAGER_APP_DATA_DIR", app_data.path())
-        .env("ENV_MANAGER_REGISTRY_PATH", &registry_path)
-        .env("ENV_MANAGER_AGENT_HOST", "codex")
+        .env("KAVRANTA_APP_DATA_DIR", app_data.path())
+        .env("KAVRANTA_REGISTRY_PATH", &registry_path)
+        .env("KAVRANTA_AGENT_HOST", "codex")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -80,8 +127,8 @@ fn broker_plan_and_separate_cli_process_complete_an_opaque_stdin_write() {
             plan_id,
             "--trim-final-newline",
         ])
-        .env("ENV_MANAGER_APP_DATA_DIR", app_data.path())
-        .env("ENV_MANAGER_REGISTRY_PATH", &registry_path)
+        .env("KAVRANTA_APP_DATA_DIR", app_data.path())
+        .env("KAVRANTA_REGISTRY_PATH", &registry_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())

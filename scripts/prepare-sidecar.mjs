@@ -4,23 +4,24 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const targetTriple = process.env.ENV_MANAGER_TARGET || commandOutput("rustc", ["--print", "host-tuple"]);
+const explicitTarget = process.env.KAVRANTA_TARGET || process.env.ENV_MANAGER_TARGET;
+const targetTriple = explicitTarget || commandOutput("rustc", ["--print", "host-tuple"]);
 const isWindows = targetTriple.includes("windows");
-const executableName = isWindows ? "env-manager-broker.exe" : "env-manager-broker";
+const executableName = isWindows ? "kavranta-broker.exe" : "kavranta-broker";
 const cargoArguments = ["build", "--release", "--locked", "-p", "env-broker"];
 
-if (process.env.ENV_MANAGER_TARGET) {
+if (explicitTarget) {
   cargoArguments.push("--target", targetTriple);
 }
 
 run("cargo", cargoArguments);
 
-const source = process.env.ENV_MANAGER_TARGET
+const source = explicitTarget
   ? join(repositoryRoot, "target", targetTriple, "release", executableName)
   : join(repositoryRoot, "target", "release", executableName);
 const destinationName = isWindows
-  ? `env-manager-broker-${targetTriple}.exe`
-  : `env-manager-broker-${targetTriple}`;
+  ? `kavranta-broker-${targetTriple}.exe`
+  : `kavranta-broker-${targetTriple}`;
 const destination = join(repositoryRoot, "src-tauri", "binaries", destinationName);
 
 await mkdir(dirname(destination), { recursive: true });

@@ -16,9 +16,10 @@ use commands::{
     list_team_channels, move_variable, plan_migration, plan_team_channel_import, plan_team_import,
     protect_variables, publish_team_channel, push_to_provider, read_value, register_project,
     remap_team_import_file, remove_action_pack, remove_personal_provider_pack, remove_project,
-    remove_runtime_target, remove_team_channel, rename_env_file, rename_group, rename_project,
-    reveal_team_import_conflict, save_description, save_runtime_target, save_value, scan_project,
-    set_account_project_access, set_codex_access, set_last_selected_project, update_account,
+    remove_runtime_target, remove_team_channel, rename_env_file_label, rename_env_file_on_disk,
+    rename_group, rename_project, reveal_team_import_conflict, save_description,
+    save_runtime_target, save_value, scan_project, set_account_project_access, set_codex_access,
+    set_last_selected_project, update_account,
 };
 use runtime::{AppRuntime, CredentialRuntime};
 use tauri::Manager;
@@ -75,7 +76,8 @@ pub fn run() {
             register_project,
             remove_project,
             rename_project,
-            rename_env_file,
+            rename_env_file_label,
+            rename_env_file_on_disk,
             export_env_files,
             list_team_channels,
             connect_folder_team_channel,

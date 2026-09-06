@@ -1,3 +1,4 @@
+import "./ProjectSwitcherModal.css";
 import { Modal } from "../../components/Modal";
 import { useI18n } from "../../i18n";
 import type { ProjectSummary } from "../../lib/types";

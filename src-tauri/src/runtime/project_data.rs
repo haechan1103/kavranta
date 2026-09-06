@@ -43,7 +43,7 @@ impl AppRuntime {
         Ok(projection)
     }
 
-    pub fn rename_file(&self, project_id: &str, file: &str, name: &str) -> EnvResult<()> {
+    pub fn rename_file_label(&self, project_id: &str, file: &str, name: &str) -> EnvResult<()> {
         env_core::validate_display_name(name)?;
         let service = self.service(project_id)?;
         let path = service.validate_file_for_display_name(file)?;
@@ -56,6 +56,47 @@ impl AppRuntime {
             project.file_labels.insert(path, name.trim().to_owned());
             Ok(())
         })
+    }
+
+    pub fn rename_file_on_disk(
+        &self,
+        project_id: &str,
+        file: &str,
+        new_name: &str,
+    ) -> EnvResult<RenameEnvFileSummary> {
+        let service = self.service(project_id)?;
+        let summary = service.rename_env_file(RenameEnvFileRequest {
+            file: file.to_owned(),
+            new_name: new_name.to_owned(),
+        })?;
+        let registry_update = self.update_registry(|registry| {
+            let project = registry
+                .projects
+                .iter_mut()
+                .find(|project| project.id == project_id)
+                .ok_or_else(|| EnvError::unregistered_project(project_id))?;
+            move_file_label(project, &summary.old_file, &summary.new_file);
+            Ok(())
+        });
+        if let Err(registry_error) = registry_update {
+            let old_name = Path::new(&summary.old_file)
+                .file_name()
+                .and_then(|name| name.to_str())
+                .ok_or_else(|| EnvError::invalid("이전 실제 파일명을 복구할 수 없습니다."))?;
+            if service
+                .rename_env_file(RenameEnvFileRequest {
+                    file: summary.new_file.clone(),
+                    new_name: old_name.to_owned(),
+                })
+                .is_err()
+            {
+                return Err(EnvError::transaction(
+                    "실제 파일명은 변경됐지만 로컬 표시 이름 참조를 갱신하지 못했습니다.",
+                ));
+            }
+            return Err(registry_error);
+        }
+        Ok(summary)
     }
 
     pub fn agent_activity(&self, project_id: &str) -> EnvResult<Vec<AgentActivityEvent>> {
@@ -91,5 +132,37 @@ impl AppRuntime {
             registry.provider_push_receipts.truncate(500);
             Ok(())
         })
+    }
+}
+
+fn move_file_label(project: &mut ProjectRegistration, old_file: &str, new_file: &str) {
+    let label = project.file_labels.remove(old_file);
+    project.file_labels.remove(new_file);
+    if let Some(label) = label {
+        project.file_labels.insert(new_file.to_owned(), label);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn moves_a_local_display_label_to_the_renamed_path() {
+        let mut project = ProjectRegistration {
+            id: "project".to_owned(),
+            name: "Project".to_owned(),
+            display_path: "/fake/project".to_owned(),
+            root: PathBuf::from("/fake/project"),
+            file_labels: BTreeMap::from([("old".to_owned(), "Local".to_owned())]),
+        };
+
+        move_file_label(&mut project, "old", "new");
+
+        assert!(!project.file_labels.contains_key("old"));
+        assert_eq!(
+            project.file_labels.get("new").map(String::as_str),
+            Some("Local")
+        );
     }
 }

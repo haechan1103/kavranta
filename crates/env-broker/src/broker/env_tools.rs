@@ -63,7 +63,7 @@ impl Broker {
             args.trim_final_newline,
             &actor,
             &std::env::current_exe()
-                .map_err(|error| EnvError::io(Path::new("env-manager-broker"), error))?,
+                .map_err(|error| EnvError::io(Path::new("kavranta-broker"), error))?,
         )?;
         self.audit(
             service.project_id(),

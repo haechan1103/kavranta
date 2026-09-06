@@ -22,7 +22,8 @@ impl Default for Broker {
             provider_app_data_override: None,
             workspace_root_override: None,
             agent_host: Mutex::new(
-                std::env::var("ENV_MANAGER_AGENT_HOST")
+                std::env::var("KAVRANTA_AGENT_HOST")
+                    .or_else(|_| std::env::var("ENV_MANAGER_AGENT_HOST"))
                     .ok()
                     .as_deref()
                     .and_then(audit::normalize_agent_host),

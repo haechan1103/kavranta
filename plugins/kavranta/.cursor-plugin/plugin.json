@@ -1,0 +1,21 @@
+{
+  "name": "kavranta",
+  "version": "2.1.1",
+  "description": "Manage registered project env files through a redacted local MCP broker, portable Skill, and fail-closed Cursor access guard.",
+  "author": {
+    "name": "haechan1103"
+  },
+  "homepage": "https://github.com/haechan1103/kavranta",
+  "repository": "https://github.com/haechan1103/kavranta",
+  "license": "MIT",
+  "keywords": [
+    "kavranta",
+    "environment-variables",
+    "env",
+    "cursor",
+    "agent-skills"
+  ],
+  "skills": "./skills/",
+  "hooks": "./cursor-hooks/hooks.json",
+  "mcpServers": "./mcp.json"
+}

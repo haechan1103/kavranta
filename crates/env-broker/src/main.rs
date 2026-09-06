@@ -21,7 +21,7 @@ fn main() {
             return;
         }
         Some("--version" | "-V") => {
-            println!("env-manager-broker {}", env!("CARGO_PKG_VERSION"));
+            println!("kavranta-broker {}", env!("CARGO_PKG_VERSION"));
             return;
         }
         Some("value") => {
@@ -179,7 +179,7 @@ fn handle_line(broker: &Broker, line: &str) -> Option<Value> {
                     .and_then(Value::as_str)
                     .unwrap_or("2025-06-18"),
                 "capabilities": { "tools": { "listChanged": false } },
-                "serverInfo": { "name": "env-manager", "version": env!("CARGO_PKG_VERSION") }
+                "serverInfo": { "name": "kavranta", "version": env!("CARGO_PKG_VERSION") }
             })
         }
         "ping" => json!({}),

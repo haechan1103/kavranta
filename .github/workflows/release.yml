@@ -26,7 +26,7 @@ jobs:
           - x86_64-apple-darwin
     runs-on: macos-14
     env:
-      ENV_MANAGER_TARGET: ${{ matrix.target }}
+      KAVRANTA_TARGET: ${{ matrix.target }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -128,7 +128,7 @@ jobs:
           releaseBody: |
             Kavranta v__VERSION__ for macOS and Windows.
 
-            - Renamed Env Manager to Kavranta while preserving existing app data, project manifests, Broker commands, and agent plugin selectors.
+            - Renamed Env Manager to Kavranta while preserving existing app data and project manifests, and safely migrating legacy agent connections to the Kavranta plugin, Skill, MCP, and Broker identities.
             - Windows 10/11 (x64 beta, unsigned): download the `x64-setup.exe` installer. Microsoft Defender SmartScreen may warn; use only the installer attached to this official release.
             - Apple Silicon: download the aarch64 DMG
             - Intel Mac: download the x86_64 DMG
@@ -148,7 +148,7 @@ jobs:
 
             Kavranta v__VERSION__ Windows 및 macOS 설치 파일입니다.
 
-            - Env Manager에서 Kavranta로 이름을 바꾸면서 기존 앱 데이터, 프로젝트 manifest, Broker 명령과 AI 플러그인 선택자를 그대로 유지합니다.
+            - Env Manager에서 Kavranta로 이름을 바꾸면서 기존 앱 데이터와 프로젝트 manifest는 유지하고, 기존 AI 연결은 Kavranta 플러그인·Skill·MCP·Broker ID로 안전하게 전환합니다.
             - Windows 10/11(x64 베타, 미서명): `x64-setup.exe` 설치 파일. Microsoft Defender SmartScreen 경고가 나타날 수 있으므로 이 공식 릴리스에 첨부된 파일만 사용하세요.
             - Apple Silicon: aarch64 DMG
             - Intel Mac: x86_64 DMG
@@ -226,7 +226,7 @@ jobs:
     environment: release
     runs-on: windows-latest
     env:
-      ENV_MANAGER_TARGET: x86_64-pc-windows-msvc
+      KAVRANTA_TARGET: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -257,7 +257,7 @@ jobs:
           releaseBody: |
             Kavranta v__VERSION__ for macOS and Windows.
 
-            - Renamed Env Manager to Kavranta while preserving existing app data, project manifests, Broker commands, and agent plugin selectors.
+            - Renamed Env Manager to Kavranta while preserving existing app data and project manifests, and safely migrating legacy agent connections to the Kavranta plugin, Skill, MCP, and Broker identities.
             - Windows 10/11 (x64 beta, unsigned): download the `x64-setup.exe` installer. Microsoft Defender SmartScreen may warn; use only the installer attached to this official release.
             - Apple Silicon: download the aarch64 DMG
             - Intel Mac: download the x86_64 DMG
@@ -277,7 +277,7 @@ jobs:
 
             Kavranta v__VERSION__ Windows 및 macOS 설치 파일입니다.
 
-            - Env Manager에서 Kavranta로 이름을 바꾸면서 기존 앱 데이터, 프로젝트 manifest, Broker 명령과 AI 플러그인 선택자를 그대로 유지합니다.
+            - Env Manager에서 Kavranta로 이름을 바꾸면서 기존 앱 데이터와 프로젝트 manifest는 유지하고, 기존 AI 연결은 Kavranta 플러그인·Skill·MCP·Broker ID로 안전하게 전환합니다.
             - Windows 10/11(x64 베타, 미서명): `x64-setup.exe` 설치 파일. Microsoft Defender SmartScreen 경고가 나타날 수 있으므로 이 공식 릴리스에 첨부된 파일만 사용하세요.
             - Apple Silicon: aarch64 DMG
             - Intel Mac: x86_64 DMG
