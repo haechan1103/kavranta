@@ -6,8 +6,8 @@ import { chromium } from "@playwright/test";
 
 const execFileAsync = promisify(execFile);
 const root = process.cwd();
-const outputDir = path.join(root, "assets", "jocohunt");
 const workDir = path.join(root, "test-results", "jocohunt-assets");
+const outputDir = path.join(workDir, "output");
 const logoPath = path.join(root, "assets", "brand", "kavranta-logo.svg");
 const editorPath = path.join(root, "assets", "screenshots", "kavranta-editor.png");
 const codexWorkflowPath = path.join(root, "assets", "screenshots", "kavranta-codex-workflow-ko.png");
@@ -17,9 +17,8 @@ const codexDetailImages = [
   ["kavranta-codex-action-pack", "kavranta-codex-action-pack-ko.png"],
 ];
 
-await mkdir(outputDir, { recursive: true });
 await rm(workDir, { recursive: true, force: true });
-await mkdir(workDir, { recursive: true });
+await mkdir(outputDir, { recursive: true });
 
 const logo = (await readFile(logoPath)).toString("base64");
 const editor = (await readFile(editorPath)).toString("base64");
