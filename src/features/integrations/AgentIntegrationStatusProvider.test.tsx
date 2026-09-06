@@ -24,6 +24,7 @@ const healthy: AgentIntegrationStatus = {
   currentVersion: "1.7.0",
   updateAvailable: false,
   needsRepair: false,
+  activationUnverified: false,
   protection: "broker",
   detail: "Connected",
   canInstall: true,

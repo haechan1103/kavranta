@@ -1,5 +1,5 @@
 import { demoProjection } from "../demo";
-import type { AgentActivityEvent, CodexAccess, GitignoreUpdateSummary, MigrationPlanProjection, MutationSummary, ProjectProjection } from "../types";
+import type { AgentActivityEvent, CodexAccess, GitignoreUpdateSummary, MutationSummary, ProjectProjection } from "../types";
 import { call, isTauriRuntime } from "./shared";
 
 export async function scanProject(projectId: string): Promise<ProjectProjection> {
@@ -167,36 +167,4 @@ export async function copyValue(projectId: string, file: string, key: string): P
 export async function copyKey(projectId: string, key: string): Promise<void> {
   if (!isTauriRuntime) return;
   return call("copy_key", { request: { projectId, key } });
-}
-
-export async function planMigration(
-  projectId: string,
-  file: string,
-): Promise<MigrationPlanProjection> {
-  if (!isTauriRuntime) {
-    return {
-      planId: "demo-migration-plan",
-      expiresInSeconds: 300,
-      preview: {
-        file,
-        summary:
-          "Convert 2 group markers to the `# @group` format without changing values or variable order.",
-        suggestions: [
-          { currentMarker: "# === GPT ===", groupName: "GPT" },
-          { currentMarker: "# [Database]", groupName: "Database" },
-        ],
-      },
-    };
-  }
-  return call("plan_migration", { request: { projectId, file } });
-}
-
-export async function applyMigration(
-  projectId: string,
-  planId: string,
-): Promise<MutationSummary> {
-  if (!isTauriRuntime) return { affectedFiles: [], keys: [] };
-  return call("apply_migration", {
-    request: { projectId, planId, confirmed: true },
-  });
 }

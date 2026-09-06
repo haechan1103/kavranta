@@ -1,7 +1,7 @@
 import { open } from "@tauri-apps/plugin-dialog";
 
 import { demoProjects } from "../demo";
-import type { ProjectSummary } from "../types";
+import type { ProjectSummary, RenameEnvFileSummary } from "../types";
 import { call, isTauriRuntime } from "./shared";
 
 export async function chooseAndRegisterProject(dialogTitle: string): Promise<ProjectSummary | null> {
@@ -31,7 +31,20 @@ export async function renameProject(projectId: string, name: string): Promise<Pr
   return call("rename_project", { request: { projectId, name } });
 }
 
-export async function renameEnvFile(projectId: string, file: string, name: string): Promise<void> {
+export async function renameEnvFileLabel(projectId: string, file: string, name: string): Promise<void> {
   if (!isTauriRuntime) return;
-  return call("rename_env_file", { request: { projectId, file, name } });
+  return call("rename_env_file_label", { request: { projectId, file, name } });
+}
+
+export async function renameEnvFileOnDisk(
+  projectId: string,
+  file: string,
+  newName: string,
+): Promise<RenameEnvFileSummary> {
+  if (!isTauriRuntime) {
+    const segments = file.split("/");
+    segments[segments.length - 1] = newName;
+    return { oldFile: file, newFile: segments.join("/") };
+  }
+  return call("rename_env_file_on_disk", { request: { projectId, file, newName } });
 }

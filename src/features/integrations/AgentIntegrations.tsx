@@ -1,3 +1,4 @@
+import "./AgentIntegrations.css";
 import { useCallback, useEffect, useState } from "react";
 
 import { localizeError, useI18n } from "../../i18n";
@@ -6,6 +7,7 @@ import type {
   AgentIntegrationId,
   AgentIntegrationStatus,
 } from "../../lib/types";
+import { AgentBrandMark } from "./AgentBrandMark";
 import { useAgentIntegrationStatus } from "./AgentIntegrationStatusProvider";
 
 interface Props {
@@ -13,10 +15,11 @@ interface Props {
   onNotice: (message: string) => void;
 }
 
-const marks: Record<AgentIntegrationId, string> = {
-  codex: "C",
-  "claude-code": "A",
-  "github-copilot": "G",
+const providers: Record<AgentIntegrationId, string> = {
+  codex: "OpenAI",
+  "claude-code": "Anthropic",
+  "github-copilot": "GitHub",
+  cursor: "Anysphere",
 };
 
 export function AgentIntegrations({ onError, onNotice }: Props) {
@@ -41,7 +44,12 @@ export function AgentIntegrations({ onError, onNotice }: Props) {
     try {
       const result = await api.installAgentIntegration(item.id);
       replace(result);
-      onNotice(t("integration.installSuccess", { name: item.name, version: result.currentVersion }));
+      onNotice(
+        t(
+          item.id === "cursor" ? "integration.installSuccessCursor" : "integration.installSuccess",
+          { name: item.name, version: result.currentVersion },
+        ),
+      );
     } catch (error) {
       onError(localizeError(error, locale, "error.integrationInstall", { name: item.name }));
     } finally {
@@ -64,23 +72,37 @@ export function AgentIntegrations({ onError, onNotice }: Props) {
       <div className="integration-grid" aria-live="polite">
         {items.map((item) => {
           const busy = installing === item.id;
-          const actionNeeded = !item.installed || item.updateAvailable || item.needsRepair;
-          const actionLabel = item.updateAvailable
+          const actionNeeded = !item.installed || item.updateAvailable || item.needsRepair || item.migrationPending;
+          const actionLabel = item.updateAvailable || item.migrationPending
             ? t("integration.update")
             : item.needsRepair
               ? t("integration.repair")
               : item.installed
                 ? t("integration.installed")
                 : t("integration.install");
-          const connected = item.installed && !item.needsRepair;
+          const ready = item.installed && !item.needsRepair;
+          const connected = ready && !item.activationUnverified;
+          const configured = ready && item.activationUnverified;
           return (
-            <article className={`integration-card ${connected ? "connected" : ""}`} key={item.id}>
+            <article
+              className={`integration-card ${ready ? "connected" : ""} ${actionNeeded ? "action-needed" : ""}`}
+              key={item.id}
+            >
               <header>
-                <span className={`integration-mark ${item.id}`}>{marks[item.id]}</span>
-                <div>
+                <AgentBrandMark actor={item.id} size="large" />
+                <div className="integration-card-title">
+                  <span className="integration-provider">{providers[item.id]}</span>
                   <h3>{item.name}</h3>
-                  <span className={`integration-state ${connected ? "installed" : item.detected ? "detected" : "missing"}`}>
-                    {item.needsRepair ? t("integration.repairNeeded") : connected ? t("integration.connected") : item.detected ? t("integration.detected") : t("integration.missing")}
+                  <span className={`integration-state ${ready ? "installed" : item.detected ? "detected" : "missing"}`}>
+                    {item.needsRepair
+                      ? t("integration.repairNeeded")
+                      : configured
+                        ? t("integration.configured")
+                        : connected
+                          ? t("integration.connected")
+                          : item.detected
+                            ? t("integration.detected")
+                            : t("integration.missing")}
                   </span>
                 </div>
               </header>
@@ -104,7 +126,7 @@ export function AgentIntegrations({ onError, onNotice }: Props) {
               </dl>
 
               <button
-                className={connected ? "quiet-button integration-action" : "primary-button integration-action"}
+                className={ready ? "quiet-button integration-action" : "primary-button integration-action"}
                 disabled={busy || !actionNeeded || !item.canInstall}
                 onClick={() => void install(item)}
               >
@@ -140,8 +162,10 @@ function integrationDetail(
   item: AgentIntegrationStatus,
   t: ReturnType<typeof useI18n>["t"],
 ) {
+  if (item.migrationPending) return t("integration.detailMigration");
   if (item.needsRepair) return t("integration.detailRepair");
   if (item.installed && item.id === "codex") return t("integration.detailCodex");
+  if (item.installed && item.id === "cursor") return t("integration.detailCursor");
   if (item.installed) return t("integration.detailGuarded");
   if (item.id === "github-copilot" && item.detected && !item.canInstall) {
     return t("integration.detailCopilotCli");

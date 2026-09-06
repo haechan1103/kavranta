@@ -1,0 +1,90 @@
+.modal-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 30px;
+  background: rgba(10, 17, 14, 0.52);
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  width: min(500px, 100%);
+  max-height: min(720px, calc(100vh - 60px));
+  overflow: auto;
+  color: var(--ink);
+  background: white;
+  border: 1px solid #d9dfda;
+  border-radius: 15px;
+  box-shadow: 0 30px 80px rgba(9, 18, 14, 0.24);
+}
+
+.modal > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 21px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.modal h2 {
+  margin: 0;
+  font-size: calc(16px * var(--font-scale));
+}
+
+.modal header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(10px * var(--font-scale));
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 19px 21px 21px;
+}
+
+.modal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #525d58;
+  font-size: calc(9px * var(--font-scale));
+  font-weight: 700;
+}
+
+.modal-form input,
+.modal-form textarea,
+.modal-form select {
+  min-height: 37px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: #fafbfa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 500;
+}
+
+.modal-form textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.label-hint {
+  color: var(--faint);
+  font-weight: 500;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 21px 21px;
+}
+
+.modal-form .modal-actions {
+  padding: 5px 0 0;
+}

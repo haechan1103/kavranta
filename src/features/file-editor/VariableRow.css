@@ -1,0 +1,347 @@
+.variable-row {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.variable-row:last-child {
+  border-bottom: 0;
+}
+
+.variable-row.has-error {
+  box-shadow: inset 3px 0 var(--red);
+}
+
+.variable-main {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.95fr) minmax(230px, 1.25fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 76px;
+  padding: 11px 14px 11px 18px;
+}
+
+.variable-meta {
+  min-width: 0;
+}
+
+.key-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.key-line strong {
+  overflow: hidden;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: calc(10px * var(--font-scale));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.key-copy-button {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  place-items: center;
+  padding: 0;
+  color: #77817c;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: calc(10px * var(--font-scale));
+}
+
+.key-copy-button:hover {
+  color: var(--green);
+  background: var(--green-pale);
+}
+
+.key-copy-button.copied {
+  color: var(--green);
+  background: var(--green-pale);
+  font-size: calc(9px * var(--font-scale));
+  font-weight: 800;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: calc(8px * var(--font-scale));
+  font-weight: 700;
+}
+
+.badge.linked {
+  color: #16674f;
+  background: var(--green-pale);
+}
+
+.badge.available {
+  color: #755618;
+  background: var(--amber-pale);
+}
+
+.badge.error {
+  color: var(--red);
+  background: var(--red-pale);
+}
+
+.description-button {
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  margin-top: 6px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: calc(9px * var(--font-scale));
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.description-button.muted {
+  color: #a1a8a4;
+  font-style: italic;
+}
+
+.value-editor {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  background: #f8f9f7;
+  border: 1px solid #dfe3df;
+  border-radius: 8px;
+}
+
+.value-editor:focus-within {
+  background: white;
+  border-color: #75c5aa;
+  box-shadow: 0 0 0 3px rgba(56, 212, 159, 0.09);
+}
+
+.value-editor input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  color: #26312d;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: calc(9px * var(--font-scale));
+}
+
+.value-editor .revealed-value-field {
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  max-height: 240px;
+  padding: 9px 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  resize: none;
+  color: #26312d;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: calc(9px * var(--font-scale));
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.value-editor:has(.revealed-value-field) {
+  background: white;
+  border-color: #b9d9cd;
+}
+
+.value-editor:has(.revealed-value-field) .icon-button {
+  margin-top: 2px;
+}
+
+.value-editor input::placeholder {
+  color: #8e9792;
+  opacity: 1;
+}
+
+.variable-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.access-select {
+  height: 29px;
+  padding: 0 24px 0 9px;
+  border-radius: 7px;
+  font-size: calc(9px * var(--font-scale));
+  font-weight: 700;
+}
+
+.access-select.protected {
+  color: #6c5745;
+  background: #f5f0e9;
+  border: 1px solid #e5d8c8;
+}
+
+.access-select.unclassified {
+  color: var(--violet);
+  background: var(--violet-pale);
+  border: 1px solid #dcd6fa;
+}
+
+.access-select.read-write {
+  color: var(--green);
+  background: var(--green-pale);
+  border: 1px solid #c9e9dc;
+}
+
+.relationship-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  margin: 0 14px 12px 18px;
+  padding: 11px 12px;
+  border: 1px solid;
+  border-radius: 9px;
+}
+
+.linked-relationship {
+  color: #315f51;
+  background: #f4faf7;
+  border-color: #d8eee5;
+}
+
+.available-relationship {
+  color: #71551f;
+  background: #fffbf1;
+  border-color: #f0e3bf;
+}
+
+.relationship-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.relationship-copy > strong {
+  color: var(--ink);
+  font-size: calc(9px * var(--font-scale));
+}
+
+.relationship-copy > span {
+  color: var(--muted);
+  font-size: calc(8px * var(--font-scale));
+  line-height: 1.5;
+}
+
+.relationship-copy > .unlinked-peer-note {
+  margin-top: 4px;
+  color: #806322;
+  font-weight: 700;
+}
+
+.relationship-paths {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.relationship-paths code {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  color: #50665e;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(94, 116, 107, 0.14);
+  border-radius: 5px;
+  font-size: calc(8px * var(--font-scale));
+}
+
+.relationship-paths code.current {
+  color: var(--green);
+  border-color: rgba(22, 118, 90, 0.24);
+}
+
+.relationship-paths small {
+  padding: 1px 4px;
+  color: white;
+  background: var(--green);
+  border-radius: 999px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: calc(7px * var(--font-scale));
+  font-weight: 700;
+}
+
+.relationship-action {
+  align-self: center;
+  white-space: nowrap;
+}
+
+.description-editor {
+  display: flex;
+  gap: 10px;
+  padding: 0 14px 13px 18px;
+}
+
+.description-editor textarea {
+  min-height: 58px;
+  flex: 1;
+  padding: 9px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: calc(10px * var(--font-scale));
+}
+
+.description-editor > div {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+@media (max-width: 1050px) {
+
+  .variable-main {
+    grid-template-columns: 1fr 1.2fr;
+  }
+
+  .variable-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+
+  .variable-main {
+    grid-template-columns: 1fr;
+  }
+
+  .value-editor,
+  .variable-actions {
+    grid-column: 1;
+  }
+
+  .relationship-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .relationship-action {
+    grid-column: 1;
+    justify-self: start;
+  }
+}

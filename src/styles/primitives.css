@@ -1,0 +1,236 @@
+.page-stack {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 38px clamp(25px, 4vw, 55px) 70px;
+}
+
+.section-heading,
+.file-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.file-heading p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--font-scale));
+}
+
+.primary-button,
+.secondary-button,
+.quiet-button,
+.danger-quiet-button {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 700;
+}
+
+.primary-button {
+  color: white;
+  background: var(--green);
+  border: 1px solid var(--green);
+  box-shadow: 0 5px 12px rgba(22, 118, 90, 0.14);
+}
+
+.primary-button:hover {
+  background: #0e674d;
+  border-color: #0e674d;
+  box-shadow: 0 7px 16px rgba(22, 118, 90, 0.2);
+}
+
+.primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.primary-button.large {
+  min-height: 42px;
+  padding: 0 20px;
+  font-size: calc(12px * var(--font-scale));
+}
+
+.secondary-button {
+  color: #165d48;
+  background: var(--green-pale);
+  border: 1px solid #bce4d4;
+}
+
+.secondary-button:hover {
+  color: #104f3d;
+  background: #dff3ea;
+  border-color: #91d2b9;
+}
+
+.quiet-button,
+.danger-quiet-button {
+  color: #4e5954;
+  background: white;
+  border: 1px solid var(--line);
+}
+
+.danger-quiet-button {
+  color: #a03c38;
+}
+
+.quiet-button:hover {
+  color: var(--ink);
+  background: #f6f8f6;
+  border-color: #bdc8c1;
+}
+
+.danger-quiet-button:hover {
+  color: #8f302c;
+  background: var(--red-pale);
+  border-color: #edc4c1;
+}
+
+.compact {
+  min-height: 29px;
+  padding: 0 10px;
+  font-size: calc(10px * var(--font-scale));
+}
+
+@media (max-width: 1050px) {
+
+  .header-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 760px) {
+
+  .page-stack {
+    padding-inline: 20px;
+  }
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #78817c;
+  font-size: calc(9px * var(--font-scale));
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.section-heading h2,
+.file-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: calc(22px * var(--font-scale));
+  letter-spacing: -0.035em;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #dce4df;
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--green-bright);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(56, 212, 159, 0.1);
+}
+.field-help, .field-error { grid-column: 1 / -1; margin: 0; font-size: calc(8px * var(--font-scale)); }
+.field-help { color: var(--muted); }
+.field-error { color: var(--red); }.content-scroll {
+  flex: 1;
+  overflow: auto;
+}
+
+.quiet-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 17px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.panel-title h3 {
+  margin: 0;
+  font-size: calc(12px * var(--font-scale));
+}
+
+.panel-title > span {
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  color: var(--muted);
+  background: #f0f2ef;
+  border-radius: 999px;
+  font-size: calc(9px * var(--font-scale));
+}
+
+.empty-inline {
+  display: flex;
+  min-height: 185px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale));
+}
+
+.empty-inline span {
+  color: var(--green);
+}
+
+.badge.exposure {
+  color: #a33b32;
+  background: #fff0ed;
+  border: 1px solid #f3cbc5;
+}
+
+.icon-button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  color: #69746f;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  color: var(--ink);
+  background: #eef1ee;
+}
+
+.activity-heading > div > p:last-child {
+  max-width: 680px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale));
+}

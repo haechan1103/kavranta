@@ -1,3 +1,4 @@
+import "./App.css";
 import { useEffect, useState } from "react";
 
 import { RenameModal } from "../components/RenameModal";
@@ -11,8 +12,8 @@ import { AgentActivity } from "../features/activity/AgentActivity";
 import { AccountVault } from "../features/accounts/AccountVault";
 import { AgentIntegrations } from "../features/integrations/AgentIntegrations";
 import { Overview } from "../features/overview/Overview";
+import { ProjectActions } from "../features/projects/ProjectActions";
 import { ProjectSidebar } from "../features/projects/ProjectSidebar";
-import { ClassificationReview } from "../features/review/ClassificationReview";
 import { useEnvManager } from "../hooks/useEnvManager";
 import { useI18n } from "../i18n";
 
@@ -21,8 +22,7 @@ type View =
   | { kind: "file"; path: string }
   | { kind: "integrations" }
   | { kind: "activity" }
-  | { kind: "accounts" }
-  | { kind: "review" };
+  | { kind: "accounts" };
 
 export function App() {
   const { t } = useI18n();
@@ -70,24 +70,41 @@ export function App() {
         onSelectProject={manager.selectProject}
         onSelectView={setView}
         onRegister={() => void manager.register()}
-        onRenameFile={(projectId, path, name) => void manager.renameEnvFile(projectId, path, name)}
+        onRenameFileLabel={(projectId, path, name) => void manager.renameEnvFileLabel(projectId, path, name)}
+        onRenameFileOnDisk={(projectId, path, newName) => {
+          void manager.renameEnvFileOnDisk(projectId, path, newName).then((summary) => {
+            if (!summary) return;
+            setView((current) => current.kind === "file" && current.path === summary.oldFile
+              ? { kind: "file", path: summary.newFile }
+              : current);
+          });
+        }}
+        projectActions={manager.selectedProject && manager.projection ? (
+          <ProjectActions
+            onRename={() => setRenamingProject(true)}
+            onExport={() => setExporting(true)}
+            onImport={() => setImporting(true)}
+            onShare={() => setSharing(true)}
+            onPush={() => setPushing(true)}
+            onRunAction={() => setRunningAction(true)}
+            onRefresh={() => void refresh()}
+            onRemove={() => {
+              if (window.confirm(t("app.removeConfirm"))) {
+                void manager.remove(manager.selectedProject!.id);
+              }
+            }}
+          />
+        ) : undefined}
       />
 
       <main className="main-panel">
         {view.kind === "integrations" ? (
-          <>
-            <header className="project-header integration-header">
-              <div>
-                <h1>{t("app.integrationsTitle")}</h1>
-              </div>
-            </header>
-            <div className="content-scroll">
-              <AgentIntegrations
-                onError={manager.showError}
-                onNotice={manager.showNotice}
-              />
-            </div>
-          </>
+          <div className="content-scroll">
+            <AgentIntegrations
+              onError={manager.showError}
+              onNotice={manager.showNotice}
+            />
+          </div>
         ) : manager.loading ? (
           <div className="center-state" aria-live="polite">
             <span className="spinner" />
@@ -170,47 +187,12 @@ export function App() {
           </section>
         ) : (
           <>
-            <header className="project-header">
-              <div>
-                <p className="eyebrow">{manager.selectedProject.displayPath}</p>
-                <h1>{manager.selectedProject.name}</h1>
-              </div>
-              <div className="header-actions">
-                <button className="quiet-button" onClick={() => {
-                  setRenamingProject(true);
-                }}>{t("common.rename")}</button>
-                <button className="quiet-button" onClick={() => setExporting(true)}>{t("export.action")}</button>
-                <button className="quiet-button" onClick={() => setImporting(true)}>{t("import.headerAction")}</button>
-                <button className="quiet-button" onClick={() => setSharing(true)}>{t("teamChannel.headerAction")}</button>
-                <button className="quiet-button" onClick={() => setPushing(true)}>{t("push.headerAction")}</button>
-                <button className="quiet-button" onClick={() => setRunningAction(true)}>{t("action.headerAction")}</button>
-                <button className="quiet-button" onClick={() => void refresh()}>
-                  {t("common.refresh")}
-                </button>
-                <button
-                  className="danger-quiet-button"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        t("app.removeConfirm"),
-                      )
-                    ) {
-                      void manager.remove(manager.selectedProject!.id);
-                    }
-                  }}
-                >
-                  {t("app.removeRegistration")}
-                </button>
-              </div>
-            </header>
-
             <div className="content-scroll">
               {view.kind === "overview" && (
                 <Overview
                   projection={manager.projection}
                   onOpenFile={(path) => setView({ kind: "file", path })}
                   onApplyGitignoreGuard={manager.applyGitignoreGuard}
-                  onOpenReview={() => setView({ kind: "review" })}
                 />
               )}
               {view.kind === "file" && (
@@ -219,17 +201,6 @@ export function App() {
                   projection={manager.projection}
                   filePath={view.path}
                   onRefresh={refresh}
-                  onError={manager.showError}
-                  onNotice={manager.showNotice}
-                  onRenameFile={(path, name) => void manager.renameEnvFile(manager.selectedProject!.id, path, name)}
-                />
-              )}
-              {view.kind === "review" && (
-                <ClassificationReview
-                  projectId={manager.selectedProject.id}
-                  projection={manager.projection}
-                  onRefresh={refresh}
-                  onOpenFile={(path) => setView({ kind: "file", path })}
                   onError={manager.showError}
                   onNotice={manager.showNotice}
                 />

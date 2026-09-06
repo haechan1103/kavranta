@@ -23,5 +23,5 @@ env-test-support = { path = "../env-test-support" }
 tempfile.workspace = true
 
 [[bin]]
-name = "env-manager-broker"
+name = "kavranta-broker"
 path = "src/main.rs"

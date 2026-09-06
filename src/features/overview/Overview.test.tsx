@@ -13,13 +13,12 @@ describe("Overview", () => {
         projection={demoProjection}
         onOpenFile={vi.fn()}
         onApplyGitignoreGuard={vi.fn()}
-        onOpenReview={vi.fn()}
       />,
     );
 
     expect(screen.getByText("Action inbox")).toBeInTheDocument();
     expect(screen.getByText("NEXT_PUBLIC_APP_URL")).toBeInTheDocument();
-    expect(screen.getByText("AI access review")).toBeInTheDocument();
+    expect(screen.queryByText("AI access review")).not.toBeInTheDocument();
     expect(screen.getByText("All managed env files are ignored")).toBeInTheDocument();
     expect(screen.getByText("3 values blocked")).toBeInTheDocument();
     expect(screen.queryByText("fake_preview_value")).not.toBeInTheDocument();
@@ -46,7 +45,6 @@ describe("Overview", () => {
         }}
         onOpenFile={vi.fn()}
         onApplyGitignoreGuard={apply}
-        onOpenReview={vi.fn()}
       />,
     );
 
@@ -57,13 +55,12 @@ describe("Overview", () => {
     expect(apply).toHaveBeenCalledOnce();
   });
 
-  it("does not count ordinary unclassified variables as inbox work", () => {
+  it("does not surface AI access review as standalone inbox work", () => {
     render(
       <Overview
         projection={{ ...demoProjection, accessReviewCount: 0 }}
         onOpenFile={vi.fn()}
         onApplyGitignoreGuard={vi.fn()}
-        onOpenReview={vi.fn()}
       />,
     );
 
@@ -74,7 +71,7 @@ describe("Overview", () => {
     window.localStorage.setItem("env-manager.locale", "ko");
     render(
       <I18nProvider>
-        <Overview projection={demoProjection} onOpenFile={vi.fn()} onApplyGitignoreGuard={vi.fn()} onOpenReview={vi.fn()} />
+        <Overview projection={demoProjection} onOpenFile={vi.fn()} onApplyGitignoreGuard={vi.fn()} />
       </I18nProvider>,
     );
 

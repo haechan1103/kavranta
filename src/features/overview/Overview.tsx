@@ -1,3 +1,4 @@
+import "./Overview.css";
 import { useState } from "react";
 
 import type { GitSafetyProjection, ProjectProjection } from "../../lib/types";
@@ -7,10 +8,9 @@ interface Props {
   projection: ProjectProjection;
   onOpenFile: (path: string) => void;
   onApplyGitignoreGuard: () => Promise<void>;
-  onOpenReview: () => void;
 }
 
-export function Overview({ projection, onOpenFile, onApplyGitignoreGuard, onOpenReview }: Props) {
+export function Overview({ projection, onOpenFile, onApplyGitignoreGuard }: Props) {
   const { t } = useI18n();
   const variables = projection.files.flatMap((file) =>
     file.groups.flatMap((group) => group.variables.map((variable) => ({ ...variable, file: file.path }))),
@@ -23,7 +23,7 @@ export function Overview({ projection, onOpenFile, onApplyGitignoreGuard, onOpen
   const blockedPolicyCount = accessPolicies.filter((access) => access !== "read-write").length;
   const allowedPolicyCount = accessPolicies.filter((access) => access === "read-write").length;
   const gitAttentionCount = projection.gitSafety.state === "needs-attention" ? 1 : 0;
-  const actionCount = empty.length + projection.accessReviewCount + projection.issueCount + gitAttentionCount;
+  const actionCount = empty.length + projection.issueCount + gitAttentionCount;
 
   return (
     <section className="page-stack">
@@ -64,12 +64,6 @@ export function Overview({ projection, onOpenFile, onApplyGitignoreGuard, onOpen
                   <span>→</span>
                 </button>
               ))}
-              {projection.accessReviewCount > 0 && (
-                <button onClick={onOpenReview}>
-                  <span className="overview-row-copy"><strong>{t("overview.accessReview")}</strong><small>{t("overview.variablesToReview", { count: projection.accessReviewCount })}</small></span>
-                  <span>→</span>
-                </button>
-              )}
               {projection.issueCount > 0 && (
                 <div className="issue-row">
                   <span className="overview-row-copy"><strong>{t("overview.parseWarnings")}</strong><small>{t("overview.warningsPreserved", { count: projection.issueCount })}</small></span>

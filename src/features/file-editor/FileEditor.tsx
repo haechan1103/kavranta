@@ -1,3 +1,4 @@
+import "./FileEditor.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Modal } from "../../components/Modal";
@@ -7,7 +8,6 @@ import * as api from "../../lib/api";
 import type {
   FileProjection,
   GroupProjection,
-  MigrationPlanProjection,
   OccurrenceProjection,
   ProjectProjection,
 } from "../../lib/types";
@@ -20,7 +20,6 @@ interface Props {
   onRefresh: () => Promise<void>;
   onError: (message: string) => void;
   onNotice: (message: string) => void;
-  onRenameFile: (path: string, name: string) => void;
 }
 
 export function FileEditor({
@@ -30,15 +29,12 @@ export function FileEditor({
   onRefresh,
   onError,
   onNotice,
-  onRenameFile,
 }: Props) {
   const { locale, t } = useI18n();
   const file = projection.files.find((item) => item.path === filePath);
   const [adding, setAdding] = useState(false);
   const [addingGroup, setAddingGroup] = useState(false);
   const [linking, setLinking] = useState<OccurrenceProjection | null>(null);
-  const [migration, setMigration] = useState<MigrationPlanProjection | null>(null);
-  const [renamingFile, setRenamingFile] = useState(false);
   const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
   const [showEmptyOnly, setShowEmptyOnly] = useState(false);
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
@@ -143,28 +139,6 @@ export function FileEditor({
           <p>{t("file.summary", { variables: variableCount, groups: file.groups.length })}</p>
         </div>
         <div className="header-actions">
-          <button
-            className="quiet-button"
-            aria-label={t("file.renameFile")}
-            onClick={() => setRenamingFile(true)}
-          >
-            {t("common.rename")}
-          </button>
-          <button
-            className="quiet-button"
-            onClick={() => {
-              void api
-                .planMigration(projectId, file.path)
-                .then(setMigration)
-                .catch((cause: unknown) =>
-                  onError(
-                    localizeError(cause, locale, "error.migration"),
-                  ),
-                );
-            }}
-          >
-            {t("file.organizeComments")}
-          </button>
           <button className="quiet-button" onClick={() => setAddingGroup(true)}>{t("file.newGroup")}</button>
           <button className="primary-button" onClick={() => setAdding(true)}>{t("file.newVariable")}</button>
         </div>
@@ -307,26 +281,6 @@ export function FileEditor({
         />
       )}
 
-      {migration && (
-        <MigrationModal
-          plan={migration}
-          onClose={() => setMigration(null)}
-          onApply={() => {
-            void mutate(
-              () => api.applyMigration(projectId, migration.planId),
-              t("file.migrationApplied", { file: migration.preview.file }),
-            ).then(() => setMigration(null));
-          }}
-        />
-      )}
-      {renamingFile && (
-        <RenameModal
-          title={t("sidebar.fileNamePrompt")}
-          currentName={file.displayName}
-          onClose={() => setRenamingFile(false)}
-          onRename={(name) => onRenameFile(file.path, name)}
-        />
-      )}
       {renamingGroup && (
         <RenameModal
           title={t("file.renameGroupPrompt")}
@@ -465,46 +419,6 @@ function GroupJumpNavigation({
         )}
       </button>
     </nav>
-  );
-}
-
-function MigrationModal({
-  plan,
-  onClose,
-  onApply,
-}: {
-  plan: MigrationPlanProjection;
-  onClose: () => void;
-  onApply: () => void;
-}) {
-  const { t } = useI18n();
-  return (
-    <Modal
-      title={t("migration.title")}
-      description={t("migration.validFor", { file: plan.preview.file, minutes: plan.expiresInSeconds / 60 })}
-      onClose={onClose}
-    >
-      <div className="migration-summary">
-        <p>{t("migration.summary", { count: plan.preview.suggestions.length })}</p>
-        <div className="migration-list">
-          {plan.preview.suggestions.map((suggestion) => (
-            <div key={`${suggestion.currentMarker}:${suggestion.groupName}`}>
-              <code>{suggestion.currentMarker}</code>
-              <span>→</span>
-              <code># @group {suggestion.groupName}</code>
-            </div>
-          ))}
-        </div>
-        <div className="impact-note">
-          <strong>{t("migration.noValues")}</strong>
-          <span>{t("migration.changedGuard")}</span>
-        </div>
-      </div>
-      <div className="modal-actions">
-        <button className="quiet-button" onClick={onClose}>{t("common.cancel")}</button>
-        <button className="primary-button" onClick={onApply}>{t("migration.apply")}</button>
-      </div>
-    </Modal>
   );
 }
 

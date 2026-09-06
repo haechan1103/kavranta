@@ -19,6 +19,7 @@ use crate::{
 };
 
 mod access;
+mod file_paths;
 mod links;
 mod migration_export;
 mod persistence;
@@ -46,6 +47,20 @@ pub struct SaveDescriptionRequest {
 #[serde(rename_all = "camelCase")]
 pub struct CreateEnvFileRequest {
     pub file: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RenameEnvFileRequest {
+    pub file: String,
+    pub new_name: String,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct RenameEnvFileSummary {
+    pub old_file: String,
+    pub new_file: String,
 }
 
 #[derive(Deserialize)]

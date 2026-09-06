@@ -1,3 +1,4 @@
+import "./styles/global.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -5,7 +6,6 @@ import { App } from "./app/App";
 import { AgentIntegrationStatusProvider } from "./features/integrations/AgentIntegrationStatusProvider";
 import { I18nProvider } from "./i18n";
 import { DisplayPreferencesProvider } from "./preferences/DisplayPreferences";
-import "./styles/global.css";
 
 const root = document.getElementById("root");
 

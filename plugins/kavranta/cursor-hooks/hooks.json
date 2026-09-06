@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "kavranta-broker guard-hook",
+        "matcher": "Shell|Read|Write|Grep|Delete",
+        "timeout": 5,
+        "failClosed": true
+      }
+    ],
+    "beforeReadFile": [
+      {
+        "command": "kavranta-broker guard-hook",
+        "timeout": 5,
+        "failClosed": true
+      }
+    ],
+    "beforeTabFileRead": [
+      {
+        "command": "kavranta-broker guard-hook",
+        "timeout": 5,
+        "failClosed": true
+      }
+    ]
+  }
+}

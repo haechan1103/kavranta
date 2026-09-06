@@ -1,3 +1,4 @@
+import "./ProviderPushModal.css";
 import { useEffect, useMemo, useState } from "react";
 
 import { Modal } from "../../components/Modal";

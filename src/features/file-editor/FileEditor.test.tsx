@@ -48,11 +48,11 @@ describe("FileEditor", () => {
         onRefresh={refresh}
         onError={vi.fn()}
         onNotice={vi.fn()}
-        onRenameFile={vi.fn()}
       />,
     );
 
     expect(screen.getByText("No variables yet. Add a new variable to this group.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Organize comments" })).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Jump to environment variable group" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "+ New group" }));
     await user.type(screen.getByLabelText("Group name"), "Database");
@@ -63,33 +63,6 @@ describe("FileEditor", () => {
       name: "Database",
     });
     expect(refresh).toHaveBeenCalled();
-  });
-
-  it("renames a file through the in-app dialog", async () => {
-    const user = userEvent.setup();
-    const renameFile = vi.fn();
-    render(
-      <FileEditor
-        projectId="demo"
-        projection={projection}
-        filePath=".env.local"
-        onRefresh={vi.fn(async () => undefined)}
-        onError={vi.fn()}
-        onNotice={vi.fn()}
-        onRenameFile={renameFile}
-      />,
-    );
-
-    expect(screen.queryByText("ENV FILE")).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Rename env file" }));
-    const input = screen.getByLabelText("New name");
-    expect(input).toHaveValue(".env.local");
-    await user.clear(input);
-    await user.type(input, "Local development");
-    await user.click(screen.getByRole("button", { name: "Save" }));
-
-    expect(renameFile).toHaveBeenCalledWith(".env.local", "Local development");
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("shows sticky group shortcuts only for files with at least ten variables", async () => {
@@ -119,7 +92,6 @@ describe("FileEditor", () => {
         onRefresh={vi.fn(async () => undefined)}
         onError={vi.fn()}
         onNotice={vi.fn()}
-        onRenameFile={vi.fn()}
       />,
     );
 
@@ -169,7 +141,6 @@ describe("FileEditor", () => {
         onRefresh={vi.fn(async () => undefined)}
         onError={vi.fn()}
         onNotice={vi.fn()}
-        onRenameFile={vi.fn()}
       />,
     );
 
@@ -209,7 +180,6 @@ describe("FileEditor", () => {
         onRefresh={vi.fn(async () => undefined)}
         onError={vi.fn()}
         onNotice={vi.fn()}
-        onRenameFile={vi.fn()}
       />,
     );
 

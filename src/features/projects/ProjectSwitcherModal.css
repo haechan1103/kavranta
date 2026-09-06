@@ -1,0 +1,92 @@
+.project-switcher-modal {
+  width: min(540px, 100%);
+}
+
+.project-switcher-list {
+  display: flex;
+  max-height: 370px;
+  flex-direction: column;
+  gap: 7px;
+  padding: 16px 20px 8px;
+  overflow: auto;
+}
+
+.project-switcher-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 55px;
+  padding: 9px 11px;
+  color: var(--ink);
+  background: #fafbfa;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.project-switcher-option:hover {
+  background: #f4f8f6;
+  border-color: #b8cfc6;
+}
+
+.project-switcher-option.current {
+  background: #f1faf6;
+  border-color: #9fd5c1;
+  box-shadow: inset 3px 0 var(--green);
+}
+
+.project-switcher-option.current .project-glyph {
+  color: #102019;
+  background: #62d6ae;
+}
+
+.project-switcher-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.project-switcher-copy strong,
+.project-switcher-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-switcher-copy strong {
+  font-size: calc(11px * var(--font-scale));
+}
+
+.project-switcher-copy small {
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: calc(8px * var(--font-scale));
+}
+
+.current-project-badge {
+  padding: 4px 7px;
+  color: var(--green);
+  background: white;
+  border: 1px solid #c8e7db;
+  border-radius: 999px;
+  font-size: calc(7px * var(--font-scale));
+  font-weight: 750;
+}
+
+.project-switcher-empty {
+  padding: 30px 12px;
+  color: var(--muted);
+  background: #fafbfa;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  font-size: calc(10px * var(--font-scale));
+  text-align: center;
+}
+
+.project-switcher-actions {
+  border-top: 1px solid var(--line-soft);
+}

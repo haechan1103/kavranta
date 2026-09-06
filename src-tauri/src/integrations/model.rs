@@ -1,13 +1,18 @@
 use semver::Version;
 use serde::{Deserialize, Serialize};
 
-pub(super) const PLUGIN_NAME: &str = "env-manager";
-pub(super) const MARKETPLACE_NAME: &str = "env-manager";
-pub(super) const CODEX_MARKETPLACE_NAME: &str = "env-manager-desktop";
+pub(super) const PLUGIN_NAME: &str = "kavranta";
+pub(super) const MARKETPLACE_NAME: &str = "kavranta";
+pub(super) const CODEX_MARKETPLACE_NAME: &str = "kavranta-desktop";
+pub(super) const MCP_SERVER_NAME: &str = "kavranta";
+pub(super) const BROKER_EXECUTABLE: &str = "kavranta-broker";
+pub(super) const LEGACY_PLUGIN_NAME: &str = "env-manager";
+pub(super) const LEGACY_MARKETPLACE_NAME: &str = "env-manager";
+pub(super) const LEGACY_CODEX_MARKETPLACE_NAME: &str = "env-manager-desktop";
 pub(super) const KAVRANTA_REPOSITORY: &str = "https://github.com/haechan1103/kavranta";
 pub(super) const LEGACY_ENV_MANAGER_REPOSITORY: &str = "https://github.com/haechan1103/env_manager";
 pub(super) const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
-const AGENT_BUNDLE_VERSION: &str = include_str!("../../../plugins/env-manager/VERSION");
+const AGENT_BUNDLE_VERSION: &str = include_str!("../../../plugins/kavranta/VERSION");
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
@@ -15,6 +20,7 @@ pub enum AgentIntegrationId {
     Codex,
     ClaudeCode,
     GithubCopilot,
+    Cursor,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -26,9 +32,11 @@ pub struct AgentIntegrationStatus {
     pub installed: bool,
     pub installed_version: Option<String>,
     pub legacy_version: bool,
+    pub migration_pending: bool,
     pub current_version: &'static str,
     pub update_available: bool,
     pub needs_repair: bool,
+    pub activation_unverified: bool,
     pub protection: &'static str,
     pub detail: String,
     pub can_install: bool,
@@ -82,6 +90,7 @@ pub(super) fn integration_name(id: AgentIntegrationId) -> &'static str {
         AgentIntegrationId::Codex => "Codex",
         AgentIntegrationId::ClaudeCode => "Claude Code",
         AgentIntegrationId::GithubCopilot => "GitHub Copilot / VS Code",
+        AgentIntegrationId::Cursor => "Cursor",
     }
 }
 
@@ -90,12 +99,25 @@ pub(super) fn integration_slug(id: AgentIntegrationId) -> &'static str {
         AgentIntegrationId::Codex => "codex",
         AgentIntegrationId::ClaudeCode => "claude-code",
         AgentIntegrationId::GithubCopilot => "github-copilot",
+        AgentIntegrationId::Cursor => "cursor",
     }
 }
 
 pub(super) fn marketplace_name(id: AgentIntegrationId) -> &'static str {
     match id {
         AgentIntegrationId::Codex => CODEX_MARKETPLACE_NAME,
-        AgentIntegrationId::ClaudeCode | AgentIntegrationId::GithubCopilot => MARKETPLACE_NAME,
+        AgentIntegrationId::ClaudeCode
+        | AgentIntegrationId::GithubCopilot
+        | AgentIntegrationId::Cursor => MARKETPLACE_NAME,
+    }
+}
+
+pub(super) fn legacy_marketplace_names(id: AgentIntegrationId) -> &'static [&'static str] {
+    match id {
+        AgentIntegrationId::Codex => &[LEGACY_CODEX_MARKETPLACE_NAME, LEGACY_MARKETPLACE_NAME],
+        AgentIntegrationId::ClaudeCode | AgentIntegrationId::GithubCopilot => {
+            &[LEGACY_MARKETPLACE_NAME]
+        }
+        AgentIntegrationId::Cursor => &[],
     }
 }

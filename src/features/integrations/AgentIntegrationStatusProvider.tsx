@@ -30,7 +30,7 @@ const AgentIntegrationStatusContext =
 export function agentIntegrationNeedsAttention(item: AgentIntegrationStatus) {
   return item.detected
     && item.actionBlocker !== "tool-not-found"
-    && (!item.installed || item.updateAvailable || item.needsRepair);
+    && (!item.installed || item.updateAvailable || item.needsRepair || item.migrationPending);
 }
 
 export function AgentIntegrationStatusProvider({ children }: { children: ReactNode }) {

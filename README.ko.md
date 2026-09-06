@@ -33,7 +33,7 @@ Kavranta는 로컬 우선 데스크톱 앱입니다. 프로젝트를 등록하�
 
 | 지금 쓰는 방식을 그대로 | 연결된 값은 한 번만 수정 | AI에는 필요한 권한만 |
 | --- | --- | --- |
-| 기존 파일과 실행 명령이 계속 기준입니다. 경로, 주석, 순서와 관련 없는 형식을 보존합니다. | 같은 키를 2개, 3개 이상의 파일에서 명시적으로 연결합니다. 어느 파일에서 수정해도 연결된 모든 위치에 한 번에 저장합니다. | Codex, Claude Code, Copilot이 값이 제거된 로컬 Broker를 통해 구조를 확인하고 허용된 작업을 수행합니다. 보호된 값은 일반 조회 응답에 포함되지 않습니다. |
+| 기존 파일과 실행 명령이 계속 기준입니다. 경로, 주석, 순서와 관련 없는 형식을 보존합니다. | 같은 키를 2개, 3개 이상의 파일에서 명시적으로 연결합니다. 어느 파일에서 수정해도 연결된 모든 위치에 한 번에 저장합니다. | Codex, Claude Code, Copilot, Cursor가 값이 제거된 로컬 Broker를 통해 구조를 확인하고 허용된 작업을 수행합니다. 보호된 값은 일반 조회 응답에 포함되지 않습니다. |
 | **env 파일을 커밋하지 않고 공유** | **고른 값만 배포** | **Git 실수를 먼저 발견** |
 | 전체 또는 일부 변수를 암호화 패키지로 내보내거나, 마운트한 팀 폴더에 변경 불가능한 새 패키지로 게시합니다. | 임시 env 파일을 만들지 않고 GitHub Actions, Cloudflare Workers, Expo EAS, AWS 또는 직접 설치한 CLI Pack으로 선택한 값만 보냅니다. | 누락된 ignore 규칙, 이미 추적된 env 파일, 과거 기록과 위험한 공개 프론트엔드 변수명을 구분해 알려줍니다. |
 | **미완성 설정만 빠르게 확인** | **반복 계정은 프로젝트 파일 밖에 보관** | **프로젝트마다 직접 허용** |
@@ -61,7 +61,7 @@ Kavranta는 로컬 우선 데스크톱 앱입니다. 프로젝트를 등록하�
 
 - **Expo EAS 배포:** 선택한 값을 EAS CLI의 숨김 입력으로 `development`, `preview`, `production`에 보냅니다. 값은 명령 인자, 임시 파일, Kavranta 출력에 들어가지 않습니다.
 - **프로젝트 단위 사전 확인:** 가장 가까운 EAS 프로젝트를 찾고 로그인한 Expo 계정과 프로젝트 식별자를 확인한 뒤, 변수마다 `Sensitive` 또는 `Plain text` 공개 범위를 적용합니다.
-- **AI에서도 같은 보호 흐름:** Codex, Claude Code, Copilot이 데스크톱 앱과 같은 값 비노출 Broker 계획과 활동 기록을 사용합니다.
+- **AI에서도 같은 보호 흐름:** Codex, Claude Code, Copilot, Cursor가 데스크톱 앱과 같은 값 비노출 Broker 계획과 활동 기록을 사용합니다.
 
 ## 0.6.4의 새로운 기능
 
@@ -148,7 +148,7 @@ GitHub, Cloudflare, Expo EAS를 사용하기 전 [`gh`](https://cli.github.com/m
 
 ## AI 코딩 에이전트 연결
 
-독립적으로 버전 관리되는 하나의 로컬 번들이 **Codex**, **Claude Code**, **GitHub Copilot / VS Code**를 지원합니다. 앱에서 도구 감지, 설치된 번들 버전, 업데이트와 활성 보호 계층을 확인할 수 있습니다. 하나의 `manage-project-env` Skill이 한국어와 영어 환경변수 요청을 모두 인식하므로 언어별로 따로 설치할 필요는 없습니다.
+독립적으로 버전 관리되는 하나의 로컬 번들이 **Codex**, **Claude Code**, **GitHub Copilot / VS Code**, **Cursor**를 지원합니다. 앱에서 도구 감지, 설치된 번들 버전, 업데이트와 구성된 보호 계층을 확인할 수 있습니다. 하나의 `kavranta-env` Skill이 한국어와 영어 환경변수 요청을 모두 인식하므로 언어별로 따로 설치할 필요는 없습니다.
 
 <table>
   <tr>
@@ -156,7 +156,7 @@ GitHub, Cloudflare, Expo EAS를 사용하기 전 [`gh`](https://cli.github.com/m
     <td width="50%"><strong>값 없는 AI 활동 기록</strong><br />Broker 구조 확인, 값 읽기 시도, 수정, Provider 확인과 허용·차단 결과를 봅니다. 실제 값과 값 일부는 기록하지 않습니다.</td>
   </tr>
   <tr>
-    <td><img src="assets/screenshots/kavranta-ai-integrations.png" alt="Codex, Claude Code, GitHub Copilot용 Kavranta 연결 화면" /></td>
+    <td><img src="assets/screenshots/kavranta-ai-integrations.png" alt="Codex, Claude Code, GitHub Copilot, Cursor용 Kavranta 연결 화면" /></td>
     <td><img src="assets/screenshots/kavranta-ai-activity.png" alt="허용과 차단 결과가 표시되는 값 없는 AI Broker 활동 기록" /></td>
   </tr>
 </table>
@@ -168,7 +168,7 @@ GitHub, Cloudflare, Expo EAS를 사용하기 전 [`gh`](https://cli.github.com/m
 
 ```bash
 codex plugin marketplace add haechan1103/kavranta
-codex plugin add env-manager@env-manager
+codex plugin add kavranta@kavranta
 ```
 </details>
 
@@ -177,7 +177,7 @@ codex plugin add env-manager@env-manager
 
 ```bash
 claude plugin marketplace add haechan1103/kavranta
-claude plugin install env-manager@env-manager
+claude plugin install kavranta@kavranta
 ```
 </details>
 
@@ -186,8 +186,23 @@ claude plugin install env-manager@env-manager
 
 ```bash
 copilot plugin marketplace add haechan1103/kavranta
-copilot plugin install env-manager@env-manager
+copilot plugin install kavranta@kavranta
 ```
+</details>
+
+<details>
+  <summary><strong>Cursor</strong></summary>
+
+Cursor를 설치한 뒤 Kavranta의 AI 도구 화면에서 **연결 설치**를 누르세요.
+Kavranta가 Cursor 공식 문서의 사용자 로컬 플러그인 경로에 전용 플러그인을
+설치합니다. fail-closed Guard가 Agent 도구, Agent 컨텍스트 읽기와 Tab 자동완성
+읽기를 나누어 방어합니다. Cursor가 이미 열려 있었다면 **Developer: Reload
+Window**를 실행하세요.
+
+Team·Enterprise 관리자는 로컬 플러그인 가져오기를 막을 수 있고 같은 이름의
+Marketplace 플러그인이 우선될 수 있습니다. 그래서 Kavranta는 실제 활성화를
+단정하지 않고 **구성 완료**로 표시합니다. Reload 후 Cursor의 Customize 화면에서
+Kavranta가 활성화됐는지 확인하세요.
 </details>
 
 먼저 Kavranta에 프로젝트를 등록하고 새 에이전트 세션에서 자연스럽게 요청하세요.

@@ -334,7 +334,8 @@ pub fn apply_stdin_value_from_default_paths<R: std::io::Read>(
     reader: R,
 ) -> Result<StdinValueApplyProjection, StdinValueError> {
     let app_data = broker::provider_app_data().map_err(StdinValueError::from)?;
-    let registry_path = std::env::var_os("ENV_MANAGER_REGISTRY_PATH")
+    let registry_path = std::env::var_os("KAVRANTA_REGISTRY_PATH")
+        .or_else(|| std::env::var_os("ENV_MANAGER_REGISTRY_PATH"))
         .map(PathBuf::from)
         .unwrap_or_else(|| app_data.join("projects.json"));
     stdin_value::apply_plan(

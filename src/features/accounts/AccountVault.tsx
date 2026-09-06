@@ -1,3 +1,4 @@
+import "./AccountVault.css";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { Modal } from "../../components/Modal";

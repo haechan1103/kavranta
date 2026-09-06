@@ -1,0 +1,187 @@
+@media (min-width: 1600px) {
+  .hero {
+    padding-top: 85px;
+    padding-bottom: 75px;
+  }
+}
+@media (max-width: 1000px) {
+  .site-header {
+    padding: 0 28px;
+  }
+  .site-header nav {
+    gap: 20px;
+  }
+  .hero h1 .hero-asterisk {
+    right: -48px;
+    font-size: 48px;
+  }
+  .feature-card {
+    padding: 20px;
+  }
+  .feature-grid {
+    gap: 12px;
+  }
+  .linked-nodes > span {
+    font-size: 8px;
+    padding: 8px 4px;
+  }
+  .integrations-strip > div {
+    justify-content: center;
+    font-size: 15px;
+    gap: 26px;
+  }
+  .local-section {
+    gap: 40px;
+  }
+  .guide-steps {
+    gap: 20px;
+  }
+  .faq-section {
+    gap: 40px;
+  }
+  .protection-illustration {
+    gap: 12px;
+  }
+  .shield-symbol {
+    width: 50px;
+    height: 65px;
+  }
+}
+@media (max-width: 700px) {
+  .site-header {
+    height: 72px;
+    padding: 0 23px;
+  }
+  .site-header .brand {
+    font-size: 23px;
+  }
+  .site-header nav,
+  .github-link,
+  .brand > span {
+    display: none;
+  }
+  .site-header .button-small {
+    padding: 8px 11px;
+    font-size: 11px;
+  }
+  .hero {
+    padding: 42px 20px;
+  }
+  .hero h1 {
+    font-size: 43px;
+    letter-spacing: -2.5px;
+    line-height: 1.35;
+    margin-top: 25px;
+  }
+  .hero h1 .hero-asterisk {
+    right: -14px;
+    top: -20px;
+    font-size: 31px;
+  }
+  .hero > p {
+    font-size: 13px;
+    line-height: 1.9;
+  }
+  .hero-actions {
+    gap: 18px;
+  }
+  .hero-actions .button,
+  .hero-actions .text-link {
+    font-size: 12px;
+  }
+  .hero-note {
+    font-size: 9px;
+    gap: 8px;
+  }
+  .integrations-strip {
+    margin-top: 35px;
+    padding-bottom: 36px;
+  }
+  .integrations-strip > div {
+    font-size: 13px;
+    gap: 22px;
+  }
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .feature-card {
+    padding: 26px;
+  }
+  .feature-card h3 {
+    font-size: 22px;
+  }
+  .link-illustration,
+  .protection-illustration,
+  .ship-illustration {
+    height: 165px;
+    max-width: 310px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .linked-nodes > span {
+    padding: 10px;
+    font-size: 10px;
+  }
+  .local-section {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .guide-steps {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .guide-steps p {
+    min-height: 0;
+  }
+  .guide-steps h3 {
+    margin-top: 15px;
+  }
+  .faq-section {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding-top: 0;
+  }
+  .download-section {
+    margin: 0 12px;
+    padding: 55px 22px;
+  }
+  .download-section h2 {
+    font-size: 42px;
+  }
+  .download-section .eyebrow {
+    font-size: 8px;
+  }
+  .download-buttons {
+    gap: 8px;
+  }
+  .download-buttons .button {
+    font-size: 11px;
+    gap: 12px;
+    padding: 13px;
+  }
+  .install-command {
+    gap: 12px;
+    padding: 12px;
+  }
+  .install-command code {
+    font-size: 9px;
+    text-align: left;
+  }
+  .download-mark {
+    font-size: 260px;
+    right: -110px;
+  }
+  .site-footer {
+    padding: 30px 24px;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .site-footer > span {
+    display: none;
+  }
+  .site-footer > div {
+    font-size: 10px;
+    gap: 17px;
+  }
+}

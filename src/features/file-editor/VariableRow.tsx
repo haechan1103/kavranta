@@ -1,8 +1,10 @@
+import "./VariableRow.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { displayGroupName, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type { CodexAccess, OccurrenceProjection } from "../../lib/types";
+import { MoveVariableModal } from "./MoveVariableModal";
 
 interface Props {
   projectId: string;
@@ -32,6 +34,7 @@ export function VariableRow({
   const [revealActivity, setRevealActivity] = useState(0);
   const [keyCopied, setKeyCopied] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
+  const [moving, setMoving] = useState(false);
   const [description, setDescription] = useState(variable.description.join("\n"));
   const revealedValueRef = useRef<HTMLTextAreaElement>(null);
 
@@ -234,30 +237,8 @@ export function VariableRow({
           <button
             className="quiet-button compact"
             title={t("row.moveTitle")}
-            onClick={() => {
-              const choices = groups.filter((group) => group !== currentGroup);
-              if (choices.length === 0) return;
-              const displayedChoices = choices.map((group) => displayGroupName(group, t));
-              const selected = window
-                .prompt(
-                  t("row.movePrompt", { groups: displayedChoices.join(" · ") }),
-                  displayedChoices[0],
-                )
-                ?.trim();
-              const target = choices.find(
-                (group) => group === selected || displayGroupName(group, t) === selected,
-              );
-              if (!target) return;
-              void onMutate(
-                () =>
-                  api.moveVariable(projectId, {
-                    file,
-                    key: variable.key,
-                    targetGroup: target,
-                  }),
-                t("row.moved", { key: variable.key, group: displayGroupName(target, t) }),
-              );
-            }}
+            disabled={groups.filter((group) => group !== currentGroup).length === 0}
+            onClick={() => setMoving(true)}
           >
             {t("common.move")}
           </button>
@@ -358,6 +339,23 @@ export function VariableRow({
             </button>
           </div>
         </div>
+      )}
+
+      {moving && (
+        <MoveVariableModal
+          variableKey={variable.key}
+          currentGroup={currentGroup}
+          groups={groups}
+          onClose={() => setMoving(false)}
+          onMove={(targetGroup) => onMutate(
+            () => api.moveVariable(projectId, {
+              file,
+              key: variable.key,
+              targetGroup,
+            }),
+            t("row.moved", { key: variable.key, group: displayGroupName(targetGroup, t) }),
+          )}
+        />
       )}
     </article>
   );

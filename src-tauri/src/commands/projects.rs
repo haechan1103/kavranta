@@ -21,10 +21,18 @@ pub struct RenameProjectRequest {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RenameFileRequest {
+pub struct RenameFileLabelRequest {
     project_id: String,
     file: String,
     name: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RenameFileOnDiskRequest {
+    project_id: String,
+    file: String,
+    new_name: String,
 }
 
 #[tauri::command]
@@ -76,11 +84,21 @@ pub fn rename_project(
 }
 
 #[tauri::command]
-pub fn rename_env_file(
-    request: RenameFileRequest,
+pub fn rename_env_file_label(
+    request: RenameFileLabelRequest,
     runtime: State<'_, AppRuntime>,
 ) -> CommandResult<()> {
     runtime
-        .rename_file(&request.project_id, &request.file, &request.name)
+        .rename_file_label(&request.project_id, &request.file, &request.name)
+        .map_err(Into::into)
+}
+
+#[tauri::command]
+pub fn rename_env_file_on_disk(
+    request: RenameFileOnDiskRequest,
+    runtime: State<'_, AppRuntime>,
+) -> CommandResult<RenameEnvFileSummary> {
+    runtime
+        .rename_file_on_disk(&request.project_id, &request.file, &request.new_name)
         .map_err(Into::into)
 }

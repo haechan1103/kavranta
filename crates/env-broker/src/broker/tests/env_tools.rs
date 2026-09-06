@@ -8,6 +8,7 @@ fn unknown_mcp_client_names_stay_unattributed() {
         normalize_agent_host("GitHub Copilot"),
         Some("github-copilot")
     );
+    assert_eq!(normalize_agent_host("Cursor Agent"), Some("cursor"));
     assert_eq!(normalize_agent_host("custom-agent"), None);
 }
 

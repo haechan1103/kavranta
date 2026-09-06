@@ -1,0 +1,62 @@
+.agent-brand-mark {
+  display: grid;
+  overflow: hidden;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #5b6761;
+  background: #f3f5f3;
+  border: 1px solid #e1e5e2;
+  border-radius: 10px;
+}
+
+.agent-brand-mark.compact {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.agent-brand-mark.regular {
+  width: 38px;
+  height: 38px;
+}
+
+.agent-brand-mark.large {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+}
+
+.agent-brand-mark img,
+.agent-brand-mark svg {
+  display: block;
+  width: 62%;
+  height: 62%;
+}
+
+.agent-brand-mark.codex,
+.agent-brand-mark.claude-code {
+  background: transparent;
+  border-color: transparent;
+}
+
+.agent-brand-mark.codex img,
+.agent-brand-mark.claude-code img {
+  width: 100%;
+  height: 100%;
+}
+
+.agent-brand-mark.github-copilot img {
+  width: 58%;
+  height: 58%;
+}
+
+.agent-brand-mark.cursor {
+  color: #f5f5f2;
+  background: #171918;
+  border-color: #2c302e;
+}
+
+.agent-brand-mark.cursor img {
+  width: 56%;
+  height: 64%;
+}

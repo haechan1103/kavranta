@@ -18,6 +18,7 @@ const integrations: AgentIntegrationStatus[] = [
     currentVersion: "1.0.0",
     updateAvailable: false,
     needsRepair: false,
+    activationUnverified: false,
     protection: "broker",
     detail: "The redacted broker is connected.",
     canInstall: true,
@@ -33,6 +34,7 @@ const integrations: AgentIntegrationStatus[] = [
     currentVersion: "1.0.0",
     updateAvailable: false,
     needsRepair: false,
+    activationUnverified: false,
     protection: "inactive",
     detail: "The integration can be installed.",
     canInstall: true,
@@ -48,10 +50,27 @@ const integrations: AgentIntegrationStatus[] = [
     currentVersion: "1.0.0",
     updateAvailable: false,
     needsRepair: false,
+    activationUnverified: false,
     protection: "inactive",
     detail: "Install the tool to connect it.",
     canInstall: false,
     actionBlocker: "tool-not-found",
+  },
+  {
+    id: "cursor",
+    name: "Cursor",
+    detected: true,
+    installed: false,
+    installedVersion: null,
+    legacyVersion: false,
+    currentVersion: "1.0.0",
+    updateAvailable: false,
+    needsRepair: false,
+    activationUnverified: false,
+    protection: "inactive",
+    detail: "The integration can be installed.",
+    canInstall: true,
+    actionBlocker: null,
   },
 ];
 
@@ -75,12 +94,49 @@ function renderIntegrations(onError = vi.fn(), onNotice = vi.fn()) {
 
 describe("AgentIntegrations", () => {
   it("shows all supported hosts without exposing env values", async () => {
-    renderIntegrations();
+    const { container } = renderIntegrations();
 
     expect(await screen.findByText("Codex")).toBeInTheDocument();
     expect(screen.getByText("Claude Code")).toBeInTheDocument();
     expect(screen.getByText("GitHub Copilot / VS Code")).toBeInTheDocument();
+    expect(screen.getByText("Cursor")).toBeInTheDocument();
+    expect(container.querySelector('img[src="/brand/agents/openai.svg"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/brand/agents/claude.svg"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/brand/agents/github.svg"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/brand/agents/cursor.svg"]')).toBeInTheDocument();
     expect(screen.queryByText(/API_KEY=/)).not.toBeInTheDocument();
+  });
+
+  it("tells Cursor users to reload the window after local installation", async () => {
+    const user = userEvent.setup();
+    const onNotice = vi.fn();
+    renderIntegrations(vi.fn(), onNotice);
+
+    const cursorCard = (await screen.findByText("Cursor")).closest("article");
+    expect(cursorCard).not.toBeNull();
+    await user.click(within(cursorCard!).getByRole("button", { name: "Install connection" }));
+
+    expect(api.installAgentIntegration).toHaveBeenCalledWith("cursor");
+    expect(onNotice).toHaveBeenCalledWith(expect.stringContaining("Reload Window"));
+  });
+
+  it("labels a locally installed Cursor plugin as configured until host activation is confirmed", async () => {
+    vi.mocked(api.listAgentIntegrations).mockResolvedValueOnce([
+      {
+        ...integrations[3]!,
+        installed: true,
+        installedVersion: "1.0.0",
+        activationUnverified: true,
+        protection: "guarded",
+      },
+    ]);
+    renderIntegrations();
+
+    const cursorCard = (await screen.findByText("Cursor")).closest("article");
+    expect(cursorCard).not.toBeNull();
+    expect(within(cursorCard!).getByText("Configured")).toBeInTheDocument();
+    expect(within(cursorCard!).queryByText("Connected")).not.toBeInTheDocument();
+    expect(within(cursorCard!).getByText(/confirm Kavranta is active/)).toBeInTheDocument();
   });
 
   it("installs the selected host through the shared integration API", async () => {
@@ -121,5 +177,15 @@ describe("AgentIntegrations", () => {
 
     expect(await screen.findByText("Repair needed")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Repair connection" })).toBeEnabled();
+  });
+
+  it("keeps legacy cleanup visible and retryable after the Kavranta connection is ready", async () => {
+    vi.mocked(api.listAgentIntegrations).mockResolvedValueOnce([
+      { ...integrations[0]!, migrationPending: true },
+    ]);
+    renderIntegrations();
+
+    expect(await screen.findByText(/legacy Env Manager connection remains/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update" })).toBeEnabled();
   });
 });

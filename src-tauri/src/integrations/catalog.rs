@@ -6,8 +6,8 @@ use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Manager};
 
 use super::model::{
-    AgentIntegrationId, IntegrationError, PLUGIN_NAME, agent_bundle_version, integration_slug,
-    marketplace_name,
+    AgentIntegrationId, IntegrationError, MCP_SERVER_NAME, PLUGIN_NAME, agent_bundle_version,
+    integration_slug, marketplace_name,
 };
 
 pub(super) fn catalog_source(app: &AppHandle) -> Option<PathBuf> {
@@ -29,14 +29,16 @@ pub(super) fn source_repository_root(_app: &AppHandle) -> Option<PathBuf> {
 }
 
 pub(super) fn catalog_is_valid(root: &Path) -> bool {
-    let plugin = root.join("plugins/env-manager");
+    let plugin = root.join("plugins").join(PLUGIN_NAME);
     let codex_manifest = plugin.join(".codex-plugin/plugin.json");
     let claude_manifest = plugin.join(".claude-plugin/plugin.json");
+    let cursor_manifest = plugin.join(".cursor-plugin/plugin.json");
     let marketplace = root.join(".claude-plugin/marketplace.json");
     plugin.join("VERSION").is_file()
         && root.join(".agents/plugins/marketplace.json").is_file()
         && manifest_version(&codex_manifest).as_deref() == Some(agent_bundle_version())
         && manifest_version(&claude_manifest).as_deref() == Some(agent_bundle_version())
+        && manifest_version(&cursor_manifest).as_deref() == Some(agent_bundle_version())
         && marketplace_version(&marketplace).as_deref() == Some(agent_bundle_version())
 }
 
@@ -70,27 +72,61 @@ pub(super) fn materialize_catalog(
         )?;
     }
 
-    let plugin = target.join("plugins/env-manager");
+    let plugin = target.join("plugins").join(PLUGIN_NAME);
     let mcp_path = plugin.join(".mcp.json");
     let mut mcp = read_json(&mcp_path)?;
-    mcp["mcpServers"]["env-manager"]["command"] =
+    mcp["mcpServers"][MCP_SERVER_NAME]["command"] =
         Value::String(broker.to_string_lossy().into_owned());
-    mcp["mcpServers"]["env-manager"]["env"] = json!({
-        "ENV_MANAGER_AUDIT_DIR": app_data.join("agent-activity").to_string_lossy(),
-        "ENV_MANAGER_APP_DATA_DIR": app_data.to_string_lossy(),
-        "ENV_MANAGER_AGENT_HOST": integration_slug(id),
+    mcp["mcpServers"][MCP_SERVER_NAME]["env"] = json!({
+        "KAVRANTA_AUDIT_DIR": app_data.join("agent-activity").to_string_lossy(),
+        "KAVRANTA_APP_DATA_DIR": app_data.to_string_lossy(),
+        "KAVRANTA_AGENT_HOST": integration_slug(id),
     });
     write_json(&mcp_path, &mcp)?;
+
+    let cursor_mcp_path = plugin.join("mcp.json");
+    write_json(&cursor_mcp_path, &mcp)?;
 
     let hook_path = plugin.join("hooks/hooks.json");
     let mut hooks = read_json(&hook_path)?;
     hooks["hooks"]["PreToolUse"][0]["hooks"][0]["command"] =
         Value::String(format!("\"{}\" guard-hook", broker.to_string_lossy()));
     write_json(&hook_path, &hooks)?;
+
+    let cursor_hook_path = plugin.join("cursor-hooks/hooks.json");
+    let mut cursor_hooks = read_json(&cursor_hook_path)?;
+    rewrite_cursor_hook_commands(
+        &mut cursor_hooks,
+        &format!("\"{}\" guard-hook", broker.to_string_lossy()),
+    )?;
+    write_json(&cursor_hook_path, &cursor_hooks)?;
     Ok(target)
 }
 
-fn copy_directory(source: &Path, target: &Path) -> Result<(), IntegrationError> {
+fn rewrite_cursor_hook_commands(config: &mut Value, command: &str) -> Result<(), IntegrationError> {
+    let hooks = config
+        .get_mut("hooks")
+        .and_then(Value::as_object_mut)
+        .ok_or(IntegrationError {
+            code: "PLUGIN_CONFIG_INVALID",
+            message: "Cursor Guard 설정 형식이 올바르지 않습니다.",
+        })?;
+    for event in ["preToolUse", "beforeReadFile", "beforeTabFileRead"] {
+        let entry = hooks
+            .get_mut(event)
+            .and_then(Value::as_array_mut)
+            .and_then(|entries| entries.first_mut())
+            .and_then(Value::as_object_mut)
+            .ok_or(IntegrationError {
+                code: "PLUGIN_CONFIG_INVALID",
+                message: "Cursor Guard 설정 형식이 올바르지 않습니다.",
+            })?;
+        entry.insert("command".to_owned(), Value::String(command.to_owned()));
+    }
+    Ok(())
+}
+
+pub(super) fn copy_directory(source: &Path, target: &Path) -> Result<(), IntegrationError> {
     fs::create_dir_all(target).map_err(|_| IntegrationError {
         code: "PLUGIN_COPY_FAILED",
         message: "플러그인 설치 디렉터리를 만들지 못했습니다.",
