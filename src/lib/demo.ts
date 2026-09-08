@@ -60,7 +60,7 @@ export const demoAgentIntegrations: AgentIntegrationStatus[] = [
     installed: false,
     installedVersion: null,
     legacyVersion: false,
-    currentVersion: "2.1.1",
+    currentVersion: "2.2.0",
     updateAvailable: false,
     needsRepair: false,
     activationUnverified: false,

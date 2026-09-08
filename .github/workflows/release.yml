@@ -134,6 +134,9 @@ jobs:
             - Intel Mac: download the x86_64 DMG
             - The app opens in English by default and also supports Korean.
             - Run locally reviewed Action Packs against a fixed CLI or HTTPS target without returning managed values to the UI, agent, logs, or response body.
+            - Let a supported agent install a concretely requested, value-free Action Pack through a redacted plan, then run it as a separate audited action.
+            - Verify managed Android App Links certificate fingerprints against explicit public hosts without returning local or remote fingerprints to the agent.
+            - Allow source-code patches that only mention env filenames while continuing to block patches whose declared target is an env data file.
             - Pipe a generated value through a five-minute, single-use Broker plan without putting it in command arguments or agent output.
             - Discover Wrangler `.dev.vars*` alongside `.env*`, and surface app or installed AI-integration updates through quiet background checks.
             - Exchange immutable encrypted packages through a mounted NAS or existing sync folder, then review conflicts before applying.
@@ -154,6 +157,9 @@ jobs:
             - Intel Mac: x86_64 DMG
             - 앱은 영어를 기본으로 열리며 한국어도 지원합니다.
             - 검토한 Action Pack으로 고정 CLI 또는 HTTPS 대상을 실행하되 관리 값을 UI, 에이전트, 로그나 응답 본문에 반환하지 않습니다.
+            - 구체적으로 요청한 값 없는 Action Pack을 지원 에이전트가 비공개 계획으로 설치하고, 별도 감사 작업으로 실행할 수 있습니다.
+            - 관리 중인 Android App Links 인증서 지문을 로컬·원격 지문 원문을 에이전트에 반환하지 않고 지정한 공개 호스트와 검증할 수 있습니다.
+            - env 파일명이 언급된 소스 코드 패치는 허용하면서 실제 패치 대상이 env 데이터 파일인 작업은 계속 차단합니다.
             - 생성값을 명령 인자나 에이전트 출력에 넣지 않고 5분·1회용 Broker 계획으로 바로 저장할 수 있습니다.
             - Wrangler `.dev.vars*`를 `.env*`와 함께 탐색하고 앱·설치된 AI 연동 업데이트를 조용히 백그라운드에서 확인합니다.
             - 마운트한 NAS나 기존 동기화 폴더에서 변경 불가능한 암호화 패키지를 주고받고, 충돌 검토 후 적용할 수 있습니다.
@@ -263,6 +269,9 @@ jobs:
             - Intel Mac: download the x86_64 DMG
             - The app opens in English by default and also supports Korean.
             - Run locally reviewed Action Packs against a fixed CLI or HTTPS target without returning managed values to the UI, agent, logs, or response body.
+            - Let a supported agent install a concretely requested, value-free Action Pack through a redacted plan, then run it as a separate audited action.
+            - Verify managed Android App Links certificate fingerprints against explicit public hosts without returning local or remote fingerprints to the agent.
+            - Allow source-code patches that only mention env filenames while continuing to block patches whose declared target is an env data file.
             - Pipe a generated value through a five-minute, single-use Broker plan without putting it in command arguments or agent output.
             - Discover Wrangler `.dev.vars*` alongside `.env*`, and surface app or installed AI-integration updates through quiet background checks.
             - Exchange immutable encrypted packages through a mounted NAS or existing sync folder, then review conflicts before applying.
@@ -283,6 +292,9 @@ jobs:
             - Intel Mac: x86_64 DMG
             - 앱은 영어를 기본으로 열리며 한국어도 지원합니다.
             - 검토한 Action Pack으로 고정 CLI 또는 HTTPS 대상을 실행하되 관리 값을 UI, 에이전트, 로그나 응답 본문에 반환하지 않습니다.
+            - 구체적으로 요청한 값 없는 Action Pack을 지원 에이전트가 비공개 계획으로 설치하고, 별도 감사 작업으로 실행할 수 있습니다.
+            - 관리 중인 Android App Links 인증서 지문을 로컬·원격 지문 원문을 에이전트에 반환하지 않고 지정한 공개 호스트와 검증할 수 있습니다.
+            - env 파일명이 언급된 소스 코드 패치는 허용하면서 실제 패치 대상이 env 데이터 파일인 작업은 계속 차단합니다.
             - 생성값을 명령 인자나 에이전트 출력에 넣지 않고 5분·1회용 Broker 계획으로 바로 저장할 수 있습니다.
             - Wrangler `.dev.vars*`를 `.env*`와 함께 탐색하고 앱·설치된 AI 연동 업데이트를 조용히 백그라운드에서 확인합니다.
             - 마운트한 NAS나 기존 동기화 폴더에서 변경 불가능한 암호화 패키지를 주고받고, 충돌 검토 후 적용할 수 있습니다.
