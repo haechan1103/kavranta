@@ -60,7 +60,9 @@ pub(super) fn parse_fingerprint(value: &str) -> Result<Fingerprint, FingerprintE
     }
 
     let mut bytes = [0_u8; 32];
-    for (index, pair) in compact.as_bytes().chunks_exact(2).enumerate() {
+    let (pairs, remainder) = compact.as_bytes().as_chunks::<2>();
+    debug_assert!(remainder.is_empty());
+    for (index, pair) in pairs.iter().enumerate() {
         bytes[index] = (hex_nibble(pair[0])? << 4) | hex_nibble(pair[1])?;
     }
     Ok(bytes)
