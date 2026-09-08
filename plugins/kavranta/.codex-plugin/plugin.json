@@ -1,6 +1,6 @@
 {
   "name": "kavranta",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Safely inspect, plan, and manage registered project env files through a redacted local broker shared by AI coding agents.",
   "author": {
     "name": "haechan1103",
@@ -24,7 +24,7 @@
   "interface": {
     "displayName": "Kavranta",
     "shortDescription": "Manage registered env files through a redacted local broker.",
-    "longDescription": "Adds a portable Agent Skill and local MCP broker for redacted env management, encrypted team-channel inspection, opaque cross-project reuse, value-hidden deployment pushes, installed Action Pack execution, and redacted AWS or registered Runtime value checks.",
+    "longDescription": "Adds a portable Agent Skill and local MCP broker for redacted env management, encrypted team-channel inspection, opaque cross-project reuse, value-hidden deployment pushes, request-authorized Action Pack installation and execution, redacted deployment checks, and typed Android App Links verification.",
     "developerName": "haechan1103",
     "category": "Productivity",
     "capabilities": [
@@ -40,8 +40,9 @@
       "Value-hidden Expo EAS environment push",
       "Redacted AWS deployment-value comparison",
       "Encrypted registered Runtime comparison",
+      "Redacted Android App Links certificate verification",
       "Personal Provider Pack authoring",
-      "Value-hidden Action Pack execution and authoring",
+      "Request-authorized Action Pack installation and execution",
       "Opaque stdin value generation and storage",
       "Multi-agent compatible workflow"
     ],

@@ -1,6 +1,6 @@
 {
   "name": "kavranta",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Manage registered project env files through a redacted local MCP broker, portable Skill, and fail-closed Cursor access guard.",
   "author": {
     "name": "haechan1103"
