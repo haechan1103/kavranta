@@ -499,4 +499,87 @@ mod tests {
                 .contains(canary)
         );
     }
+
+    #[cfg(unix)]
+    #[test]
+    fn cli_action_without_name_placeholder_can_create_a_fixed_local_output() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let canary = "fake_ACTION_OUTPUT_SECRET_24";
+        let project = tempfile::tempdir().expect("project");
+        let env_name = [".", "env", ".local"].concat();
+        fs::write(
+            project.path().join(&env_name),
+            format!("SERVICE_API_KEY={canary}\n"),
+        )
+        .expect("fixture");
+        let service = ProjectService::open(project.path()).expect("service");
+        service.initialize().expect("initialize");
+        let app_data = tempfile::tempdir().expect("app data");
+        let source = tempfile::tempdir().expect("source");
+        let runner = tempfile::tempdir().expect("runner");
+        let executable = runner.path().join("fake-generator");
+        let output = project.path().join("generated-result.bin");
+        fs::write(
+            &executable,
+            "#!/bin/sh\nif [ \"$1\" = \"--version\" ]; then printf '1.0.0\\n'; exit 0; fi\noutput_file=$1\ncat >/dev/null\nprintf 'fake-generated-result' > \"$output_file\"\n",
+        )
+        .expect("runner source");
+        let mut permissions = fs::metadata(&executable).expect("metadata").permissions();
+        permissions.set_mode(0o700);
+        fs::set_permissions(&executable, permissions).expect("permissions");
+        let manifest = ActionPackManifest {
+            schema_version: 1,
+            id: "local.example.fixed-output".to_owned(),
+            display_name: "Fixed output".to_owned(),
+            description: "Synthetic one-shot generator".to_owned(),
+            pack_version: "1.0.0".to_owned(),
+            action_protocol_version: "0.1.0".to_owned(),
+            action: ActionDefinition::Cli {
+                executable_candidates: vec![executable.to_string_lossy().into_owned()],
+                version_args: vec!["--version".to_owned()],
+                profiles: vec![CliActionProfile {
+                    id: "fake-v1".to_owned(),
+                    version_requirement: ">=1,<2".to_owned(),
+                    arguments: vec![output.to_string_lossy().into_owned()],
+                }],
+                secret_binding: "value".to_owned(),
+                secret_transport: CliSecretTransport::Stdin,
+                result_policy: CliResultPolicy {
+                    success: true,
+                    exit_code: true,
+                    duration: true,
+                },
+                timeout_seconds: 5,
+            },
+        };
+        fs::write(
+            source.path().join("action.json"),
+            serde_json::to_vec(&manifest).expect("manifest"),
+        )
+        .expect("write manifest");
+        install(source.path(), app_data.path(), false).expect("install");
+
+        let result = execute(
+            &service,
+            app_data.path(),
+            ActionExecutionRequest {
+                pack_id: manifest.id,
+                file: env_name,
+                bindings: BTreeMap::from([("value".to_owned(), "SERVICE_API_KEY".to_owned())]),
+            },
+        )
+        .expect("execute");
+
+        assert!(result.succeeded);
+        assert_eq!(
+            fs::read_to_string(output).expect("generated output"),
+            "fake-generated-result"
+        );
+        assert!(
+            !serde_json::to_string(&result)
+                .expect("result")
+                .contains(canary)
+        );
+    }
 }

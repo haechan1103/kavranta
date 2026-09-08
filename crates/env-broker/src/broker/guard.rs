@@ -61,17 +61,97 @@ fn hook_requests_direct_env_access(input: &Value) -> bool {
         return true;
     }
 
+    let patch_like = tool_name.contains("apply_patch") || tool_name == "applypatch";
+    if patch_like {
+        return patch_tool_requests_direct_env_access(input);
+    }
+
     let command_like = tool_name.contains("bash")
         || tool_name.contains("shell")
         || tool_name.contains("terminal")
-        || tool_name.contains("command")
-        || tool_name.contains("apply_patch")
-        || tool_name == "applypatch";
+        || tool_name.contains("command");
     let shell_event = input
         .get("hook_event_name")
         .and_then(Value::as_str)
         .is_some_and(|name| name == "beforeShellExecution");
     (command_like || shell_event) && contains_env_command_field(input)
+}
+
+fn patch_tool_requests_direct_env_access(input: &Value) -> bool {
+    patch_field_decision(input).unwrap_or_else(|| contains_env_command_field(input))
+}
+
+fn patch_field_decision(value: &Value) -> Option<bool> {
+    match value {
+        Value::Object(fields) => {
+            let mut found = false;
+            let mut denied = false;
+            for (key, value) in fields {
+                let normalized = key.replace(['_', '-'], "").to_ascii_lowercase();
+                if matches!(normalized.as_str(), "patch" | "patchtext") {
+                    found = true;
+                    denied |= patch_value_requests_direct_env_access(value);
+                } else if let Some(nested_denied) = patch_field_decision(value) {
+                    found = true;
+                    denied |= nested_denied;
+                }
+            }
+            found.then_some(denied)
+        }
+        Value::Array(values) => {
+            let mut found = false;
+            let mut denied = false;
+            for value in values {
+                if let Some(nested_denied) = patch_field_decision(value) {
+                    found = true;
+                    denied |= nested_denied;
+                }
+            }
+            found.then_some(denied)
+        }
+        _ => None,
+    }
+}
+
+fn patch_value_requests_direct_env_access(value: &Value) -> bool {
+    match value {
+        Value::String(text) => patch_text_requests_direct_env_access(text),
+        Value::Array(values) => values.iter().any(patch_value_requests_direct_env_access),
+        Value::Object(fields) => fields.values().any(patch_value_requests_direct_env_access),
+        _ => false,
+    }
+}
+
+fn patch_text_requests_direct_env_access(text: &str) -> bool {
+    const TARGET_HEADERS: [&str; 4] = [
+        "*** Update File:",
+        "*** Add File:",
+        "*** Delete File:",
+        "*** Move to:",
+    ];
+
+    let mut found_target = false;
+    let mut malformed_target = false;
+    for line in text.lines() {
+        for header in TARGET_HEADERS {
+            let Some(path) = line.strip_prefix(header) else {
+                continue;
+            };
+            found_target = true;
+            let path = path.trim();
+            if path.is_empty() {
+                malformed_target = true;
+            } else if contains_env_reference(path) {
+                return true;
+            }
+        }
+    }
+
+    if found_target && !malformed_target {
+        false
+    } else {
+        contains_env_reference(text)
+    }
 }
 
 fn contains_env_path_field(value: &Value) -> bool {

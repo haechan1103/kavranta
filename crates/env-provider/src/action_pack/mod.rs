@@ -10,4 +10,4 @@ pub use model::{
     ActionPackInfo, ActionPackManifest, CliActionProfile, CliResultPolicy, CliSecretTransport,
     HttpActionMethod, HttpResultPolicy, HttpSecretBinding, HttpSecretSource,
 };
-pub use storage::{install, list, remove};
+pub use storage::{install, install_manifest, list, prepare_install, remove};

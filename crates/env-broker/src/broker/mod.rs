@@ -1,3 +1,4 @@
+mod app_link_tools;
 mod audit;
 mod env_tools;
 pub(super) mod guard;
@@ -98,7 +99,9 @@ impl Broker {
             "list_runtime_targets" => self.list_runtime_targets(parse(arguments)?),
             "list_team_channels" => self.list_team_channels(parse(arguments)?),
             "compare_deployment_values" => self.compare_deployment_values(parse(arguments)?),
+            "verify_android_app_links" => self.verify_android_app_links(parse(arguments)?),
             "plan_provider_push" => self.plan_provider_push(parse(arguments)?),
+            "plan_install_action_pack" => self.plan_install_action_pack(parse(arguments)?),
             "plan_action" => self.plan_action(parse(arguments)?),
             "apply_plan" => self.apply(parse(arguments)?),
             _ => Err(EnvError::invalid("지원하지 않는 Kavranta 도구입니다.")),

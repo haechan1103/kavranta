@@ -196,6 +196,33 @@ impl Broker {
         )
     }
 
+    pub(super) fn plan_install_action_pack(
+        &self,
+        args: PlanInstallActionPackArgs,
+    ) -> Result<Value, EnvError> {
+        let service = self.open_registered(&args.project_path)?;
+        let app_data = self.provider_app_data()?;
+        let pack =
+            env_provider::action_pack::prepare_install(&args.manifest, &app_data, args.replace)
+                .map_err(action_pack_error)?;
+        let action = if args.replace { "교체" } else { "설치" };
+        self.store_plan(
+            &service,
+            PlannedOperation::InstallActionPack {
+                manifest: args.manifest,
+                replace: args.replace,
+            },
+            format!(
+                "{} Action Pack을 로컬에 {}합니다. 고정 대상: {}",
+                pack.display_name, action, pack.target
+            ),
+            Vec::new(),
+            Vec::new(),
+            "local-action-pack-install",
+            None,
+        )
+    }
+
     pub(super) fn compare_deployment_values(
         &self,
         args: CompareDeploymentValuesArgs,

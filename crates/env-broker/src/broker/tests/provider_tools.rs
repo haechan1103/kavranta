@@ -4,7 +4,6 @@ use super::*;
 fn action_pack_plan_and_result_never_cross_the_broker_with_the_secret() {
     let (project, service) = registered_project();
     let app_data = tempfile::tempdir().expect("app data");
-    let pack_source = tempfile::tempdir().expect("pack source");
     let listener = TcpListener::bind("127.0.0.1:0").expect("listener");
     let address = listener.local_addr().expect("address");
     let manifest = json!({
@@ -31,15 +30,6 @@ fn action_pack_plan_and_result_never_cross_the_broker_with_the_secret() {
         },
         "timeoutSeconds": 5
     });
-    serde_json::from_value::<env_provider::action_pack::ActionPackManifest>(manifest.clone())
-        .expect("manifest shape");
-    fs::write(
-        pack_source.path().join("action.json"),
-        serde_json::to_vec_pretty(&manifest).expect("manifest"),
-    )
-    .expect("write manifest");
-    env_provider::action_pack::install(pack_source.path(), app_data.path(), false)
-        .expect("install");
     let server = std::thread::spawn(move || {
         let (mut stream, _) = listener.accept().expect("accept");
         let mut request = [0_u8; 4096];
@@ -58,6 +48,25 @@ fn action_pack_plan_and_result_never_cross_the_broker_with_the_secret() {
         vec![service.root().to_path_buf()],
         app_data.path().to_path_buf(),
     );
+
+    let install_plan = broker
+        .call_tool(
+            "plan_install_action_pack",
+            json!({
+                "projectPath": project.root(),
+                "manifest": manifest,
+                "replace": false
+            }),
+        )
+        .expect("plan Action Pack install");
+    assert_eq!(install_plan["risk"], "local-action-pack-install");
+    assert!(!install_plan.to_string().contains(CANARY));
+    let install_plan_id = install_plan["planId"].as_str().expect("install plan id");
+    let installed = broker
+        .call_tool("apply_plan", json!({ "planId": install_plan_id }))
+        .expect("install Action Pack");
+    assert_eq!(installed["id"], "local.test.api-check");
+    assert!(!installed.to_string().contains(CANARY));
 
     let packs = broker
         .call_tool(
@@ -87,6 +96,120 @@ fn action_pack_plan_and_result_never_cross_the_broker_with_the_secret() {
     assert_eq!(result["succeeded"], true);
     assert_eq!(result["statusCode"], 200);
     assert!(!result.to_string().contains(CANARY));
+    let audit = fs::read_to_string(
+        app_data
+            .path()
+            .join("agent-activity")
+            .join(format!("{}.jsonl", service.project_id())),
+    )
+    .expect("Action audit");
+    assert!(audit.contains("local-action-pack-install"));
+    assert!(audit.contains("opaque-action-pack"));
+    assert!(!audit.contains(CANARY));
+}
+
+#[test]
+fn action_pack_install_plan_validates_manifest_and_replace_intent() {
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+    let manifest = json!({
+        "schemaVersion": 1,
+        "id": "local.test.install-check",
+        "displayName": "Install check",
+        "description": "Synthetic install-only action",
+        "packVersion": "1.0.0",
+        "actionProtocolVersion": "0.1.0",
+        "type": "http",
+        "method": "HEAD",
+        "url": "https://api.example.test/health",
+        "secretBindings": {
+            "Authorization": {
+                "source": "header",
+                "format": "Bearer {value}"
+            }
+        },
+        "resultPolicy": {
+            "status": true,
+            "duration": true,
+            "body": false,
+            "successStatusCodes": [200]
+        },
+        "timeoutSeconds": 5
+    });
+
+    let plan = broker
+        .call_tool(
+            "plan_install_action_pack",
+            json!({
+                "projectPath": project.root(),
+                "manifest": manifest.clone()
+            }),
+        )
+        .expect("plan initial install");
+    let plan_id = plan["planId"].as_str().expect("install plan id");
+    broker
+        .call_tool("apply_plan", json!({ "planId": plan_id }))
+        .expect("apply initial install");
+
+    let duplicate = broker
+        .call_tool(
+            "plan_install_action_pack",
+            json!({
+                "projectPath": project.root(),
+                "manifest": manifest.clone(),
+                "replace": false
+            }),
+        )
+        .expect_err("duplicate install without replace");
+    assert!(duplicate.to_string().contains("ACTION_PACK_EXISTS"));
+
+    let replace_plan = broker
+        .call_tool(
+            "plan_install_action_pack",
+            json!({
+                "projectPath": project.root(),
+                "manifest": manifest,
+                "replace": true
+            }),
+        )
+        .expect("plan explicit replacement");
+    let replace_plan_id = replace_plan["planId"].as_str().expect("replace plan id");
+    broker
+        .call_tool("apply_plan", json!({ "planId": replace_plan_id }))
+        .expect("apply replacement");
+
+    let unsafe_manifest = json!({
+        "schemaVersion": 1,
+        "id": "local.test.unsafe-shell",
+        "displayName": "Unsafe shell",
+        "description": "Synthetic rejected action",
+        "packVersion": "1.0.0",
+        "actionProtocolVersion": "0.1.0",
+        "type": "cli",
+        "executableCandidates": ["bash"],
+        "versionArgs": ["--version"],
+        "profiles": [{
+            "id": "shell-v1",
+            "versionRequirement": ">=1",
+            "arguments": ["run"]
+        }],
+        "secretBinding": "value",
+        "secretTransport": "stdin",
+        "resultPolicy": { "success": true, "exitCode": true, "duration": true },
+        "timeoutSeconds": 5
+    });
+    let unsafe_result = broker.call_tool(
+        "plan_install_action_pack",
+        json!({
+            "projectPath": project.root(),
+            "manifest": unsafe_manifest
+        }),
+    );
+    assert!(unsafe_result.is_err());
 }
 
 #[test]
@@ -162,6 +285,38 @@ fn provider_compare_returns_only_redacted_state_for_protected_values() {
 
     assert_eq!(result["items"][0]["state"], "unverifiable");
     assert!(!result.to_string().contains(CANARY));
+    assert_eq!(
+        service
+            .codex_access("GPT_API_KEY")
+            .expect("protected access"),
+        CodexAccess::Protected
+    );
+}
+
+#[test]
+fn android_app_links_rejects_a_generic_secret_before_any_network_request() {
+    let (project, service) = registered_project();
+    let broker = Broker::with_registered_roots(vec![service.root().to_path_buf()]);
+    let file = [".", "env", ".local"].concat();
+    let error = broker
+        .call_tool(
+            "verify_android_app_links",
+            json!({
+                "projectPath": project.root(),
+                "file": file,
+                "key": "GPT_API_KEY",
+                "packageName": "com.example.app",
+                "hosts": ["example.test"]
+            }),
+        )
+        .expect_err("generic secrets are not verifier inputs");
+
+    assert!(
+        error
+            .to_string()
+            .contains("ANDROID_APP_LINKS_KEY_NOT_ELIGIBLE")
+    );
+    assert!(!error.to_string().contains(CANARY));
     assert_eq!(
         service
             .codex_access("GPT_API_KEY")

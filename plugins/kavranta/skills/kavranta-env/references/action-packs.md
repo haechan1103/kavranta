@@ -1,8 +1,9 @@
 # Action Pack authoring
 
 Use an Action Pack only for one bounded, locally trusted CLI or HTTP operation. It is
-not a generic shell or HTTP client. The user installs `action.json` in Kavranta;
-an agent never installs or executes source files directly.
+not a generic shell or HTTP client. For a concrete user-requested action, an agent may
+register a value-free manifest through `plan_install_action_pack`; a recommendation
+alone grants no installation authority.
 
 ## HTTP
 
@@ -71,10 +72,27 @@ an agent never installs or executes source files directly.
 - Choose the narrowest semantic-version range verified against official docs.
 - Use direct executable candidates only. Shells, interpreters, `.cmd`, and `.bat`
   launchers are rejected.
-- Each Profile contains exactly one `{variableName}` across its argument tokens.
+- Each Profile may contain at most one `{variableName}` across its argument tokens.
+  A fixed one-shot generator may omit it and use literal action/output arguments.
 - Protocol v1 has one secret binding and `stdin` is the only value transport.
 - Never add `{value}` to arguments, environment variables, paths, or files.
 - stdout/stderr are discarded. Results contain only status metadata.
+
+## Agent registration
+
+1. Call `list_action_packs` and reuse a matching installed Pack when available.
+2. If none matches a concrete requested action, verify the fixed target, executable
+   contract, and side effect from authoritative documentation.
+3. Call `plan_install_action_pack` with the complete value-free manifest and
+   `replace: false` for a new Pack.
+4. Verify the redacted plan target, then call `apply_plan` immediately. Do not ask
+   the user to repeat the installation in the desktop app.
+5. List Packs again, bind managed variable names with `plan_action`, and apply it.
+
+Set `replace: true` only for an explicitly requested Pack update. Never include a
+secret, credential, dynamic command, response body, or generated output in the
+manifest or plan. The Pack remains installed locally after the task and can be
+removed from the Kavranta desktop app.
 
 Use a Personal Provider Pack instead when the operation is a normal per-variable
 deployment push with provider targets. Use a compiled official adapter when the

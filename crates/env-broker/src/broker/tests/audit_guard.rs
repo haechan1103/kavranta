@@ -27,6 +27,55 @@ fn broker_exposes_no_account_storage_or_permission_capability() {
 }
 
 #[test]
+fn broker_exposes_a_closed_action_pack_install_plan_schema() {
+    let definitions = tool_definitions();
+    let tool = definitions
+        .as_array()
+        .expect("tool definitions")
+        .iter()
+        .find(|tool| tool["name"] == "plan_install_action_pack")
+        .expect("Action Pack install tool");
+    let schema = &tool["inputSchema"];
+
+    assert_eq!(schema["additionalProperties"], false);
+    assert!(schema["properties"]["manifest"]["oneOf"].is_array());
+    assert!(schema["properties"].get("command").is_none());
+    assert!(schema["properties"].get("value").is_none());
+}
+
+#[test]
+fn android_app_links_tool_accepts_only_semantic_identifiers() {
+    let definitions = tool_definitions();
+    let tool = definitions
+        .as_array()
+        .expect("tool definitions")
+        .iter()
+        .find(|tool| tool["name"] == "verify_android_app_links")
+        .expect("Android App Links tool");
+    let properties = &tool["inputSchema"]["properties"];
+
+    assert_eq!(tool["inputSchema"]["additionalProperties"], false);
+    for forbidden in [
+        "value",
+        "fingerprint",
+        "candidate",
+        "url",
+        "body",
+        "command",
+    ] {
+        assert!(properties.get(forbidden).is_none());
+    }
+    assert_eq!(properties["hosts"]["maxItems"], 10);
+    assert_eq!(
+        audit_category(
+            "verify_android_app_links",
+            "opaque-public-fingerprint-verification"
+        ),
+        "provider-compare"
+    );
+}
+
+#[test]
 fn audit_schema_contains_only_allowlisted_metadata() {
     let paths = vec![".env.local".to_owned()];
     let keys = vec!["GPT_API_KEY".to_owned()];
@@ -201,6 +250,99 @@ fn guard_denies_shell_and_patch_env_access() {
             "deny"
         );
     }
+}
+
+#[test]
+fn guard_allows_source_patch_that_only_mentions_env_paths_in_changed_lines() {
+    let runtime_file = ["runtime.", "env", ".staging"].concat();
+    let dotenv_file = [".", "env", ".local"].concat();
+    let wrangler_file = [".dev", ".vars", ".preview"].concat();
+    for input in [
+        json!({
+            "tool_name": "apply_patch",
+            "tool_input": {
+                "patch": format!(
+                    "*** Begin Patch\n*** Update File: deploy.sh\n@@\n-verify --env-file {runtime_file}\n+verify --env-file {runtime_file} --strict\n*** End Patch\n"
+                )
+            }
+        }),
+        json!({
+            "toolName": "ApplyPatch",
+            "toolInput": {
+                "patchText": format!(
+                    "*** Begin Patch\r\n*** Update File: docs/deployment.md\r\n@@\r\n-Use {dotenv_file}\r\n+Use {wrangler_file}\r\n*** End Patch\r\n"
+                )
+            }
+        }),
+    ] {
+        assert_eq!(guard_hook_decision(&input), json!({}));
+    }
+}
+
+#[test]
+fn guard_blocks_patch_when_any_declared_target_is_env_data() {
+    let targets = [
+        ("Update File", [".", "env", ".local"].concat()),
+        (
+            "Add File",
+            ["workers/api/.dev", ".vars", ".preview"].concat(),
+        ),
+        (
+            "Delete File",
+            ["secrets/runtime.", "env", ".staging"].concat(),
+        ),
+    ];
+    for (operation, target) in targets {
+        let input = json!({
+            "tool_name": "apply_patch",
+            "tool_input": {
+                "patch": format!(
+                    "*** Begin Patch\n*** {operation}: {target}\n@@\n-old\n+new\n*** End Patch\n"
+                )
+            }
+        });
+        assert_guard_denies(input);
+    }
+
+    let move_target = ["config/runtime.", "env", ".production"].concat();
+    assert_guard_denies(json!({
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "patch": format!(
+                "*** Begin Patch\n*** Update File: deploy.sh\n*** Move to: {move_target}\n@@\n-old\n+new\n*** End Patch\n"
+            )
+        }
+    }));
+
+    let mixed_target = ["config/.", "env", ".production"].concat();
+    assert_guard_denies(json!({
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "patch": format!(
+                "*** Begin Patch\n*** Update File: deploy.sh\n@@\n-old\n+new\n*** Update File: {mixed_target}\n@@\n-old\n+new\n*** End Patch\n"
+            )
+        }
+    }));
+}
+
+#[test]
+fn guard_fails_closed_for_unparseable_patch_that_mentions_an_env_path() {
+    let target = [".", "env", ".local"].concat();
+    let input = json!({
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "patch": format!("*** Begin Patch\n@@\n+Read {target} directly\n*** End Patch\n")
+        }
+    });
+
+    assert_guard_denies(input);
+}
+
+fn assert_guard_denies(input: Value) {
+    assert_eq!(
+        guard_hook_decision(&input)["hookSpecificOutput"]["permissionDecision"],
+        "deny"
+    );
 }
 
 #[test]

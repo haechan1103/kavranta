@@ -92,7 +92,10 @@ pub(crate) fn audit_category(operation: &str, policy_decision: &str) -> &'static
         "structure-inspection"
     } else if operation == "read_allowed_value" {
         "value-read"
-    } else if operation == "compare_deployment_values" {
+    } else if matches!(
+        operation,
+        "compare_deployment_values" | "verify_android_app_links"
+    ) {
         "provider-compare"
     } else if policy_decision == "opaque-action-pack" {
         "action-execution"
