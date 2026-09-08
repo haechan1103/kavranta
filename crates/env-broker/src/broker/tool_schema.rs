@@ -230,6 +230,25 @@ pub fn tool_definitions() -> Value {
             })
         ),
         tool(
+            "verify_android_app_links",
+            "Compare one managed Android certificate-fingerprint list with the public App Links statements for explicit hosts. Returns package/host states and counts only; never accepts or returns fingerprints, hashes, response bodies, URLs, or values.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "projectPath": { "type": "string" },
+                    "file": { "type": "string" },
+                    "key": { "type": "string" },
+                    "packageName": { "type": "string" },
+                    "hosts": {
+                        "type": "array", "minItems": 1, "maxItems": 10,
+                        "items": { "type": "string" }
+                    }
+                },
+                "required": ["projectPath", "file", "key", "packageName", "hosts"],
+                "additionalProperties": false
+            })
+        ),
+        tool(
             "plan_provider_push",
             "Create a redacted one-way provider push plan. Values remain inside Rust and are resolved only when apply_plan is called.",
             json!({
@@ -270,6 +289,20 @@ pub fn tool_definitions() -> Value {
             })
         ),
         tool(
+            "plan_install_action_pack",
+            "Create a redacted plan to install or explicitly replace one validated local Action Pack from a value-free manifest. The current user request must name the intended fixed CLI or API action.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "projectPath": { "type": "string" },
+                    "manifest": action_pack_manifest_schema(),
+                    "replace": { "type": "boolean", "default": false }
+                },
+                "required": ["projectPath", "manifest"],
+                "additionalProperties": false
+            })
+        ),
+        tool(
             "plan_action",
             "Create a redacted plan for one locally installed Action Pack. Bindings map pack binding IDs to managed variable names; raw values, commands, output, and response bodies are never accepted or returned.",
             json!({
@@ -303,4 +336,131 @@ pub fn tool_definitions() -> Value {
 
 fn tool(name: &str, description: &str, input_schema: Value) -> Value {
     json!({ "name": name, "description": description, "inputSchema": input_schema })
+}
+
+fn action_pack_manifest_schema() -> Value {
+    let common = json!({
+        "schemaVersion": { "type": "integer", "const": 1 },
+        "id": { "type": "string" },
+        "displayName": { "type": "string" },
+        "description": { "type": "string" },
+        "packVersion": { "type": "string" },
+        "actionProtocolVersion": { "type": "string", "const": "0.1.0" }
+    });
+    let common = common.as_object().cloned().unwrap_or_default();
+
+    let mut cli = common.clone();
+    cli.extend(
+        json!({
+            "type": { "const": "cli" },
+            "executableCandidates": {
+                "type": "array", "minItems": 1, "maxItems": 8,
+                "items": { "type": "string" }
+            },
+            "versionArgs": {
+                "type": "array", "minItems": 1, "maxItems": 8,
+                "items": { "type": "string" }
+            },
+            "profiles": {
+                "type": "array", "minItems": 1, "maxItems": 8,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": { "type": "string" },
+                        "versionRequirement": { "type": "string" },
+                        "arguments": {
+                            "type": "array", "minItems": 1, "maxItems": 32,
+                            "items": { "type": "string" }
+                        }
+                    },
+                    "required": ["id", "versionRequirement", "arguments"],
+                    "additionalProperties": false
+                }
+            },
+            "secretBinding": { "type": "string" },
+            "secretTransport": { "type": "string", "const": "stdin" },
+            "resultPolicy": {
+                "type": "object",
+                "properties": {
+                    "success": { "type": "boolean" },
+                    "exitCode": { "type": "boolean" },
+                    "duration": { "type": "boolean" }
+                },
+                "additionalProperties": false
+            },
+            "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 120 }
+        })
+        .as_object()
+        .cloned()
+        .unwrap_or_default(),
+    );
+
+    let mut http = common;
+    http.extend(
+        json!({
+            "type": { "const": "http" },
+            "method": { "type": "string", "enum": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"] },
+            "url": { "type": "string" },
+            "secretBindings": {
+                "type": "object", "minProperties": 1, "maxProperties": 16,
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                        "source": { "type": "string", "const": "header" },
+                        "name": { "type": ["string", "null"] },
+                        "format": { "type": "string" }
+                    },
+                    "required": ["source", "format"],
+                    "additionalProperties": false
+                }
+            },
+            "resultPolicy": {
+                "type": "object",
+                "properties": {
+                    "status": { "type": "boolean" },
+                    "duration": { "type": "boolean" },
+                    "body": { "type": "boolean", "const": false },
+                    "successStatusCodes": {
+                        "type": "array",
+                        "items": { "type": "integer", "minimum": 100, "maximum": 599 }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 120 }
+        })
+        .as_object()
+        .cloned()
+        .unwrap_or_default(),
+    );
+
+    let required = [
+        "schemaVersion",
+        "id",
+        "displayName",
+        "description",
+        "packVersion",
+        "actionProtocolVersion",
+    ];
+    json!({
+        "oneOf": [
+            {
+                "type": "object",
+                "properties": cli,
+                "required": required.iter().copied().chain([
+                    "type", "executableCandidates", "versionArgs", "profiles",
+                    "secretBinding", "secretTransport", "resultPolicy", "timeoutSeconds"
+                ]).collect::<Vec<_>>(),
+                "additionalProperties": false
+            },
+            {
+                "type": "object",
+                "properties": http,
+                "required": required.iter().copied().chain([
+                    "type", "method", "url", "secretBindings", "resultPolicy", "timeoutSeconds"
+                ]).collect::<Vec<_>>(),
+                "additionalProperties": false
+            }
+        ]
+    })
 }

@@ -153,6 +153,14 @@ impl Broker {
                         serde_json::to_value(result).map_err(EnvError::serialization)
                     })
             }
+            PlannedOperation::InstallActionPack { manifest, replace } => {
+                let app_data = self.provider_app_data()?;
+                env_provider::action_pack::install_manifest(manifest, &app_data, replace)
+                    .map_err(action_pack_error)
+                    .and_then(|result| {
+                        serde_json::to_value(result).map_err(EnvError::serialization)
+                    })
+            }
             PlannedOperation::ActionPack(request) => {
                 let app_data = self.provider_app_data()?;
                 env_provider::action_pack::execute(&service, &app_data, request)

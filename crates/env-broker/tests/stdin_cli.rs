@@ -54,6 +54,52 @@ fn cursor_hook_cli_blocks_agent_context_and_tab_env_reads_without_echoing_input(
 }
 
 #[test]
+fn guard_hook_cli_distinguishes_patch_targets_from_changed_line_mentions() {
+    let binary = env!("CARGO_BIN_EXE_kavranta-broker");
+    let data_name = ["runtime.", "env", ".staging"].concat();
+    let source_patch = json!({
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "patch": format!(
+                "*** Begin Patch\n*** Update File: deploy.sh\n@@\n-old {data_name}\n+new {data_name}\n*** End Patch\n"
+            )
+        }
+    });
+    let data_patch = json!({
+        "tool_name": "apply_patch",
+        "tool_input": {
+            "patch": format!(
+                "*** Begin Patch\n*** Update File: {data_name}\n@@\n-old\n+new\n*** End Patch\n"
+            )
+        }
+    });
+
+    assert_eq!(run_guard_hook(binary, &source_patch), json!({}));
+    assert_eq!(
+        run_guard_hook(binary, &data_patch)["hookSpecificOutput"]["permissionDecision"],
+        "deny"
+    );
+}
+
+fn run_guard_hook(binary: &str, input: &Value) -> Value {
+    let mut process = Command::new(binary)
+        .arg("guard-hook")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn Guard hook");
+    serde_json::to_writer(process.stdin.as_mut().expect("Guard stdin"), input)
+        .expect("write Guard input");
+    drop(process.stdin.take());
+
+    let output = process.wait_with_output().expect("wait for Guard hook");
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    serde_json::from_slice(&output.stdout).expect("Guard response")
+}
+
+#[test]
 fn broker_plan_and_separate_cli_process_complete_an_opaque_stdin_write() {
     let project = SyntheticProject::new();
     project.write(".env.local", "AUTH_SECRET=fake_before\n");

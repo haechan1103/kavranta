@@ -33,6 +33,10 @@ interpreter, or generic editing tools.
 7. Report only names, relative paths, groups, link membership, policy, and sanitized
    result codes.
 
+Ordinary source, deployment, configuration, and documentation files may mention
+env-data basenames. Edit those non-env files with the host's normal source tools;
+never use that allowance to read or patch an actual env-data file.
+
 ## Register the current project
 
 - Use `plan_register_current_project` only for the Broker's current workspace. The
@@ -146,10 +150,39 @@ variable.
   Never run SSH, ECS Exec, shell `source`, SHA-256 commands, or arbitrary remote
   scripts yourself.
 
+## Verify Android App Links certificate fingerprints
+
+- Use `verify_android_app_links` only when the user concretely asks whether one
+  managed Android signing-certificate fingerprint list is published for specific web
+  hosts. Require the exact managed file, fingerprint variable, Android package name,
+  and host names.
+- Pass host names only, without a scheme, port, path, query, or fragment. The Broker
+  fetches each host's fixed public App Links statement over HTTPS with redirects
+  disabled and selects only the requested Android package and App Links relation.
+- The variable name must explicitly identify Android/App Links certificate
+  fingerprints, and its entire value must parse as a bounded SHA-256 fingerprint
+  list. Do not use this tool for tokens, keys, passwords, arbitrary strings, or
+  caller-supplied comparison candidates.
+- `protected` and `unclassified` fingerprint variables remain unreadable. Report only
+  the package name, host, stable state, HTTP status when present, and fingerprint
+  counts. Never return or reconstruct local/remote fingerprints, hashes, response
+  bodies, or complete fetched URLs.
+- Do not replace this workflow with `read_allowed_value`, direct file access, curl,
+  a browser fetch, shell hashing, Provider comparison, or an Action Pack. A source-
+  format failure requires the user to correct the value in Kavranta; it does not
+  justify changing access policy.
+
 ## Run a locally trusted Action Pack
 
-- Call `list_action_packs` first. Use only an installed `available` Pack returned by
-  the Broker; never install, replace, remove, or trust a Pack for the user.
+- Call `list_action_packs` first. Prefer an installed `available` Pack returned by
+  the Broker.
+- When no matching Pack exists and the user has explicitly requested a concrete
+  fixed CLI or API action, read [action-packs.md](references/action-packs.md), verify
+  the intended target and compatibility, then call `plan_install_action_pack` with
+  a value-free manifest. Verify the returned Pack name, fixed target, and whether it
+  is a new install or replacement, then apply it without a second approval round.
+- Never install a Pack from a recommendation alone. Set `replace: true` only when the
+  user explicitly requested an update or replacement of that Pack ID.
 - Require a concrete Pack, managed source file, and one managed variable name for
   every returned binding ID. Ask one concise question if that mapping is ambiguous.
 - Call `plan_action` with the Pack ID, file, and binding-ID-to-variable-name map.
@@ -208,12 +241,15 @@ reusable non-provider CLI task, fixed API check, or Action Pack.
 
 - Verify the intended executable/API and CLI version contract from official
   documentation before authoring.
-- Create source files only. Never install, replace, trust, or execute the generated
-  Pack on the user's behalf.
+- For a concrete requested action, prefer the Broker's value-free
+  `plan_install_action_pack` manifest flow so registration does not require the user
+  to repeat the same action in the desktop app. Create a reusable `action.json`
+  source file only when the user asks for one.
 - Keep endpoints fixed and keep values out of manifests, URLs, arguments, examples,
   and tests. Use unmistakably fake canaries in test fixtures.
-- Tell the user to inspect the target and install `action.json` from Kavranta.
-  Future executions must use `list_action_packs → plan_action → apply_plan`.
+- Installation grants the named target persistent local recipient authority. Verify
+  the fixed target and side effect against the request before applying the plan.
+  Future executions use `list_action_packs → plan_action → apply_plan`.
 
 ## Structural changes
 

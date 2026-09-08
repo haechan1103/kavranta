@@ -22,6 +22,8 @@
 | Inspect available deployment providers | `list_deployment_providers` |
 | Opaque provider push | `list_deployment_providers` → `plan_provider_push` → `apply_plan` |
 | Redacted provider comparison | `list_deployment_providers` → `compare_deployment_values` |
+| Android App Links fingerprint verification | `verify_android_app_links` |
+| Install a concretely requested Action Pack | `list_action_packs` → `plan_install_action_pack` → `apply_plan` → `list_action_packs` |
 | Run installed Action Pack | `list_action_packs` → `plan_action` → `apply_plan` |
 
 ## Failures
@@ -65,10 +67,16 @@
   or lacks the fixed remote verifier. For Runtime comparison, list registered targets
   and use only the returned target ID and source file. Never infer equality from a
   prior push receipt and never fall back to a shell/hash/SSH recipe.
-- Missing, invalid, unavailable, or failed Action Pack: list Packs again and report
-  the stable code. Ask the user to inspect/install a compatible Pack in the desktop
-  app when needed. Never fall back to its executable, curl, raw HTTP, shell, or a
-  direct value read.
+- Android App Links source rejected: use only a variable whose name clearly identifies
+  Android/App Links certificate fingerprints and whose entire value is a SHA-256
+  fingerprint list. Keep its access policy unchanged. For per-host HTTP, content-type,
+  document, package, relation, or mismatch states, report the stable state and counts
+  only; never fetch the document again through a generic network tool or ask for the
+  fingerprint in chat.
+- Missing Action Pack for a concrete requested action: verify the fixed target and
+  manifest contract, then use the request-authorized install plan. For invalid,
+  unavailable, or failed Packs, report the stable code. Never fall back to the
+  executable, curl, raw HTTP, shell, or a direct value read.
 
 ## Output allowlist
 
@@ -76,5 +84,6 @@ Return project IDs, relative paths, the trusted Broker executable path supplied 
 an opaque stdin plan, variable names, descriptions, group names,
 presence (`empty` or `present`), policy, link IDs/members, plan IDs, risks, and
 sanitized result codes, Action success, optional HTTP status, optional duration, and
-optional CLI exit code. Do not return assignment lines, values, value fragments,
+optional CLI exit code, and Android App Links host/package comparison states and
+counts. Do not return assignment lines, values, value fragments,
 masked prefixes/suffixes, hashes, response bodies, CLI output, or MCP argument echoes.

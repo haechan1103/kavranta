@@ -14,6 +14,7 @@ use env_core::{
     SaveDescriptionRequest, SaveValueRequest,
 };
 use env_provider::action_pack::ActionExecutionRequest;
+use env_provider::android_app_links::AndroidAppLinksVerificationRequest;
 use env_provider::provider_push::{ProviderCompareRequest, ProviderPushRequest};
 use env_registry::ProjectRegistration;
 use serde::{Deserialize, Serialize};
@@ -77,6 +78,10 @@ enum PlannedOperation {
         request: OpaqueValueCopyRequest,
     },
     ProviderPush(ProviderPushRequest),
+    InstallActionPack {
+        manifest: env_provider::action_pack::ActionPackManifest,
+        replace: bool,
+    },
     ActionPack(ActionExecutionRequest),
 }
 
@@ -258,6 +263,15 @@ struct PlanActionArgs {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PlanInstallActionPackArgs {
+    project_path: String,
+    manifest: env_provider::action_pack::ActionPackManifest,
+    #[serde(default)]
+    replace: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ListTeamChannelsArgs {
     project_path: String,
 }
@@ -305,6 +319,16 @@ struct CompareDeploymentValuesArgs {
     aws_region: Option<String>,
     aws_path_prefix: Option<String>,
     runtime_target_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct VerifyAndroidAppLinksArgs {
+    project_path: String,
+    file: String,
+    key: String,
+    package_name: String,
+    hosts: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -45,16 +45,29 @@ pub fn install(
         source.to_path_buf()
     };
     let manifest = read_manifest(&source)?;
+    install_manifest(manifest, app_data, replace)
+}
+
+pub fn prepare_install(
+    manifest: &ActionPackManifest,
+    app_data: &Path,
+    replace: bool,
+) -> Result<ActionPackInfo, ActionPackError> {
+    validate_manifest(manifest)?;
+    ensure_install_target(&manifest.id, app_data, replace)?;
+    Ok(pack_info(manifest, None))
+}
+
+pub fn install_manifest(
+    manifest: ActionPackManifest,
+    app_data: &Path,
+    replace: bool,
+) -> Result<ActionPackInfo, ActionPackError> {
     validate_manifest(&manifest)?;
     let directory = packs_directory(app_data);
     fs::create_dir_all(&directory).map_err(|_| storage_failed())?;
     let destination = directory.join(format!("{}.json", manifest.id));
-    if destination.exists() && !replace {
-        return Err(ActionPackError::new(
-            "ACTION_PACK_EXISTS",
-            "같은 ID의 Action Pack이 이미 설치되어 있습니다.",
-        ));
-    }
+    ensure_install_target(&manifest.id, app_data, replace)?;
 
     let bytes = serde_json::to_vec_pretty(&manifest).map_err(|_| invalid_pack())?;
     let mut staging = tempfile::NamedTempFile::new_in(&directory).map_err(|_| storage_failed())?;
@@ -67,6 +80,20 @@ pub fn install(
         .persist(&destination)
         .map_err(|_| storage_failed())?;
     Ok(pack_info(&manifest, None))
+}
+
+fn ensure_install_target(id: &str, app_data: &Path, replace: bool) -> Result<(), ActionPackError> {
+    let destination = packs_directory(app_data).join(format!("{id}.json"));
+    if destination.exists() && !replace {
+        return Err(ActionPackError::new(
+            "ACTION_PACK_EXISTS",
+            "같은 ID의 Action Pack이 이미 설치되어 있습니다.",
+        ));
+    }
+    if destination.exists() {
+        reject_symlink(&destination)?;
+    }
+    Ok(())
 }
 
 pub fn remove(id: &str, app_data: &Path) -> Result<(), ActionPackError> {
@@ -242,7 +269,7 @@ fn validate_manifest(manifest: &ActionPackManifest) -> Result<(), ActionPackErro
                     map_provider_validation(validate_text(argument, 1, 256))?;
                     variable_name_slots += validate_argument_template(argument)?;
                 }
-                if variable_name_slots != 1 {
+                if variable_name_slots > 1 {
                     return Err(invalid_pack());
                 }
             }
@@ -494,6 +521,16 @@ mod tests {
             timeout_seconds: 30,
         };
         validate_manifest(&cli).expect("CLI pack");
+
+        let ActionDefinition::Cli { profiles, .. } = &mut cli.action else {
+            unreachable!()
+        };
+        profiles[0].arguments = vec![
+            "generate".to_owned(),
+            "--output".to_owned(),
+            "result.bin".to_owned(),
+        ];
+        validate_manifest(&cli).expect("CLI pack without a variable-name argument");
     }
 
     #[test]
