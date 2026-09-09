@@ -44,6 +44,49 @@ fn broker_exposes_a_closed_action_pack_install_plan_schema() {
 }
 
 #[test]
+fn registered_discovery_tools_expose_only_bounded_redacted_queries() {
+    let definitions = tool_definitions();
+    let definitions = definitions.as_array().expect("tool definitions");
+    let project_tool = definitions
+        .iter()
+        .find(|tool| tool["name"] == "find_registered_projects")
+        .expect("registered project tool");
+    let variable_tool = definitions
+        .iter()
+        .find(|tool| tool["name"] == "search_registered_variable_sources")
+        .expect("registered variable tool");
+
+    assert_eq!(project_tool["inputSchema"]["additionalProperties"], false);
+    assert_eq!(
+        project_tool["inputSchema"]["properties"]["limit"]["maximum"],
+        25
+    );
+    assert_eq!(variable_tool["inputSchema"]["additionalProperties"], false);
+    assert_eq!(
+        variable_tool["inputSchema"]["properties"]["limit"]["maximum"],
+        50
+    );
+    for forbidden in ["value", "sourceLine", "command", "path"] {
+        assert!(
+            variable_tool["inputSchema"]["properties"]
+                .get(forbidden)
+                .is_none()
+        );
+    }
+    assert_eq!(
+        audit_category("find_registered_projects", "redacted-project-lookup"),
+        "structure-inspection"
+    );
+    assert_eq!(
+        audit_category(
+            "search_registered_variable_sources",
+            "redacted-cross-project-search"
+        ),
+        "structure-inspection"
+    );
+}
+
+#[test]
 fn android_app_links_tool_accepts_only_semantic_identifiers() {
     let definitions = tool_definitions();
     let tool = definitions

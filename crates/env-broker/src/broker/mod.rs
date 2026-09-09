@@ -78,6 +78,10 @@ impl Broker {
             "find_reusable_variable_sources" => {
                 self.find_reusable_variable_sources(parse(arguments)?)
             }
+            "find_registered_projects" => self.find_registered_projects(parse(arguments)?),
+            "search_registered_variable_sources" => {
+                self.search_registered_variable_sources(parse(arguments)?)
+            }
             "read_allowed_value" => self.read_allowed(parse(arguments)?),
             "plan_set_allowed_value" => self.plan_value(parse(arguments)?),
             "plan_stdin_value_write" => self.plan_stdin_value(parse(arguments)?),

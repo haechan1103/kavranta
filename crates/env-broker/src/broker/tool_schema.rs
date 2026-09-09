@@ -26,6 +26,28 @@ pub fn tool_definitions() -> Value {
             })
         ),
         tool(
+            "find_registered_projects",
+            "Resolve a project name, alias, ID, or path fragment against locally registered projects. Returns bounded available project metadata only, never environment values.",
+            json!({
+                "type": "object", "properties": {
+                    "query": { "type": "string", "minLength": 1, "maxLength": 80 },
+                    "limit": { "type": "integer", "minimum": 1, "maximum": 25, "default": 10 }
+                }, "required": ["query"], "additionalProperties": false
+            })
+        ),
+        tool(
+            "search_registered_variable_sources",
+            "Search variable names across registered projects, optionally scoped by stable project ID. Returns bounded key, policy, file, and empty/present metadata only; never values or source lines.",
+            json!({
+                "type": "object", "properties": {
+                    "query": { "type": "string", "minLength": 2, "maxLength": 80 },
+                    "projectId": { "type": "string", "minLength": 1, "maxLength": 80 },
+                    "includeEmpty": { "type": "boolean", "default": false },
+                    "limit": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+                }, "required": ["query"], "additionalProperties": false
+            })
+        ),
+        tool(
             "read_allowed_value",
             "Explicitly read one value only when its policy is read-write.",
             json!({

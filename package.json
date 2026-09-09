@@ -1,7 +1,7 @@
 {
   "name": "kavranta",
   "private": true,
-  "version": "0.7.4",
+  "version": "0.7.5",
   "type": "module",
   "scripts": {
     "dev:website": "vite --config website/vite.config.ts",

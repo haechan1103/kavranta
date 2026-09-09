@@ -24,6 +24,7 @@ mod links;
 mod migration_export;
 mod persistence;
 mod project;
+mod search;
 mod structure;
 mod values;
 
@@ -124,6 +125,14 @@ pub struct OpaqueValueCopyRequest {
 pub struct RedactedOccurrenceReference {
     pub file: String,
     pub value_state: RedactedValueState,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RedactedVariableMatch {
+    pub key: String,
+    pub codex_access: CodexAccess,
+    pub occurrences: Vec<RedactedOccurrenceReference>,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -1,6 +1,6 @@
 {
   "name": "kavranta",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Safely inspect, plan, and manage registered project env files through a redacted local broker shared by AI coding agents.",
   "author": {
     "name": "haechan1103",
@@ -30,11 +30,13 @@
     "capabilities": [
       "Redacted env inspection",
       "Request-authorized current-project registration",
+      "Registered-project alias discovery",
       "Request-authorized mutation plans",
       "Safe env file creation",
       "Group and variable structure",
       "N-way variable links",
       "Opaque cross-project value reuse",
+      "Redacted cross-project variable discovery",
       "Encrypted team-channel inspection",
       "Opaque deployment provider push",
       "Value-hidden Expo EAS environment push",

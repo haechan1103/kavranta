@@ -4,5 +4,7 @@ mod files_and_values;
 mod links_and_providers;
 #[path = "tests/project.rs"]
 mod project;
+#[path = "tests/search.rs"]
+mod search;
 #[path = "tests/structure.rs"]
 mod structure;

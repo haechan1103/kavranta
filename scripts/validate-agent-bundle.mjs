@@ -66,6 +66,8 @@ assert(skillInterface.includes('display_name: "Kavranta Env Management"'), "Skil
 assert(skillInterface.includes("한국어"), "Skill default prompt must advertise the Korean workflow");
 assert(normalizedSkill.includes("plan_register_current_project"), "Skill must route safe current-project registration");
 assert(normalizedSkill.includes("find_reusable_variable_sources"), "Skill must route redacted cross-project source discovery");
+assert(normalizedSkill.includes("find_registered_projects"), "Skill must resolve registered project aliases before asking for paths");
+assert(normalizedSkill.includes("search_registered_variable_sources"), "Skill must route bounded variable-name discovery");
 assert(normalizedSkill.includes("plan_copy_variable_from_project"), "Skill must route opaque cross-project copy plans");
 assert(normalizedSkill.includes("plan_provider_push"), "Skill must route opaque provider push plans");
 assert(normalizedSkill.includes("personal-provider-packs.md"), "Skill must route Personal Provider Pack authoring");
