@@ -115,6 +115,183 @@ fn finds_and_copies_a_protected_value_across_registered_projects_opaquely() {
 }
 
 #[test]
+fn resolves_registered_project_aliases_and_searches_sources_without_values() {
+    let mobile = SyntheticProject::new();
+    let api = SyntheticProject::new();
+    let missing_manifest = SyntheticProject::new();
+    let mobile_canary = "fake_OPENROUTER_MOBILE_CANARY_31";
+    let api_canary = "fake_OPENROUTER_API_CANARY_47";
+    mobile.write(
+        ".env.local",
+        &format!("OPENROUTER_API_KEY={mobile_canary}\nOPENROUTER_EMPTY=\n"),
+    );
+    api.write(
+        ".env.production",
+        &format!("OPENROUTER_API_KEY={api_canary}\n"),
+    );
+    missing_manifest.write(
+        ".env.local",
+        "OPENROUTER_API_KEY=fake_UNINITIALIZED_CANARY_63\n",
+    );
+    let mobile_service = ProjectService::open(mobile.root()).expect("mobile service");
+    let api_service = ProjectService::open(api.root()).expect("api service");
+    mobile_service.initialize().expect("mobile initialize");
+    api_service.initialize().expect("api initialize");
+    let mobile_manifest_before = mobile.read(env_core::MANIFEST_FILE_NAME);
+    let app_data = tempfile::tempdir().expect("app data");
+    let stale_root = app_data.path().join("removed-project");
+    env_registry::write(
+        &app_data.path().join("projects.json"),
+        &env_registry::RegistryData {
+            projects: vec![
+                ProjectRegistration {
+                    id: mobile_service.project_id().to_owned(),
+                    name: "쏙핀 Mobile".to_owned(),
+                    display_path: mobile.root().to_string_lossy().into_owned(),
+                    root: mobile.root().to_path_buf(),
+                    file_labels: Default::default(),
+                },
+                ProjectRegistration {
+                    id: api_service.project_id().to_owned(),
+                    name: "쏙핀 API".to_owned(),
+                    display_path: api.root().to_string_lossy().into_owned(),
+                    root: api.root().to_path_buf(),
+                    file_labels: Default::default(),
+                },
+                ProjectRegistration {
+                    id: "missing-manifest".to_owned(),
+                    name: "쏙핀 Draft".to_owned(),
+                    display_path: missing_manifest.root().to_string_lossy().into_owned(),
+                    root: missing_manifest.root().to_path_buf(),
+                    file_labels: Default::default(),
+                },
+                ProjectRegistration {
+                    id: "stale-project".to_owned(),
+                    name: "쏙핀 Old".to_owned(),
+                    display_path: stale_root.to_string_lossy().into_owned(),
+                    root: stale_root,
+                    file_labels: Default::default(),
+                },
+            ],
+            ..env_registry::RegistryData::default()
+        },
+    )
+    .expect("registry");
+    let broker = Broker::with_workspace_and_app_data(
+        mobile.root().to_path_buf(),
+        app_data.path().to_path_buf(),
+    );
+
+    let projects = broker
+        .call_tool(
+            "find_registered_projects",
+            json!({ "query": "쏙핀", "limit": 10 }),
+        )
+        .expect("project lookup");
+    assert_eq!(
+        projects
+            .get("candidates")
+            .and_then(Value::as_array)
+            .map(Vec::len),
+        Some(2)
+    );
+    assert_eq!(projects.get("unavailableCount"), Some(&json!(2)));
+    assert!(projects.to_string().contains("projectPath"));
+    assert!(!projects.to_string().contains(mobile_canary));
+    assert!(!projects.to_string().contains(api_canary));
+
+    let scoped = broker
+        .call_tool(
+            "search_registered_variable_sources",
+            json!({
+                "query": "open-route",
+                "projectId": mobile_service.project_id(),
+                "includeEmpty": false
+            }),
+        )
+        .expect("scoped variable search");
+    let scoped_candidates = scoped
+        .get("candidates")
+        .and_then(Value::as_array)
+        .expect("scoped candidates");
+    assert_eq!(scoped_candidates.len(), 1);
+    assert_eq!(
+        scoped_candidates[0].get("key"),
+        Some(&json!("OPENROUTER_API_KEY"))
+    );
+    assert_eq!(
+        scoped_candidates[0].get("codexAccess"),
+        Some(&json!("protected"))
+    );
+    assert_eq!(scoped.get("searchedProjectCount"), Some(&json!(1)));
+
+    let global = broker
+        .call_tool(
+            "search_registered_variable_sources",
+            json!({ "query": "OPENROUTE", "limit": 1 }),
+        )
+        .expect("global variable search");
+    assert_eq!(global.get("truncated"), Some(&json!(true)));
+    assert_eq!(global.get("skippedProjectCount"), Some(&json!(2)));
+    assert_eq!(
+        global
+            .get("candidates")
+            .and_then(Value::as_array)
+            .map(Vec::len),
+        Some(1)
+    );
+    let serialized = global.to_string();
+    assert!(!serialized.contains(mobile_canary));
+    assert!(!serialized.contains(api_canary));
+    assert_eq!(
+        mobile.read(env_core::MANIFEST_FILE_NAME),
+        mobile_manifest_before
+    );
+    assert!(
+        !missing_manifest
+            .root()
+            .join(env_core::MANIFEST_FILE_NAME)
+            .exists()
+    );
+}
+
+#[test]
+fn registered_search_rejects_unbounded_or_trivial_requests() {
+    let broker = Broker::with_registered_roots(Vec::new());
+    assert!(
+        broker
+            .call_tool(
+                "find_registered_projects",
+                json!({ "query": "project", "limit": 26 })
+            )
+            .is_err()
+    );
+    assert!(
+        broker
+            .call_tool(
+                "search_registered_variable_sources",
+                json!({ "query": "_" })
+            )
+            .is_err()
+    );
+    let missing_scope = broker
+        .call_tool(
+            "search_registered_variable_sources",
+            json!({ "query": "OPENROUTE", "projectId": "not-registered" }),
+        )
+        .expect_err("missing scope must fail");
+    assert_eq!(missing_scope.code(), EnvErrorCode::UnregisteredProject);
+    assert!(
+        broker
+            .call_tool(
+                "search_registered_variable_sources",
+                json!({ "query": "A".repeat(81) })
+            )
+            .is_err()
+    );
+}
+
+#[test]
 fn plan_output_never_contains_replacement_value() {
     let (project, _) = registered_project();
     let replacement = "fake_REPLACEMENT_canary_82";

@@ -76,7 +76,9 @@ Kavranta is a local-first desktop app. Register a project and it discovers the r
 - **Remote Runtime checks:** compare a managed file with an allowlisted server target through an age-encrypted SSH verifier; the UI receives equality states, never remote values or hashes.
 - **Personal Provider Packs:** add a locally trusted stdin-only CLI integration without waiting for a Kavranta app release.
 - **AI provider operations:** supported agents can use the same opaque provider engine and value-free activity log as the desktop app.
-- **Cross-project reuse:** copy a protected same-name value between registered projects inside Rust without returning it to the agent or normal UI projection.
+- **Cross-project discovery and reuse:** resolve registered project aliases, search
+  variable-name fragments with redacted metadata, and copy a protected same-name
+  value inside Rust without returning it to the agent or normal UI projection.
 
 ## See the workflow
 
@@ -213,6 +215,7 @@ Inspect this project's env structure without reading values.
 Create a Database group and add an empty DATABASE_URL variable.
 Link GPT_API_KEY across local and development.
 Reuse this registered project's GEMINI_API_KEY here without showing it to me.
+Find the registered 쏙핀 project and show me its OpenRouter-like variable candidates without reading values.
 Push the selected deployment keys to AWS Secrets Manager under my-service/staging without showing their values.
 Push EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY to EAS development, preview, and production as Sensitive without showing its value.
 Generate AUTH_SECRET with `openssl rand -base64 32` and save it without showing the value.

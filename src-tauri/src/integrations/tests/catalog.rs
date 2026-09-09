@@ -27,6 +27,6 @@ fn catalog_validation_requires_every_agent_manifest() {
 
 #[test]
 fn agent_bundle_version_is_independent_from_the_app_release() {
-    assert_eq!(agent_bundle_version(), "2.2.0");
+    assert_eq!(agent_bundle_version(), "2.3.0");
     assert_ne!(agent_bundle_version(), env!("CARGO_PKG_VERSION"));
 }

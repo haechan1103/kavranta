@@ -87,7 +87,13 @@ pub(crate) fn audit_category(operation: &str, policy_decision: &str) -> &'static
         "project-registration"
     } else if matches!(
         operation,
-        "inspect_project" | "list_team_channels" | "list_runtime_targets" | "list_action_packs"
+        "inspect_project"
+            | "find_registered_projects"
+            | "search_registered_variable_sources"
+            | "find_reusable_variable_sources"
+            | "list_team_channels"
+            | "list_runtime_targets"
+            | "list_action_packs"
     ) {
         "structure-inspection"
     } else if operation == "read_allowed_value" {

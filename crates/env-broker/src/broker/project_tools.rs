@@ -1,6 +1,169 @@
 use super::super::*;
 
 impl Broker {
+    pub(super) fn find_registered_projects(
+        &self,
+        args: FindRegisteredProjectsArgs,
+    ) -> Result<Value, EnvError> {
+        let query = validated_project_query(&args.query)?;
+        let limit = validated_limit(args.limit, 10, 25)?;
+        let mut candidates = Vec::new();
+        let mut unavailable_count = 0_usize;
+
+        for registration in self.registered_projects()? {
+            let Some(rank) = project_match_rank(&registration, &query) else {
+                continue;
+            };
+            let Ok(service) = ProjectService::open(&registration.root) else {
+                unavailable_count += 1;
+                continue;
+            };
+            if registration.id != service.project_id()
+                || !service.root().join(env_core::MANIFEST_FILE_NAME).is_file()
+                || env_core::ManifestStore::for_root(service.root())
+                    .load()
+                    .is_err()
+            {
+                unavailable_count += 1;
+                continue;
+            }
+            candidates.push((
+                rank,
+                RegisteredProjectCandidate {
+                    project_id: service.project_id().to_owned(),
+                    project_name: registration.name,
+                    project_path: service.root().to_string_lossy().into_owned(),
+                },
+            ));
+        }
+
+        candidates.sort_by(|(left_rank, left), (right_rank, right)| {
+            left_rank
+                .cmp(right_rank)
+                .then_with(|| {
+                    left.project_name
+                        .to_lowercase()
+                        .cmp(&right.project_name.to_lowercase())
+                })
+                .then_with(|| left.project_id.cmp(&right.project_id))
+        });
+        let truncated = candidates.len() > limit;
+        candidates.truncate(limit);
+        let candidates = candidates
+            .into_iter()
+            .map(|(_, candidate)| candidate)
+            .collect::<Vec<_>>();
+        self.audit(
+            "registry",
+            "find_registered_projects",
+            &[],
+            &[],
+            "redacted-project-lookup",
+            "OK",
+        );
+        Ok(json!({
+            "candidates": candidates,
+            "unavailableCount": unavailable_count,
+            "truncated": truncated
+        }))
+    }
+
+    pub(super) fn search_registered_variable_sources(
+        &self,
+        args: SearchRegisteredVariableSourcesArgs,
+    ) -> Result<Value, EnvError> {
+        let normalized_query = validated_variable_query(&args.query)?;
+        let limit = validated_limit(args.limit, 20, 50)?;
+        let project_id = args
+            .project_id
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty());
+        if args.project_id.is_some()
+            && project_id.is_none_or(|value| {
+                value.chars().count() > 80 || value.chars().any(char::is_control)
+            })
+        {
+            return Err(EnvError::invalid(
+                "프로젝트 ID는 1~80자의 일반 문자여야 합니다.",
+            ));
+        }
+
+        let mut candidates = Vec::new();
+        let mut searched_project_count = 0_usize;
+        let mut skipped_project_count = 0_usize;
+        let mut scoped_registration_found = false;
+        for registration in self.registered_projects()? {
+            if project_id.is_some_and(|id| registration.id != id) {
+                continue;
+            }
+            scoped_registration_found |= project_id.is_some();
+            let Ok(service) = ProjectService::open(&registration.root) else {
+                skipped_project_count += 1;
+                continue;
+            };
+            if registration.id != service.project_id()
+                || !service.root().join(env_core::MANIFEST_FILE_NAME).is_file()
+            {
+                skipped_project_count += 1;
+                continue;
+            }
+            let Ok(matches) = service.search_redacted_variables(&args.query, args.include_empty)
+            else {
+                skipped_project_count += 1;
+                continue;
+            };
+            searched_project_count += 1;
+            for matched in matches {
+                candidates.push(RegisteredVariableSourceCandidate {
+                    project_id: service.project_id().to_owned(),
+                    project_name: registration.name.clone(),
+                    project_path: service.root().to_string_lossy().into_owned(),
+                    key: matched.key,
+                    codex_access: matched.codex_access,
+                    occurrences: matched.occurrences,
+                });
+            }
+        }
+        if project_id.is_some() && !scoped_registration_found {
+            return Err(EnvError::unregistered_project(
+                project_id.unwrap_or_default(),
+            ));
+        }
+
+        candidates.sort_by(|left, right| {
+            variable_match_rank(&left.key, &normalized_query)
+                .cmp(&variable_match_rank(&right.key, &normalized_query))
+                .then_with(|| {
+                    left.project_name
+                        .to_lowercase()
+                        .cmp(&right.project_name.to_lowercase())
+                })
+                .then_with(|| left.key.cmp(&right.key))
+                .then_with(|| left.project_id.cmp(&right.project_id))
+        });
+        let truncated = candidates.len() > limit;
+        candidates.truncate(limit);
+        let matched_keys = candidates
+            .iter()
+            .map(|candidate| candidate.key.clone())
+            .collect::<Vec<_>>();
+        self.audit(
+            project_id.unwrap_or("registry"),
+            "search_registered_variable_sources",
+            &[],
+            &matched_keys,
+            "redacted-cross-project-search",
+            "OK",
+        );
+        Ok(json!({
+            "candidates": candidates,
+            "searchedProjectCount": searched_project_count,
+            "skippedProjectCount": skipped_project_count,
+            "truncated": truncated
+        }))
+    }
+
     pub(super) fn plan_register_current_project(
         &self,
         _args: PlanRegisterProjectArgs,
@@ -215,6 +378,8 @@ impl Broker {
             return Ok(roots
                 .iter()
                 .map(|root| RegisteredProject {
+                    id: ProjectService::open(root)
+                        .map_or_else(|_| String::new(), |service| service.project_id().to_owned()),
                     name: root.file_name().map_or_else(
                         || "Project".to_owned(),
                         |name| name.to_string_lossy().into_owned(),
@@ -245,6 +410,7 @@ impl Broker {
 }
 
 struct RegisteredProject {
+    id: String,
     name: String,
     display_path: String,
     root: PathBuf,
@@ -256,11 +422,94 @@ fn load_registered_projects(path: &Path) -> Result<Vec<RegisteredProject>, EnvEr
         .projects
         .into_iter()
         .map(|project| RegisteredProject {
+            id: project.id,
             name: project.name,
             display_path: project.display_path,
             root: project.root,
         })
         .collect())
+}
+
+fn validated_project_query(query: &str) -> Result<String, EnvError> {
+    let query = query.trim();
+    if query.is_empty() || query.chars().count() > 80 || query.chars().any(char::is_control) {
+        return Err(EnvError::invalid(
+            "프로젝트 검색어는 1~80자의 일반 문자여야 합니다.",
+        ));
+    }
+    Ok(query.to_lowercase())
+}
+
+fn validated_variable_query(query: &str) -> Result<String, EnvError> {
+    if query.chars().count() > 80 || query.chars().any(char::is_control) {
+        return Err(EnvError::invalid(
+            "변수 검색어는 영문자 또는 숫자 2~80자여야 합니다.",
+        ));
+    }
+    let normalized = normalize_variable_query(query);
+    if normalized.len() < 2 || normalized.len() > 80 {
+        return Err(EnvError::invalid(
+            "변수 검색어는 영문자 또는 숫자 2~80자여야 합니다.",
+        ));
+    }
+    Ok(normalized)
+}
+
+fn validated_limit(
+    requested: Option<usize>,
+    default: usize,
+    maximum: usize,
+) -> Result<usize, EnvError> {
+    let limit = requested.unwrap_or(default);
+    if !(1..=maximum).contains(&limit) {
+        return Err(EnvError::invalid(format!(
+            "검색 결과 제한은 1~{maximum}이어야 합니다."
+        )));
+    }
+    Ok(limit)
+}
+
+fn project_match_rank(project: &RegisteredProject, query: &str) -> Option<u8> {
+    let id = project.id.to_lowercase();
+    let name = project.name.to_lowercase();
+    let display_path = project.display_path.to_lowercase();
+    let root = project.root.to_string_lossy().to_lowercase();
+    let basename = project
+        .root
+        .file_name()
+        .map_or_else(String::new, |value| value.to_string_lossy().to_lowercase());
+    if id == query || name == query {
+        Some(0)
+    } else if basename == query {
+        Some(1)
+    } else if name.starts_with(query) || basename.starts_with(query) {
+        Some(2)
+    } else if name.contains(query) || basename.contains(query) {
+        Some(3)
+    } else if display_path.contains(query) || root.contains(query) {
+        Some(4)
+    } else {
+        None
+    }
+}
+
+fn normalize_variable_query(query: &str) -> String {
+    query
+        .bytes()
+        .filter(u8::is_ascii_alphanumeric)
+        .map(|byte| byte.to_ascii_uppercase() as char)
+        .collect()
+}
+
+fn variable_match_rank(key: &str, normalized_query: &str) -> u8 {
+    let normalized_key = normalize_variable_query(key);
+    if normalized_key == normalized_query {
+        0
+    } else if normalized_key.starts_with(normalized_query) {
+        1
+    } else {
+        2
+    }
 }
 
 pub(super) fn load_registry_data(path: &Path) -> Result<env_registry::RegistryData, EnvError> {

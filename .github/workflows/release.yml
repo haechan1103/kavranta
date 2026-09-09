@@ -145,6 +145,7 @@ jobs:
             - Add local Personal Provider Packs for stdin-only custom CLI integrations.
             - Use the same redacted provider-push flow from supported AI coding agents.
             - Reuse a protected same-name value across registered projects without exposing it to the agent.
+            - Resolve registered project aliases and search distinctive variable-name fragments using bounded, value-free metadata before asking for a folder path.
             - Push selected values to Expo EAS environments through the CLI hidden-value prompt without placing values in arguments, temporary files, or Kavranta output.
 
             ---
@@ -168,6 +169,7 @@ jobs:
             - 표준 입력 전용 사용자 CLI 연동을 Personal Provider Pack으로 추가할 수 있습니다.
             - 지원 AI 코딩 에이전트에서도 같은 값 비노출 Provider 전송 흐름을 사용할 수 있습니다.
             - 같은 이름의 보호된 값을 에이전트에 노출하지 않고 등록 프로젝트 사이에서 재사용할 수 있습니다.
+            - 등록 프로젝트 별칭과 변수 이름 일부를 제한된 값 비노출 메타데이터로 검색해 이미 등록된 폴더 경로를 다시 묻지 않습니다.
             - 선택한 값을 명령 인자·임시 파일·Kavranta 출력에 넣지 않고 EAS CLI 숨김 입력으로 Expo EAS 환경에 전송할 수 있습니다.
           generateReleaseNotes: true
           prerelease: false
@@ -280,6 +282,7 @@ jobs:
             - Add local Personal Provider Packs for stdin-only custom CLI integrations.
             - Use the same redacted provider-push flow from supported AI coding agents.
             - Reuse a protected same-name value across registered projects without exposing it to the agent.
+            - Resolve registered project aliases and search distinctive variable-name fragments using bounded, value-free metadata before asking for a folder path.
             - Push selected values to Expo EAS environments through the CLI hidden-value prompt without placing values in arguments, temporary files, or Kavranta output.
 
             ---
@@ -303,6 +306,7 @@ jobs:
             - 표준 입력 전용 사용자 CLI 연동을 Personal Provider Pack으로 추가할 수 있습니다.
             - 지원 AI 코딩 에이전트에서도 같은 값 비노출 Provider 전송 흐름을 사용할 수 있습니다.
             - 같은 이름의 보호된 값을 에이전트에 노출하지 않고 등록 프로젝트 사이에서 재사용할 수 있습니다.
+            - 등록 프로젝트 별칭과 변수 이름 일부를 제한된 값 비노출 메타데이터로 검색해 이미 등록된 폴더 경로를 다시 묻지 않습니다.
             - 선택한 값을 명령 인자·임시 파일·Kavranta 출력에 넣지 않고 EAS CLI 숨김 입력으로 Expo EAS 환경에 전송할 수 있습니다.
           generateReleaseNotes: true
           prerelease: false

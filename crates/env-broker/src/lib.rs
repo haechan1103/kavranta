@@ -10,8 +10,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use env_core::{
     AddVariableRequest, ClassificationSource, CodexAccess, CreateEnvFileRequest,
     CreateGroupRequest, EnvError, EnvErrorCode, LinkRequest, MigrationPlan, MoveVariableRequest,
-    OpaqueValueCopyRequest, ProjectService, RedactedValueState, RenameGroupRequest,
-    SaveDescriptionRequest, SaveValueRequest,
+    OpaqueValueCopyRequest, ProjectService, RedactedOccurrenceReference, RedactedValueState,
+    RenameGroupRequest, SaveDescriptionRequest, SaveValueRequest,
 };
 use env_provider::action_pack::ActionExecutionRequest;
 use env_provider::android_app_links::AndroidAppLinksVerificationRequest;
@@ -117,6 +117,23 @@ struct FindReusableVariableArgs {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct FindRegisteredProjectsArgs {
+    query: String,
+    limit: Option<usize>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct SearchRegisteredVariableSourcesArgs {
+    query: String,
+    project_id: Option<String>,
+    #[serde(default)]
+    include_empty: bool,
+    limit: Option<usize>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct PlanOpaqueProjectCopyArgs {
     project_path: String,
     source_project_id: String,
@@ -132,6 +149,25 @@ struct ReusableVariableCandidate {
     project_name: String,
     display_path: String,
     files: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RegisteredProjectCandidate {
+    project_id: String,
+    project_name: String,
+    project_path: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RegisteredVariableSourceCandidate {
+    project_id: String,
+    project_name: String,
+    project_path: String,
+    key: String,
+    codex_access: CodexAccess,
+    occurrences: Vec<RedactedOccurrenceReference>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -17,6 +17,8 @@
 | Detach one member | `plan_detach` → `apply_plan` |
 | Change explicitly requested access | `plan_classification` → `apply_plan` |
 | Normalize groups | `plan_migration` → `apply_plan` |
+| Resolve a registered project alias | `find_registered_projects` |
+| Search variable-name metadata | `find_registered_projects` → `search_registered_variable_sources` |
 | Find same-name sources in other projects | `find_reusable_variable_sources` |
 | One-time opaque project copy | `find_reusable_variable_sources` → `plan_copy_variable_from_project` → `apply_plan` |
 | Inspect available deployment providers | `list_deployment_providers` |
@@ -45,9 +47,14 @@
 - Invalid or ambiguous group target: inspect again. `기타` means the ungrouped area;
   create a new explicit group before moving to it. Never select among duplicate
   group names by position.
-- Missing or ambiguous project-copy source: search again by the exact key and ask the
-  user to select a candidate project/file. Never inspect the value, choose by file
-  environment, or turn the copy into a continuing link.
+- Missing or ambiguous registered project: call `find_registered_projects` before
+  asking for a path. Ask the user to select when multiple candidates remain; if none
+  are available, ask them to register or reopen the project in Kavranta.
+- Missing or ambiguous project-copy source: use
+  `search_registered_variable_sources` for a distinctive key fragment, scope it by
+  the selected project ID when known, then search again by the exact key if needed.
+  Ask the user to select among remaining project/file candidates. Never inspect the
+  value, choose by file environment, or turn the copy into a continuing link.
 - Missing provider/target or unavailable Adapter: list providers again and ask for
   the missing semantic destination. Never fall back to a shell, CLI command, raw HTTP,
   or value read.

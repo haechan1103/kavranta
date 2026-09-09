@@ -13,24 +13,29 @@ interpreter, or generic editing tools.
 
 ## Workflow
 
-1. Call `inspect_project` with the current project path. If it reports that the
-   project is unregistered during a concrete env-management request, call
+1. Identify the intended registered project. When the user names a project or alias
+   but gives no exact folder, call `find_registered_projects` before asking for a
+   path. Continue automatically for one unambiguous candidate; if multiple remain,
+   present their names and paths and ask the user to choose.
+2. Call `inspect_project` with the resolved `projectPath`, or with the current
+   workspace path when no other project was named. If it reports that the current
+   workspace is unregistered during a concrete env-management request, call
    `plan_register_current_project`, verify that its displayed root is the current
    workspace intended by the request, and apply it immediately. Then call
    `inspect_project` again.
-2. Work only from its redacted structure, presence state, groups, descriptions,
+3. Work only from its redacted structure, presence state, groups, descriptions,
    relationships, and policies.
-3. Treat `protected` and `unclassified` as unreadable. Human-known protected-value
+4. Treat `protected` and `unclassified` as unreadable. Human-known protected-value
    input belongs in the desktop app; a requested local producer may use the opaque
    stdin workflow below without making the value readable.
-4. Keep ambiguous unclassified names protected unless the current task explicitly
+5. Keep ambiguous unclassified names protected unless the current task explicitly
    requests an access-policy change.
-5. Create a plan for every mutation, verify that its paths, names, impact, and risk
+6. Create a plan for every mutation, verify that its paths, names, impact, and risk
    match the current request, then call `apply_plan` immediately. Do not ask for a
    second approval unless the host enforces its own unavoidable tool permission.
-6. Ask one concise clarification only when a required factual choice is missing, such
+7. Ask one concise clarification only when a required factual choice is missing, such
    as the authoritative file for conflicting link values.
-7. Report only names, relative paths, groups, link membership, policy, and sanitized
+8. Report only names, relative paths, groups, link membership, policy, and sanitized
    result codes.
 
 Ordinary source, deployment, configuration, and documentation files may mention
@@ -54,6 +59,16 @@ never use that allowance to read or patch an actual env-data file.
 
 ## Reuse from another project
 
+- When the user remembers a project alias but not its folder, call
+  `find_registered_projects` first. Never ask for an exact path that a unique
+  registered candidate already supplies.
+- When the user remembers only a distinctive variable-name fragment, call
+  `search_registered_variable_sources`. Scope it with the selected `projectId` when
+  the user named a source project. Search output is key/policy/file/presence metadata,
+  not permission to read or use a value.
+- Continue with one unambiguous project/key/file candidate when the user's concrete
+  request already authorizes the matching reuse or typed action. If multiple
+  candidates remain, present them and ask which source to use.
 - Call `find_reusable_variable_sources` only for a concrete variable name when the
   user asks about reuse or when an empty requested variable makes a same-name source
   recommendation directly useful.
@@ -69,6 +84,9 @@ never use that allowance to read or patch an actual env-data file.
   inheritance, or synchronization. Later edits remain independent.
 - The source and target may stay `protected`; never downgrade policy or call
   `read_allowed_value` for this operation.
+- Discovery does not make arbitrary API use safe. Run a protected value only through
+  a compatible installed typed Provider or Action Pack, and never claim access to a
+  generic response body or output file that the Broker does not return.
 
 ## Access rules
 
