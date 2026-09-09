@@ -1,5 +1,6 @@
 import type { DemoFrame } from "./demoStory";
 import { TrafficLights } from "./DemoWindowChrome";
+import { useSiteLocale } from "./SiteLocale";
 export function DemoAppWindow({
   hasVariable,
   hasValue,
@@ -16,29 +17,32 @@ export function DemoAppWindow({
   | "deployed"
   | "visibleLines"
 >) {
+  const {
+    copy: { demo: c },
+  } = useSiteLocale();
   return (
-    <div className="app-window" aria-label="앱 반영 미리보기">
+    <div className="app-window" aria-label={c.appLabel}>
       <div className="window-bar">
         <TrafficLights />
         <span>Kavranta</span>
-        <span className="window-status">로컬 프로젝트</span>
+        <span className="window-status">{c.localProject}</span>
       </div>
       <div className="demo-app-layout">
         <aside className="demo-sidebar">
           <div className="demo-brand">
-            <img src="/brand/kavranta-logo.svg" alt="" /> Kavranta
+            <img src="./brand/kavranta-logo.svg" alt="" /> Kavranta
           </div>
           <div className="demo-project">
             <span>S</span> sample-app <small>⌄</small>
           </div>
           <div className="demo-nav-item">
-            ⌁ <span>프로젝트 개요</span>
+            ⌁ <span>{c.overview}</span>
           </div>
           <div className="demo-nav-item">
-            ◇ <span>접근 검토</span>
+            ◇ <span>{c.connections}</span>
           </div>
           <div className="demo-nav-item">
-            ◷ <span>AI 활동</span>
+            ◷ <span>{c.activity}</span>
             <i className="live-dot" />
           </div>
           <p className="demo-nav-label">ENV FILES</p>
@@ -51,27 +55,29 @@ export function DemoAppWindow({
             {linked && <small>↗</small>}
           </div>
           <div className="demo-sidebar-footer">
-            <span className="live-dot" /> AI 도구 연결됨
+            <span className="live-dot" /> {c.connected}
           </div>
         </aside>
         <div className="demo-editor">
           <div className="editor-breadcrumb">
-            sample-app <span>/</span> 환경변수
+            sample-app <span>/</span> {c.variables}
           </div>
           <div className="editor-heading">
             <div>
               <h3>Local environment</h3>
-              <p>{hasVariable ? 4 : 3}개 변수 · 2개 그룹</p>
+              <p>
+                {hasVariable ? 4 : 3} {c.variables} · 2 {c.groups}
+              </p>
             </div>
-            <span className="demo-add-label">+ 새 변수</span>
+            <span className="demo-add-label">{c.add}</span>
           </div>
           <div className="editor-tabs">
-            <span>전체 변수</span>
+            <span>{c.all}</span>
             <span>
-              연결됨 <b>{linked ? 1 : 0}</b>
+              {c.linked} <b>{linked ? 1 : 0}</b>
             </span>
             <span>
-              값 없음 <b>{hasVariable && !hasValue ? 1 : 0}</b>
+              {c.missing} <b>{hasVariable && !hasValue ? 1 : 0}</b>
             </span>
           </div>
           <div className="demo-group">
@@ -79,30 +85,26 @@ export function DemoAppWindow({
               <span>⌄ &nbsp; Application</span>
               <small>2 VARIABLES</small>
             </header>
-            <DemoRow
-              name="APP_NAME"
-              description="애플리케이션 이름"
-              policy="AI 허용"
-            />
-            <DemoRow name="NODE_ENV" description="실행 환경" policy="AI 허용" />
+            <DemoRow name="APP_NAME" description={c.appName} allowed />
+            <DemoRow name="NODE_ENV" description={c.mode} allowed />
           </div>
           <div className="demo-group">
             <header>
               <span>⌄ &nbsp; Authentication</span>
               <small>{hasVariable ? 2 : 1} VARIABLES</small>
             </header>
-            <DemoRow name="DATABASE_URL" description="데이터베이스 연결" />
+            <DemoRow name="DATABASE_URL" description={c.database} />
             {hasVariable && (
               <div className="animated-variable">
                 <DemoRow
                   name="AUTH_SECRET"
-                  description="인증 서명용 비밀값"
+                  description={c.secret}
                   empty={!hasValue}
                   highlighted
                 />
                 {linked && (
                   <div className="demo-link-detail">
-                    <span>↗ &nbsp; 2개 파일에 연결됨</span>
+                    <span>↗ &nbsp; {c.twoLinked}</span>
                     <code>Local</code>
                     <code>Development</code>
                   </div>
@@ -114,18 +116,12 @@ export function DemoAppWindow({
             {complete ? (
               <>
                 <span>✓</span>{" "}
-                {deployed
-                  ? "GitHub staging에 Secret 1개 전송 완료"
-                  : linked
-                    ? "2개 파일에 반영되었습니다"
-                    : "변경사항이 저장되었습니다"}
+                {deployed ? c.pushed : linked ? c.twoSaved : c.saved}
               </>
             ) : (
               <>
                 <span className="live-dot" />{" "}
-                {visibleLines > 0
-                  ? "AI 작업을 반영하고 있습니다"
-                  : "모든 변경사항이 저장되었습니다"}
+                {visibleLines > 0 ? c.working : c.idle}
               </>
             )}
           </div>
@@ -137,16 +133,19 @@ export function DemoAppWindow({
 function DemoRow({
   name,
   description,
-  policy = "보호됨",
+  allowed = false,
   empty = false,
   highlighted = false,
 }: {
   name: string;
   description: string;
-  policy?: string;
+  allowed?: boolean;
   empty?: boolean;
   highlighted?: boolean;
 }) {
+  const {
+    copy: { demo: c },
+  } = useSiteLocale();
   return (
     <div className={`demo-variable ${highlighted ? "highlighted" : ""}`}>
       <div>
@@ -154,11 +153,11 @@ function DemoRow({
         <small>{description}</small>
       </div>
       <span className={`masked-value ${empty ? "empty-value" : ""}`}>
-        {empty ? "설정 필요" : "••••••••••••"}
+        {empty ? c.required : "••••••••••••"}
         <span aria-hidden="true">◎</span>
       </span>
-      <span className={`policy-pill ${policy === "AI 허용" ? "allowed" : ""}`}>
-        {policy}
+      <span className={`policy-pill ${allowed ? "allowed" : ""}`}>
+        {allowed ? c.allowed : c.protected}
       </span>
     </div>
   );

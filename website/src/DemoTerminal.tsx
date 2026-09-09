@@ -1,11 +1,15 @@
 import type { DemoFrame } from "./demoStory";
 import { TrafficLights } from "./DemoWindowChrome";
+import { useSiteLocale } from "./SiteLocale";
 export function DemoTerminal({
   scene,
   typedCount,
   visibleLines,
   complete,
 }: Pick<DemoFrame, "scene" | "typedCount" | "visibleLines" | "complete">) {
+  const {
+    copy: { demo: c },
+  } = useSiteLocale();
   return (
     <div className="terminal-window">
       <div className="terminal-bar">
@@ -13,14 +17,14 @@ export function DemoTerminal({
         <span>
           AI agent <i>/</i> sample-app
         </span>
-        <span className="terminal-badge">Kavranta 연결됨</span>
+        <span className="terminal-badge">{c.terminalConnected}</span>
       </div>
       <div className="terminal-content">
         <div className="terminal-intro">
           <span>✳</span>
           <div>
-            <strong>좋은 흐름은, 끊기지 않으니까.</strong>
-            <small>환경변수 작업을 자연스럽게 요청하세요.</small>
+            <strong>{c.terminalTitle}</strong>
+            <small>{c.terminalBody}</small>
           </div>
         </div>
         <div className="terminal-prompt" aria-label={scene.prompt}>
@@ -41,8 +45,8 @@ export function DemoTerminal({
           ))}
         </div>
         <div className="terminal-foot">
-          <span>◇ 보호된 값은 대화에 반환되지 않습니다</span>
-          <span>{complete ? "완료" : "작업 중"}</span>
+          <span>◇ {c.terminalNote}</span>
+          <span>{complete ? c.done : c.inProgress}</span>
         </div>
       </div>
     </div>

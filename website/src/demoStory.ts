@@ -1,5 +1,5 @@
 // Illustrative metadata only. Local and Development are file display aliases.
-export const scenes = [
+export const koreanScenes = [
   {
     label: "변수 설정",
     title: "한 문장으로, 설정 끝.",
@@ -44,6 +44,59 @@ export const scenes = [
   },
 ] as const;
 
+export interface DemoScene {
+  label: string;
+  title: string;
+  description: string;
+  prompt: string;
+  lines: readonly string[];
+}
+
+export const scenes: readonly DemoScene[] = [
+  {
+    label: "Set a variable",
+    title: "One request. A useful change.",
+    description:
+      "Add an empty variable and fill it with a locally generated value. The value stays out of the conversation.",
+    prompt:
+      "Add AUTH_SECRET to Local and fill it with a securely generated random value. Do not show me the value.",
+    lines: [
+      "Registered sample-app found",
+      "Added empty AUTH_SECRET",
+      "Saved generated value through a single-use plan",
+      "Done · 1 file changed · value not returned",
+    ],
+  },
+  {
+    label: "Link files",
+    title: "Choose what changes together.",
+    description:
+      "Explicitly link the variable in two files. Saving from either member updates both.",
+    prompt:
+      "Link AUTH_SECRET in Local and Development. Use Local as the source value.",
+    lines: [
+      "Found 2 same-name occurrences",
+      "Source file · Local",
+      "Impact · 2 files",
+      "Done · 2 files linked · protection unchanged",
+    ],
+  },
+  {
+    label: "Push to GitHub",
+    title: "Send the selected value to its destination.",
+    description:
+      "Name the source and destination. The provider receives the value; the agent receives a status.",
+    prompt:
+      "Push AUTH_SECRET from Local as a GitHub Secret to the staging Environment in demo/sample-app.",
+    lines: [
+      "Checked GitHub login and destination access",
+      "Destination · demo/sample-app / staging",
+      "Sending AUTH_SECRET · value not returned",
+      "Done · 1 Secret sent · 0 failed",
+    ],
+  },
+];
+
 export const SCENE_DURATION_MS = 10500;
 export const TYPE_START_MS = 450;
 export const TYPE_DURATION_MS = 2800;
@@ -52,8 +105,12 @@ export const RESULT_INTERVAL_MS = 1000;
 export type DemoFrame = ReturnType<typeof projectDemoFrame>;
 
 /** Pure presentation state for the fictional story, not environment domain logic. */
-export function projectDemoFrame(sceneIndex: number, elapsed: number) {
-  const scene = scenes[sceneIndex] ?? scenes[0];
+export function projectDemoFrame(
+  sceneIndex: number,
+  elapsed: number,
+  stories: readonly DemoScene[] = scenes,
+) {
+  const scene = stories[sceneIndex] ?? koreanScenes[0];
   const typedCount = Math.floor(
     Math.max(0, Math.min(1, (elapsed - TYPE_START_MS) / TYPE_DURATION_MS)) *
       scene.prompt.length,

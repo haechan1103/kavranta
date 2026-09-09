@@ -19,7 +19,7 @@ import { useI18n } from "../i18n";
 
 type View =
   | { kind: "overview" }
-  | { kind: "file"; path: string }
+  | { kind: "file"; path: string; query?: string }
   | { kind: "integrations" }
   | { kind: "activity" }
   | { kind: "accounts" };
@@ -191,15 +191,18 @@ export function App() {
               {view.kind === "overview" && (
                 <Overview
                   projection={manager.projection}
-                  onOpenFile={(path) => setView({ kind: "file", path })}
+                  onOpenFile={(path, query) => setView({ kind: "file", path, query })}
+                  onOpenIntegrations={() => setView({ kind: "integrations" })}
                   onApplyGitignoreGuard={manager.applyGitignoreGuard}
                 />
               )}
               {view.kind === "file" && (
                 <FileEditor
+                  key={`${manager.selectedProject.id}:${view.path}:${view.query ?? ""}`}
                   projectId={manager.selectedProject.id}
                   projection={manager.projection}
                   filePath={view.path}
+                  initialSearch={view.query}
                   onRefresh={refresh}
                   onError={manager.showError}
                   onNotice={manager.showNotice}

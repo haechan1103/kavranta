@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { projectDemoFrame, scenes, SCENE_DURATION_MS } from "./demoStory";
+import {
+  projectDemoFrame,
+  scenes,
+  SCENE_DURATION_MS,
+  type DemoScene,
+} from "./demoStory";
 
 const TICK_MS = 50;
 const reducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Owns browser timing and lifecycle; the story and rendering are independent. */
-export function useDemoPlayback() {
+export function useDemoPlayback(stories: readonly DemoScene[] = scenes) {
   const [timeline, setTimeline] = useState(() => ({
     sceneIndex: 0,
     elapsed: reducedMotion() ? SCENE_DURATION_MS - 1 : 0,
@@ -45,15 +50,18 @@ export function useDemoPlayback() {
       setTimeline((current) => {
         const elapsed = current.elapsed + TICK_MS;
         return elapsed >= SCENE_DURATION_MS
-          ? { sceneIndex: (current.sceneIndex + 1) % scenes.length, elapsed: 0 }
+          ? {
+              sceneIndex: (current.sceneIndex + 1) % stories.length,
+              elapsed: 0,
+            }
           : { ...current, elapsed };
       });
     }, TICK_MS);
     return () => window.clearInterval(timer);
-  }, [playing, inView]);
+  }, [playing, inView, stories.length]);
 
   const selectScene = (index: number) => {
-    if (!scenes[index]) return;
+    if (!stories[index]) return;
     setTimeline({
       sceneIndex: index,
       elapsed: reducedMotion() || !playing ? SCENE_DURATION_MS - 1 : 0,
@@ -66,7 +74,7 @@ export function useDemoPlayback() {
 
   return {
     ...timeline,
-    ...projectDemoFrame(timeline.sceneIndex, timeline.elapsed),
+    ...projectDemoFrame(timeline.sceneIndex, timeline.elapsed, stories),
     container,
     playing,
     selectScene,

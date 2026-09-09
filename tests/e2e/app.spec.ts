@@ -109,12 +109,12 @@ test("shows one shared integration bundle for supported AI tools", async ({ page
 test("persists an explicit Korean language selection", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Items to review" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Project overview" })).toBeVisible();
   await page.getByLabel("Language").selectOption("ko");
-  await expect(page.getByRole("heading", { name: "지금 확인할 항목" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "프로젝트 개요" })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: "지금 확인할 항목" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "프로젝트 개요" })).toBeVisible();
   await expect(page.getByLabel("언어")).toHaveValue("ko");
 });
 

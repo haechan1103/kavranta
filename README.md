@@ -13,7 +13,41 @@
   </p>
 </div>
 
+## Start here
+
+On macOS:
+
+```bash
+brew install --cask haechan1103/tap/kavranta
+```
+
+Or [download an installer](https://github.com/haechan1103/kavranta/releases/latest).
+macOS builds are signed and notarized. Windows is an **unsigned x64 beta**; read
+the [first-launch notes](#windows-first-launch) before installing.
+
+### Your first useful task
+
+1. Open Kavranta and choose your existing project folder. Registration discovers
+   supported files without changing them.
+2. Open a file, turn on **Missing values only**, and fill one empty variable. If all
+   values are present, review an existing variable instead.
+3. Check which files Save will affect, then save when ready. Keep using your normal
+   development command. Same-name variables are independent unless you link them.
+
+Connecting an AI agent is optional. No hosted account or new runtime is required
+for local editing. If no files appear, follow the project's setup guide and refresh;
+example/template files are intentionally excluded and are not copied automatically.
+
+[90-day roadmap and next fixes](ROADMAP.md) ·
+[Try the interactive sample](https://haechan1103.github.io/kavranta/) ·
+[Tell us where you got stuck](https://github.com/haechan1103/kavranta/discussions)
+
+<details>
+  <summary>Watch the broader workflow (synthetic data)</summary>
+
 ![Kavranta demo showing project overview, env editing, AWS deployment, team sharing, and AI tool connections](assets/screenshots/kavranta-demo.gif)
+
+</details>
 
 <div align="center">
   <a href="https://github.com/haechan1103/kavranta/releases/latest"><strong>Download for macOS or Windows</strong></a>
@@ -23,9 +57,9 @@
   <a href="SECURITY.md">Security model</a>
 </div>
 
-> Kavranta was previously published as **Env Manager**. Existing app data and the
-> technical `env-manager` plugin, broker, and manifest identifiers are retained for
-> backward compatibility.
+> Kavranta was previously published as **Env Manager**. Existing app data and project
+> formats remain compatible. New agent installations use `kavranta`; the app handles
+> migration from its older managed connection configuration.
 
 Kavranta is a local-first desktop app. Register a project and it discovers the real `.env`, `.env.local`, `.env.development`, `runtime.env`, Wrangler `.dev.vars`, and nested app env files already used by that project. Environment values stay in those files. Reusable sign-in details are optional and stay in the operating system's secure store—Kavranta does not require a hosted vault or a new runtime command.
 
@@ -39,48 +73,16 @@ Kavranta is a local-first desktop app. Register a project and it discovers the r
 | **Finish incomplete setup faster** | **Keep reusable accounts out of project files** | **Grant access per project** |
 | Filter an env file to only variables that still need a value, with the remaining count visible at a glance. | Store optional usernames and passwords in Apple Keychain or Windows Credential Manager instead of `.env`, Git, or Kavranta's local metadata. | New accounts start blocked. Explicitly allow or revoke each project; a grant never lets an AI agent run a login on its own. |
 
-## Available on `main`
-
-- **Missing-values filter:** show only variables without a value in the current env file, including a live remaining count and a clear empty state.
-- **Project-scoped local accounts:** save reusable sign-in details in Apple Keychain on macOS or Windows Credential Manager, then explicitly choose which registered projects may use each account.
-- **Safe local handling:** Kavranta stores only labels, timestamps, and project grants in local app metadata. Account fields can be copied only from an allowed project and the clipboard is cleared after 45 seconds if it has not changed.
-- **No autonomous AI login:** account CRUD, secret reads, and login execution are not exposed through the AI Broker. A project grant marks eligibility only; a future login action must still require a separate, explicit user action.
-
-## New in 0.7.1
-
-- **Kavranta identity:** the application, installers, release metadata, documentation,
-  screenshots, and agent-integration display name now use Kavranta.
-- **Upgrade continuity:** existing project manifests, local app data, Broker commands,
-  and `env-manager` plugin selectors keep their stable technical identifiers.
-
-## New in 0.7.0
-
-- **Action Packs:** run a narrowly declared local CLI or fixed HTTPS check with one managed value. Values stay out of the UI, AI conversation, command arguments, logs, and response bodies.
-- **Opaque generated values:** let an agent request a five-minute, single-use write plan, then pipe output from `openssl` or another trusted local generator directly into the Broker without exposing the generated value.
-- **Broader env discovery and quieter maintenance:** Wrangler `.dev.vars*` files now receive the same discovery, Git-safety, and direct-access guard coverage as `.env*`; app and installed AI integration updates are checked quietly and surfaced only when action is available.
-
-## New in 0.6.5
-
-- **Expo EAS deployment:** send selected values to `development`, `preview`, and `production` through the EAS CLI hidden-value prompt. Values never enter command arguments, temporary files, or Kavranta output.
-- **Project-aware checks:** Kavranta detects the nearest EAS project, confirms the signed-in Expo account and project identity, and applies `Sensitive` or `Plain text` visibility per variable.
-- **AI-safe EAS operations:** Codex, Claude Code, Copilot, and Cursor use the same redacted Broker plan and activity trail as the desktop app.
-
-## New in 0.6.4
-
-- **Trusted macOS installation:** Apple Silicon and Intel DMGs are Developer ID signed, and their notarized, stapled apps are verified by the release pipeline before publication.
-
-## New in 0.6.2
-
-- **Folder Team Channels:** use a mounted NAS or existing sync folder to exchange immutable encrypted packages, then review conflicts before applying.
-- **AWS deployment:** push to Secrets Manager or SSM `SecureString`, choose an optional KMS key, and compare selected values with redacted `same` / `different` / `unset` results.
-- **Remote Runtime checks:** compare a managed file with an allowlisted server target through an age-encrypted SSH verifier; the UI receives equality states, never remote values or hashes.
-- **Personal Provider Packs:** add a locally trusted stdin-only CLI integration without waiting for a Kavranta app release.
-- **AI provider operations:** supported agents can use the same opaque provider engine and value-free activity log as the desktop app.
-- **Cross-project discovery and reuse:** resolve registered project aliases, search
-  variable-name fragments with redacted metadata, and copy a protected same-name
-  value inside Rust without returning it to the agent or normal UI projection.
-
 ## See the workflow
+
+### Included in the 0.7.6 release
+
+Project-wide metadata search, direct navigation to a missing variable, and combined
+name/missing-value filters are implemented in this source tree. Search does not
+inspect values, and changing filters preserves unsaved drafts. The separate
+[website](https://haechan1103.github.io/kavranta/) includes an EN/KO sample-linking
+playground hosted as static assets on GitHub Pages.
+See [ROADMAP.md](ROADMAP.md) for verification gates and work still outstanding.
 
 ### Organize real env files, not copies
 
@@ -90,7 +92,10 @@ Projects and files can have local display names while their physical paths remai
 
 ### Know what needs attention
 
-The project overview combines missing values, actionable AI-access reviews, parse warnings, Git leak checks, and managed-file navigation without reading values for those checks. Inside a file, turn on **Missing values only** to focus on unfinished setup.
+The project overview combines missing values, parse warnings, Git leak checks, and
+managed-file navigation without reading values for those checks. AI policy stays in
+the owning variable row. Inside a file, turn on **Missing values only** to focus on
+unfinished setup.
 
 ![Kavranta project overview with Git safety and AI access status](assets/screenshots/kavranta-overview.png)
 
@@ -294,7 +299,12 @@ Use synthetic env fixtures only. Never commit or attach real `.env*` values. Rea
 
 ## Project status
 
-Kavranta is an early-stage macOS and Windows desktop project. Version `0.7.1` introduces the Kavranta identity while preserving existing app data, project manifests, Broker commands, and agent plugin selectors. It ships signed and notarized macOS builds plus an explicitly unsigned Windows x64 beta. Windows code signing, ARM64, and additional languages remain planned.
+Kavranta is an early-stage macOS and Windows desktop project. It ships signed and
+notarized macOS builds plus an explicitly unsigned Windows x64 beta. Windows code
+signing and Windows ARM64 remain future work. [Releases](https://github.com/haechan1103/kavranta/releases)
+describe shipped changes; the [roadmap](ROADMAP.md) separates source work from release
+promises. Stable 1.0 depends on compatibility, security, installation, and external
+feedback gates—not on a star target.
 
 ## Community
 

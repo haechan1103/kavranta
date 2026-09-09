@@ -17,6 +17,7 @@ interface Props {
   projectId: string;
   projection: ProjectProjection;
   filePath: string;
+  initialSearch?: string;
   onRefresh: () => Promise<void>;
   onError: (message: string) => void;
   onNotice: (message: string) => void;
@@ -26,6 +27,7 @@ export function FileEditor({
   projectId,
   projection,
   filePath,
+  initialSearch = "",
   onRefresh,
   onError,
   onNotice,
@@ -37,6 +39,7 @@ export function FileEditor({
   const [linking, setLinking] = useState<OccurrenceProjection | null>(null);
   const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
   const [showEmptyOnly, setShowEmptyOnly] = useState(false);
+  const [search, setSearch] = useState(initialSearch);
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const editorRef = useRef<HTMLElement>(null);
 
@@ -66,28 +69,36 @@ export function FileEditor({
   const emptyVariableCount = file ? countEmptyVariables(file) : 0;
   const visibleGroups = useMemo(() => {
     if (!file) return [];
-    if (!showEmptyOnly) return file.groups;
+    const query = search.trim().toLocaleLowerCase();
+    if (!showEmptyOnly && !query) return file.groups;
     return file.groups
       .map((group) => ({
         ...group,
-        variables: group.variables.filter((variable) => variable.valueState === "empty"),
+        variables: group.variables.filter((variable) =>
+          (!showEmptyOnly || variable.valueState === "empty") &&
+          (!query || [variable.key, group.name, ...variable.description]
+            .some((text) => text.toLocaleLowerCase().includes(query))),
+        ),
       }))
       .filter((group) => group.variables.length > 0);
-  }, [file, showEmptyOnly]);
+  }, [file, showEmptyOnly, search]);
   const visibleVariableCount = visibleGroups.reduce(
     (total, group) => total + group.variables.length,
     0,
   );
+  const filtering = showEmptyOnly || Boolean(search.trim());
+  const visibleVariables = new Set(visibleGroups.flatMap((group) => group.variables));
   const showGroupNavigation = visibleVariableCount >= 10 && visibleGroups.length > 1;
 
   useEffect(() => {
     setActiveGroupIndex(0);
-  }, [filePath, showEmptyOnly]);
+  }, [filePath, showEmptyOnly, search]);
 
   useEffect(() => {
     if (!showGroupNavigation || !editorRef.current) return;
     const scrollRoot = editorRef.current.closest<HTMLElement>(".content-scroll");
-    const groupElements = [...editorRef.current.querySelectorAll<HTMLElement>("[data-env-group]")];
+    const groupElements = [...editorRef.current.querySelectorAll<HTMLElement>("[data-env-group]")]
+      .filter((element) => !element.hidden);
     if (!scrollRoot || groupElements.length === 0) return;
     let frame = 0;
     const updateActiveGroup = () => {
@@ -153,6 +164,14 @@ export function FileEditor({
 
       {variableCount > 0 && (
         <div className="file-filter-bar" role="toolbar" aria-label={t("file.filters")}>
+          <input
+            type="search"
+            className="file-search"
+            aria-label={t("file.search")}
+            placeholder={t("file.search")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
           <button
             className={`file-filter-toggle${showEmptyOnly ? " active" : ""}`}
             aria-pressed={showEmptyOnly}
@@ -163,10 +182,15 @@ export function FileEditor({
               {emptyVariableCount}
             </strong>
           </button>
-          {showEmptyOnly && (
+          {(showEmptyOnly || search.trim()) && (
             <span className="file-filter-result">
               {t("file.filteredCount", { visible: visibleVariableCount, total: variableCount })}
             </span>
+          )}
+          {(showEmptyOnly || search) && (
+            <button className="quiet-button" onClick={() => { setSearch(""); setShowEmptyOnly(false); }}>
+              {t("file.clearFilters")}
+            </button>
           )}
         </div>
       )}
@@ -185,23 +209,25 @@ export function FileEditor({
       )}
 
       <div className="groups-stack">
-        {showEmptyOnly && visibleGroups.length === 0 && (
+        {(showEmptyOnly || search.trim()) && visibleGroups.length === 0 && (
           <div className="file-filter-empty">
-            <strong>{t("file.noEmptyVariables")}</strong>
-            <span>{t("file.noEmptyVariablesBody")}</span>
+            <strong>{t(search.trim() ? "file.noSearchResults" : "file.noEmptyVariables")}</strong>
+            <span>{t(search.trim() ? "file.noSearchResultsBody" : "file.noEmptyVariablesBody")}</span>
           </div>
         )}
-        {visibleGroups.map((group, groupIndex) => (
+        {file.groups.map((group, groupIndex) => (
           <section
             className="group-card"
-            data-env-group={groupIndex}
+            hidden={filtering && !group.variables.some((variable) => visibleVariables.has(variable))}
+            data-env-group={visibleGroups.findIndex((candidate) => candidate === group ||
+              candidate.variables.some((variable) => group.variables.includes(variable)))}
             key={`${group.name}:${groupIndex}`}
           >
             <header className="group-header">
               <div>
                 <span className="group-fold">⌄</span>
                 <h3>{displayGroupName(group.name, t)}</h3>
-                <span>{group.variables.length}</span>
+                <span>{group.variables.filter((variable) => visibleVariables.has(variable)).length}</span>
               </div>
               {group.name !== "기타" && (
                 <button
@@ -220,6 +246,7 @@ export function FileEditor({
               {group.variables.map((variable) => (
                 <VariableRow
                   key={variable.key}
+                  hidden={!visibleVariables.has(variable)}
                   projectId={projectId}
                   file={file.path}
                   variable={variable}
