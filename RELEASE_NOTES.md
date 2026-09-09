@@ -10,6 +10,8 @@
 - Try the EN/KO [interactive website](https://haechan1103.github.io/kavranta/) with
   synthetic file selections, explicit impact preview, and production unselected.
 - Read the install-first guides and [90-day roadmap](https://github.com/haechan1103/kavranta/blob/main/ROADMAP.md).
+- Update the development-only Vitest toolchain to 4.1.11 for
+  [GHSA-82fw-gwwq-j7x9](https://github.com/vitest-dev/vitest/security/advisories/GHSA-82fw-gwwq-j7x9).
 
 ## Install
 
@@ -39,6 +41,7 @@ workflow; external user-retention targets remain unmeasured.
 - [영어·한국어 웹 체험](https://haechan1103.github.io/kavranta/?lang=ko)에서
   샘플 파일을 직접 고르고 영향 범위를 확인할 수 있습니다. Production은 기본 선택하지 않습니다.
 - 설치와 첫 작업을 앞세운 가이드, [90일 로드맵](https://github.com/haechan1103/kavranta/blob/main/ROADMAP.md)을 추가했습니다.
+- 개발용 Vitest 도구를 4.1.11로 올려 파일 읽기 취약점 경고를 해소했습니다.
 
 ## 설치
 
