@@ -1,0 +1,74 @@
+.variable-finder {
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.variable-finder > label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 700;
+}
+
+.variable-finder > input {
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: #f7f9f8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  font-size: calc(11px * var(--font-scale));
+}
+
+.variable-finder > p {
+  color: var(--muted);
+  font-size: calc(10px * var(--font-scale));
+}
+
+.variable-finder > ul {
+  max-height: 310px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.variable-finder li button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 3px;
+  text-align: left;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.variable-finder li button:hover {
+  background: var(--green-pale);
+}
+
+.variable-finder li button > span:first-child {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+
+.variable-finder strong {
+  font-size: calc(11px * var(--font-scale));
+}
+
+.variable-finder code,
+.variable-finder small {
+  color: var(--muted);
+  font-size: calc(9px * var(--font-scale));
+}

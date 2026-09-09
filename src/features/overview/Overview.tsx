@@ -3,14 +3,16 @@ import { useState } from "react";
 
 import type { GitSafetyProjection, ProjectProjection } from "../../lib/types";
 import { useI18n } from "../../i18n";
+import { VariableFinder } from "./VariableFinder";
 
 interface Props {
   projection: ProjectProjection;
-  onOpenFile: (path: string) => void;
+  onOpenFile: (path: string, key?: string) => void;
+  onOpenIntegrations?: () => void;
   onApplyGitignoreGuard: () => Promise<void>;
 }
 
-export function Overview({ projection, onOpenFile, onApplyGitignoreGuard }: Props) {
+export function Overview({ projection, onOpenFile, onOpenIntegrations, onApplyGitignoreGuard }: Props) {
   const { t } = useI18n();
   const variables = projection.files.flatMap((file) =>
     file.groups.flatMap((group) => group.variables.map((variable) => ({ ...variable, file: file.path }))),
@@ -25,6 +27,21 @@ export function Overview({ projection, onOpenFile, onApplyGitignoreGuard }: Prop
   const gitAttentionCount = projection.gitSafety.state === "needs-attention" ? 1 : 0;
   const actionCount = empty.length + projection.issueCount + gitAttentionCount;
 
+  if (projection.files.length === 0) {
+    return (
+      <section className="page-stack">
+        <div className="project-next-step">
+          <div>
+            <h2>{t("overview.noFilesTitle")}</h2>
+            <p>{t("overview.noFilesBody")}</p>
+            <p>{t("overview.noFilesExamples")}</p>
+            <p>{t("overview.noFilesRecovery")}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="page-stack">
       <div className="section-heading">
@@ -32,6 +49,25 @@ export function Overview({ projection, onOpenFile, onApplyGitignoreGuard }: Prop
           <h2>{t("overview.heading")}</h2>
         </div>
       </div>
+
+      <div className="project-next-step">
+        <div>
+          <h3>{t(empty.length > 0 ? "overview.nextMissing" : "overview.nextReady")}</h3>
+          <p>{t(empty.length > 0 ? "overview.nextMissingBody" : "overview.nextReadyBody", { count: empty.length })}</p>
+        </div>
+        <div className="next-step-actions">
+          <button className="primary-button" onClick={() => {
+            const next = empty[0];
+            if (next) onOpenFile(next.file, next.key);
+            else if (projection.files[0]) onOpenFile(projection.files[0].path);
+          }}>{t(empty.length > 0 ? "overview.fillNext" : "overview.openEditor")}</button>
+          {onOpenIntegrations && <button className="secondary-button" onClick={onOpenIntegrations}>
+            {t("overview.connectAgent")}
+          </button>}
+        </div>
+      </div>
+
+      <VariableFinder projection={projection} onOpenFile={onOpenFile} />
 
       <div className="stats-grid">
         <Stat label={t("overview.managedFiles")} value={projection.files.length} detail={t("overview.insideProject")} />
@@ -59,8 +95,8 @@ export function Overview({ projection, onOpenFile, onApplyGitignoreGuard }: Prop
           ) : (
             <div className="issue-list">
               {empty.map((variable) => (
-                <button key={`${variable.file}:${variable.key}`} onClick={() => onOpenFile(variable.file)}>
-                  <span className="overview-row-copy"><strong>{variable.key}</strong></span>
+                <button key={`${variable.file}:${variable.key}`} onClick={() => onOpenFile(variable.file, variable.key)}>
+                  <span className="overview-row-copy"><strong>{variable.key}</strong><small>{t("overview.inFile", { file: variable.file })}</small></span>
                   <span>→</span>
                 </button>
               ))}

@@ -7,6 +7,7 @@ import type { CodexAccess, OccurrenceProjection } from "../../lib/types";
 import { MoveVariableModal } from "./MoveVariableModal";
 
 interface Props {
+  hidden?: boolean;
   projectId: string;
   file: string;
   variable: OccurrenceProjection;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function VariableRow({
+  hidden = false,
   projectId,
   file,
   variable,
@@ -37,6 +39,13 @@ export function VariableRow({
   const [moving, setMoving] = useState(false);
   const [description, setDescription] = useState(variable.description.join("\n"));
   const revealedValueRef = useRef<HTMLTextAreaElement>(null);
+  const revealRequest = useRef(0);
+
+  useLayoutEffect(() => {
+    revealRequest.current += 1;
+    if (hidden) setRevealed(null);
+    return () => { revealRequest.current += 1; };
+  }, [hidden, projectId, file, variable.key]);
 
   useEffect(() => {
     setDescription(variable.description.join("\n"));
@@ -91,7 +100,7 @@ export function VariableRow({
   };
 
   return (
-    <article className={variable.duplicate ? "variable-row has-error" : "variable-row"}>
+    <article hidden={hidden} className={variable.duplicate ? "variable-row has-error" : "variable-row"}>
       <div className="variable-main">
         <div className="variable-meta">
           <div className="key-line">
@@ -172,6 +181,7 @@ export function VariableRow({
             className="icon-button"
             title={revealed === null ? t("row.reveal") : t("row.hide")}
             onClick={() => {
+              const request = ++revealRequest.current;
               if (revealed !== null) {
                 setRevealed(null);
                 return;
@@ -183,10 +193,13 @@ export function VariableRow({
                 void api
                   .readValue(projectId, file, variable.key)
                   .then((nextValue) => {
+                    if (request !== revealRequest.current) return;
                     setRevealed(nextValue);
                     setRevealActivity((activity) => activity + 1);
                   })
-                  .catch(() => setRevealed(null));
+                  .catch(() => {
+                    if (request === revealRequest.current) setRevealed(null);
+                  });
               }
             }}
           >

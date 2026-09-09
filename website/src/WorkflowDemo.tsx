@@ -1,11 +1,15 @@
 import { DemoAppWindow } from "./DemoAppWindow";
 import { DemoTerminal } from "./DemoTerminal";
-import { scenes, SCENE_DURATION_MS } from "./demoStory";
+import { koreanScenes, scenes, SCENE_DURATION_MS } from "./demoStory";
+import { useSiteLocale } from "./SiteLocale";
 import { useDemoPlayback } from "./useDemoPlayback";
 import "./WorkflowDemo.css";
 import "./WorkflowDemo.responsive.css";
 
 export function WorkflowDemo() {
+  const { locale, copy } = useSiteLocale();
+  const c = copy.demo;
+  const stories = locale === "ko" ? koreanScenes : scenes;
   const {
     sceneIndex,
     elapsed,
@@ -22,19 +26,19 @@ export function WorkflowDemo() {
     hasValue,
     linked,
     deployed,
-  } = useDemoPlayback();
+  } = useDemoPlayback(stories);
 
   return (
     <section
       className="workflow"
       id="demo"
       ref={container}
-      aria-label="Kavranta 인터랙티브 제품 데모"
+      aria-label={c.label}
     >
       <div className="demo-stage">
         <div className="stage-caption">
           <span className="live-dot" /> YOUR FILES. YOUR FLOW.
-          <span>INTERACTIVE PRODUCT DEMO</span>
+          <span>{c.label}</span>
         </div>
         <DemoAppWindow
           hasVariable={hasVariable}
@@ -51,14 +55,14 @@ export function WorkflowDemo() {
           complete={complete}
         />
         <div className="stage-seal">
-          <span>↗</span> 요청은 자연스럽게.
+          <span>↗</span> {c.seal[0]}
           <br />
-          반영은 정확하게.
+          {c.seal[1]}
         </div>
       </div>
       <div className="demo-controls">
-        <div className="scene-buttons" aria-label="데모 시나리오">
-          {scenes.map((item, index) => (
+        <div className="scene-buttons" aria-label={c.scenarios}>
+          {stories.map((item, index) => (
             <button
               key={item.label}
               aria-pressed={sceneIndex === index}
@@ -77,14 +81,14 @@ export function WorkflowDemo() {
         <button
           className="playback-button"
           onClick={togglePlayback}
-          aria-label={playing ? "데모 일시정지" : "데모 재생"}
+          aria-label={playing ? c.pause : c.play}
         >
           {playing ? "Ⅱ" : "▷"}
         </button>
         <button
           className="playback-button"
           onClick={replay}
-          aria-label="데모 처음부터 재생"
+          aria-label={c.replay}
         >
           ↺
         </button>
@@ -95,18 +99,22 @@ export function WorkflowDemo() {
           <p>{scene.description}</p>
         </div>
         <span>
-          합성 데이터로 재현한 데모입니다.
+          {c.disclosure[0]}
           <br />
-          실제 파일 변경이나 외부 전송은 없습니다.
+          {c.disclosure[1]}
         </span>
       </div>
       <details className="demo-transcript">
-        <summary>데모를 텍스트로 읽기</summary>
-        {scenes.map((item) => (
+        <summary>{c.transcript}</summary>
+        {stories.map((item) => (
           <div key={item.label}>
             <h4>{item.label}</h4>
-            <p>요청: {item.prompt}</p>
-            <p>결과: {item.lines.at(-1)}</p>
+            <p>
+              {c.request}: {item.prompt}
+            </p>
+            <p>
+              {c.result}: {item.lines.at(-1)}
+            </p>
           </div>
         ))}
       </details>

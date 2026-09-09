@@ -31,6 +31,35 @@ const variable: OccurrenceProjection = {
 };
 
 describe("VariableRow", () => {
+  it("clears a reveal when filtering hides its row", async () => {
+    const user = userEvent.setup();
+    const row = (hidden: boolean) => <VariableRow hidden={hidden} projectId="demo"
+      file={variable.linkedFiles[0]!} variable={variable} currentGroup="GPT" groups={["GPT"]}
+      sameKeyFiles={variable.linkedFiles} onMutate={vi.fn()} onLink={vi.fn()} />;
+    const view = render(row(false));
+    await user.click(screen.getByTitle("Show value · hides after 30 seconds of inactivity"));
+    expect(await screen.findByDisplayValue("fake_preview_value")).toBeVisible();
+    view.rerender(row(true));
+    expect(screen.queryByDisplayValue("fake_preview_value")).not.toBeInTheDocument();
+    view.rerender(row(false));
+    expect(screen.getByLabelText("GPT_API_KEY value")).toHaveValue("");
+  });
+
+  it("ignores a late reveal after a filter hides and restores the row", async () => {
+    let finishRead: (value: string) => void = () => {};
+    vi.mocked(api.readValue).mockImplementationOnce(() => new Promise((resolve) => { finishRead = resolve; }));
+    const row = (hidden: boolean) => <VariableRow hidden={hidden} projectId="demo"
+      file={variable.linkedFiles[0]!} variable={variable} currentGroup="GPT" groups={["GPT"]}
+      sameKeyFiles={variable.linkedFiles} onMutate={vi.fn()} onLink={vi.fn()} />;
+    const view = render(row(false));
+    fireEvent.click(screen.getByTitle("Show value · hides after 30 seconds of inactivity"));
+    view.rerender(row(true));
+    view.rerender(row(false));
+    await act(async () => finishRead("fake_late_reveal"));
+    expect(screen.queryByDisplayValue("fake_late_reveal")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("GPT_API_KEY value")).toHaveValue("");
+  });
+
   it("shows linked save impact after a masked replacement", async () => {
     const user = userEvent.setup();
     render(

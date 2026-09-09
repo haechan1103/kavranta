@@ -37,6 +37,46 @@ const projection: ProjectProjection = {
 };
 
 describe("FileEditor", () => {
+  it("combines metadata search with missing-only filtering and reports no matches", async () => {
+    const user = userEvent.setup();
+    render(<FileEditor projectId="demo" filePath={projection.files[0]!.path} projection={{ ...projection,
+      files: [{ ...projection.files[0]!, groups: [{ name: "App", variables: [
+        { ...variable("PORT", "empty"), description: ["Listener address"] }, variable("MODE"),
+      ] }] }],
+    }} onRefresh={vi.fn()} onError={vi.fn()} onNotice={vi.fn()} />);
+    await user.type(screen.getByRole("searchbox"), "listener");
+    await user.click(screen.getByRole("button", { name: /Missing values only/ }));
+    expect(screen.getByText("PORT")).toBeVisible();
+    expect(screen.getByText("MODE")).not.toBeVisible();
+    await user.clear(screen.getByRole("searchbox"));
+    await user.type(screen.getByRole("searchbox"), "MODE");
+    expect(screen.getByText("No variables match these filters")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Show all variables" }));
+    expect(screen.getByText("PORT")).toBeVisible();
+    expect(screen.getByText("MODE")).toBeVisible();
+  });
+
+  it("preserves an unsaved draft when search hides and restores its row", async () => {
+    const user = userEvent.setup();
+    render(<FileEditor projectId="demo" filePath={projection.files[0]!.path} projection={{ ...projection,
+      files: [{ ...projection.files[0]!, groups: [{ name: "App", variables: [variable("PORT"), variable("MODE")] }] }],
+    }} onRefresh={vi.fn()} onError={vi.fn()} onNotice={vi.fn()} />);
+    await user.type(screen.getByLabelText("PORT value"), "fake_draft_only");
+    await user.type(screen.getByRole("searchbox"), "MODE");
+    expect(screen.getByText("PORT")).not.toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Show all variables" }));
+    expect(screen.getByLabelText("PORT value")).toHaveValue("fake_draft_only");
+    expect(screen.getByLabelText("PORT value")).toBeVisible();
+  });
+
+  it("opens with the variable search supplied by the overview", () => {
+    render(<FileEditor projectId="demo" filePath={projection.files[0]!.path} initialSearch="MODE" projection={{ ...projection,
+      files: [{ ...projection.files[0]!, groups: [{ name: "App", variables: [variable("PORT"), variable("MODE")] }] }],
+    }} onRefresh={vi.fn()} onError={vi.fn()} onNotice={vi.fn()} />);
+    expect(screen.getByRole("searchbox")).toHaveValue("MODE");
+    expect(screen.getByText("PORT")).not.toBeVisible();
+    expect(screen.getByText("MODE")).toBeVisible();
+  });
   it("creates an explicit empty group from the file header", async () => {
     const user = userEvent.setup();
     const refresh = vi.fn(async () => undefined);
@@ -151,8 +191,8 @@ describe("FileEditor", () => {
     await user.click(screen.getByRole("button", { name: /Missing values only/ }));
 
     expect(screen.getByText("GPT_API_KEY")).toBeInTheDocument();
-    expect(screen.queryByText("GPT_MODEL")).not.toBeInTheDocument();
-    expect(screen.queryByText("DATABASE_URL")).not.toBeInTheDocument();
+    expect(screen.getByText("GPT_MODEL")).not.toBeVisible();
+    expect(screen.getByText("DATABASE_URL")).not.toBeVisible();
     expect(
       screen.queryByRole("heading", { name: "Database" }),
     ).not.toBeInTheDocument();
@@ -186,7 +226,7 @@ describe("FileEditor", () => {
     await user.click(screen.getByRole("button", { name: /Missing values only/ }));
 
     expect(screen.getByText("Every variable has a value")).toBeInTheDocument();
-    expect(screen.queryByText("GPT_API_KEY")).not.toBeInTheDocument();
+    expect(screen.getByText("GPT_API_KEY")).not.toBeVisible();
   });
 });
 

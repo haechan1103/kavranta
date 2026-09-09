@@ -5,6 +5,9 @@
   }
 }
 @media (max-width: 1000px) {
+  .site-header nav {
+    display: none;
+  }
   .site-header {
     padding: 0 28px;
   }
@@ -21,10 +24,6 @@
   .feature-grid {
     gap: 12px;
   }
-  .linked-nodes > span {
-    font-size: 8px;
-    padding: 8px 4px;
-  }
   .integrations-strip > div {
     justify-content: center;
     font-size: 15px;
@@ -39,21 +38,22 @@
   .faq-section {
     gap: 40px;
   }
-  .protection-illustration {
-    gap: 12px;
-  }
-  .shield-symbol {
-    width: 50px;
-    height: 65px;
-  }
 }
 @media (max-width: 700px) {
   .site-header {
     height: 72px;
-    padding: 0 23px;
+    padding: 0 16px;
+    gap: 12px;
+  }
+  .nav-actions {
+    gap: 10px;
+  }
+  .site-header .brand img {
+    width: 24px;
+    height: 28px;
   }
   .site-header .brand {
-    font-size: 23px;
+    font-size: 21px;
   }
   .site-header nav,
   .github-link,
@@ -84,6 +84,7 @@
   }
   .hero-actions {
     gap: 18px;
+    flex-wrap: wrap;
   }
   .hero-actions .button,
   .hero-actions .text-link {
@@ -110,18 +111,6 @@
   }
   .feature-card h3 {
     font-size: 22px;
-  }
-  .link-illustration,
-  .protection-illustration,
-  .ship-illustration {
-    height: 165px;
-    max-width: 310px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .linked-nodes > span {
-    padding: 10px;
-    font-size: 10px;
   }
   .local-section {
     grid-template-columns: 1fr;
@@ -183,5 +172,13 @@
   .site-footer > div {
     font-size: 10px;
     gap: 17px;
+  }
+}
+@media (max-width: 370px) {
+  .site-header .button-small {
+    display: none;
+  }
+  .hero h1 {
+    font-size: 37px;
   }
 }

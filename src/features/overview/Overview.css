@@ -4,6 +4,42 @@
   gap: 12px;
 }
 
+.project-next-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 18px;
+  margin-bottom: 14px;
+  border: 1px solid #c6dfd2;
+  border-radius: 12px;
+  background: #f1f8f4;
+}
+
+.project-next-step h3,
+.project-next-step h2 {
+  margin: 0;
+  font-size: calc(14px * var(--font-scale));
+}
+
+.project-next-step p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(10px * var(--font-scale));
+  line-height: 1.7;
+}
+
+.next-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.variable-finder + .stats-grid {
+  margin-top: 14px;
+}
+
 .stat-card {
   display: flex;
   min-height: 118px;

@@ -1,0 +1,126 @@
+.link-playground {
+  padding-block: 90px;
+  scroll-margin-top: 100px;
+}
+.playground-files {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.playground-file {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid #d4ded7;
+  border-radius: 16px;
+  background: #fff;
+  transition: border-color 150ms;
+}
+.playground-file.will-change {
+  border-color: #168463;
+  box-shadow: 0 0 0 2px #168463;
+}
+.playground-file header {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 26px;
+}
+.playground-file header span {
+  color: #4e6358;
+  font-size: 12px;
+}
+.playground-file code {
+  font-size: 14px;
+}
+.playground-mask {
+  display: block;
+  margin: 12px 0 22px;
+  padding: 12px;
+  background: #eef3ef;
+  border-radius: 8px;
+  letter-spacing: 3px;
+}
+.playground-file label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.playground-file input {
+  width: 18px;
+  height: 18px;
+  accent-color: #168463;
+}
+.playground-file p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+.playground-file small {
+  margin-top: 12px;
+  color: #61716a;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.playground-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 25px;
+}
+.playground-actions .text-link {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.playground-actions .button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.playground-review {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 24px;
+  margin-top: 24px;
+  border-radius: 12px;
+  background: #e6f3eb;
+}
+.playground-review ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin: 12px 0 0;
+  padding-left: 18px;
+}
+.playground-result {
+  min-height: 24px;
+  color: #156449;
+  font-weight: 650;
+  font-size: 14px;
+}
+.playground-disclosure {
+  max-width: 850px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #61716a;
+}
+@media (max-width: 760px) {
+  .link-playground {
+    padding-block: 55px;
+  }
+  .playground-files {
+    grid-template-columns: 1fr;
+  }
+  .playground-file {
+    padding: 20px;
+  }
+}

@@ -13,7 +13,41 @@
   </p>
 </div>
 
+## 바로 시작하기
+
+macOS에서는:
+
+```bash
+brew install --cask haechan1103/tap/kavranta
+```
+
+또는 [설치 파일을 받으세요](https://github.com/haechan1103/kavranta/releases/latest).
+macOS는 서명·공증된 앱이며, Windows는 **x64 미서명 베타**입니다.
+설치 전 [첫 실행 안내](#windows-첫-실행)를 확인하세요.
+
+### 첫 번째 유용한 작업
+
+1. Kavranta를 열고 작업 중인 프로젝트 폴더를 선택하세요. 등록은 지원 파일을
+   찾으며 내용을 변경하지 않습니다.
+2. 파일을 열고 **값 없음** 필터를 켜서 빈 변수 하나를 채워 보세요. 이미 모두
+   채워져 있다면 기존 변수 하나를 살펴보세요.
+3. 저장할 때 영향을 받는 파일을 확인하고 저장하세요. 개발 서버 명령은 쓰던
+   그대로입니다. 이름이 같아도 직접 연결하기 전에는 독립적으로 관리합니다.
+
+AI 연결은 선택 사항입니다. 로컬 편집에 가입이나 새 런타임이 필요하지 않습니다.
+파일이 없다면 프로젝트의 설정 가이드를 따른 뒤 새로고침하세요. 예제·템플릿
+파일은 의도적으로 제외하며 자동으로 복사하지 않습니다.
+
+[90일 로드맵과 다음 개선](ROADMAP.md) ·
+[샘플로 직접 체험](https://haechan1103.github.io/kavranta/?lang=ko) ·
+[막힌 부분 알려주기](https://github.com/haechan1103/kavranta/discussions)
+
+<details>
+  <summary>전체 사용 흐름 보기 (합성 데이터)</summary>
+
 ![프로젝트 개요, env 편집, AWS 배포, 팀 공유, AI 도구 연결을 보여주는 Kavranta 데모](assets/screenshots/kavranta-demo.gif)
+
+</details>
 
 <div align="center">
   <a href="https://github.com/haechan1103/kavranta/releases/latest"><strong>macOS·Windows용 다운로드</strong></a>
@@ -23,9 +57,9 @@
   <a href="SECURITY.md">보안 모델</a>
 </div>
 
-> Kavranta의 이전 제품명은 **Env Manager**입니다. 기존 사용자 데이터와
-> `env-manager` 플러그인·Broker·manifest 기술 식별자는 하위 호환성을 위해
-> 그대로 유지합니다.
+> Kavranta의 이전 제품명은 **Env Manager**입니다. 기존 사용자 데이터와 프로젝트
+> 형식은 호환됩니다. 새 AI 연결은 `kavranta` 식별자를 사용하며 앱이 관리하던
+> 이전 연결 설정의 마이그레이션을 처리합니다.
 
 Kavranta는 로컬 우선 데스크톱 앱입니다. 프로젝트를 등록하면 그 프로젝트가 실제로 사용하는 `.env`, `.env.local`, `.env.development`, `runtime.env`, Wrangler `.dev.vars`, 하위 앱 env 파일을 찾아줍니다. 환경변수 값은 원래 파일에 남습니다. 반복해서 쓰는 로그인 정보는 선택적으로 운영체제 보안 저장소에 보관하며, 호스팅된 vault나 새로운 실행 명령을 요구하지 않습니다.
 
@@ -39,44 +73,16 @@ Kavranta는 로컬 우선 데스크톱 앱입니다. 프로젝트를 등록하�
 | **미완성 설정만 빠르게 확인** | **반복 계정은 프로젝트 파일 밖에 보관** | **프로젝트마다 직접 허용** |
 | 현재 env 파일에서 아직 값이 없는 변수만 필터링하고 남은 개수를 바로 확인합니다. | 선택한 아이디와 비밀번호를 `.env`, Git, Kavranta 메타데이터가 아닌 macOS Keychain 또는 Windows Credential Manager에 저장합니다. | 새 계정은 기본 차단됩니다. 프로젝트별로 직접 허용·해제하며, 허용만으로 AI가 스스로 로그인을 실행할 수는 없습니다. |
 
-## `main`에 추가된 기능
-
-- **값 없는 변수 필터:** 현재 env 파일에서 아직 값을 입력하지 않은 변수만 보고 남은 개수와 완료 상태를 바로 확인합니다.
-- **프로젝트별 로컬 계정:** 반복해서 쓰는 로그인 정보를 macOS Keychain 또는 Windows Credential Manager에 저장하고, 등록된 프로젝트 중 사용할 곳만 직접 허용합니다.
-- **안전한 로컬 처리:** Kavranta 로컬 메타데이터에는 표시명, 시각 정보, 프로젝트 허용 관계만 저장됩니다. 계정 항목은 허용된 프로젝트 화면에서만 직접 복사할 수 있으며, 클립보드가 바뀌지 않았다면 45초 후 지웁니다.
-- **AI 자율 로그인 차단:** 계정 생성·수정·삭제, 원문 조회와 로그인 실행은 AI Broker 도구로 제공하지 않습니다. 프로젝트 허용은 사용 후보 자격일 뿐이며, 향후 로그인 작업도 별도의 명시적 사용자 실행을 요구합니다.
-
-## 0.7.1의 새로운 기능
-
-- **Kavranta 브랜드:** 앱, 설치 파일, 릴리스 정보, 문서, 스크린샷과 AI 연동 표시 이름을 Kavranta로 통일했습니다.
-- **업데이트 호환성:** 기존 프로젝트 manifest, 로컬 앱 데이터, Broker 명령과 `env-manager` 플러그인 선택자는 안정적인 기술 식별자로 유지합니다.
-
-## 0.7.0의 새로운 기능
-
-- **Action Pack:** 범위를 좁혀 선언한 로컬 CLI 또는 고정 HTTPS 점검에 관리 값을 사용합니다. 값은 UI, AI 대화, 명령 인자, 로그와 응답 본문에 나타나지 않습니다.
-- **생성값 비노출 저장:** 에이전트가 5분·1회용 저장 계획을 요청한 뒤 `openssl` 같은 신뢰할 수 있는 로컬 생성기의 출력을 Broker로 바로 전달합니다. 생성값은 에이전트에게 돌아오지 않습니다.
-- **더 넓은 env 탐색과 조용한 유지관리:** Wrangler `.dev.vars*`도 `.env*`와 같은 탐색·Git 안전 검사·직접 접근 Guard를 적용하며, 앱과 설치된 AI 연동 업데이트는 백그라운드에서 확인해 조치할 때만 표시합니다.
-
-## 0.6.5의 새로운 기능
-
-- **Expo EAS 배포:** 선택한 값을 EAS CLI의 숨김 입력으로 `development`, `preview`, `production`에 보냅니다. 값은 명령 인자, 임시 파일, Kavranta 출력에 들어가지 않습니다.
-- **프로젝트 단위 사전 확인:** 가장 가까운 EAS 프로젝트를 찾고 로그인한 Expo 계정과 프로젝트 식별자를 확인한 뒤, 변수마다 `Sensitive` 또는 `Plain text` 공개 범위를 적용합니다.
-- **AI에서도 같은 보호 흐름:** Codex, Claude Code, Copilot, Cursor가 데스크톱 앱과 같은 값 비노출 Broker 계획과 활동 기록을 사용합니다.
-
-## 0.6.4의 새로운 기능
-
-- **신뢰할 수 있는 macOS 설치:** Apple Silicon·Intel DMG를 Developer ID로 서명하고, 내부 앱이 Apple 공증·스테이플링과 배포 검증을 모두 통과한 경우에만 공개합니다.
-
-## 0.6.2의 새로운 기능
-
-- **Folder Team Channel:** NAS나 기존 동기화 폴더에서 암호화 패키지를 주고받고, 충돌을 확인한 뒤 프로젝트에 적용합니다.
-- **AWS 배포:** Secrets Manager와 SSM `SecureString`으로 전송하고, 선택적으로 KMS 키를 지정하며, 값을 표시하지 않고 `같음` / `다름` / `없음` 상태를 확인합니다.
-- **Remote Runtime 확인:** age로 암호화된 SSH Verifier를 통해 관리 파일과 서버의 허용된 대상을 비교합니다. UI에는 원격 값이나 해시가 아닌 일치 상태만 돌아옵니다.
-- **Personal Provider Pack:** 앱 업데이트를 기다리지 않고 표준 입력 전용 사용자 CLI 연동을 로컬에 추가합니다.
-- **AI Provider 작업:** 지원 에이전트도 데스크톱과 같은 값 비노출 Provider Engine과 값 없는 활동 기록을 사용합니다.
-- **프로젝트 간 값 재사용:** 같은 이름의 보호된 값을 Rust 내부에서 다른 등록 프로젝트로 복사하며 에이전트나 일반 UI에 반환하지 않습니다.
-
 ## 실제 사용 흐름
+
+### 0.7.6 릴리스에 포함
+
+프로젝트 전체 메타데이터 검색, 빈 변수로 바로 이동, 이름·값 없음 조합 필터를
+이 소스 트리에 구현했습니다. 검색은 값을 읽지 않으며 필터를 바꿔도 입력 중인
+초안을 유지합니다. 별도 [웹사이트](https://haechan1103.github.io/kavranta/?lang=ko)는
+GitHub Pages에 정적 파일로 게시하며 EN/KO 샘플 연결 체험을 제공합니다.
+검증 기준과 미완료 작업은 [로드맵](ROADMAP.md)에
+구분해 두었습니다.
 
 ### 복사본이 아니라 실제 env 파일을 정리합니다
 
@@ -86,7 +92,9 @@ Kavranta는 로컬 우선 데스크톱 앱입니다. 프로젝트를 등록하�
 
 ### 지금 확인해야 할 것만 모아봅니다
 
-프로젝트 개요는 값이 비어 있는 변수, 조치가 필요한 AI 접근 검토, 파싱 경고, Git 유출 위험과 관리 파일 이동을 한곳에 모읍니다. 이 점검을 위해 값을 읽지는 않습니다. 파일 안에서는 **값 없는 변수만**을 켜 미완성 설정에만 집중할 수 있습니다.
+프로젝트 개요는 값이 비어 있는 변수, 파싱 경고, Git 유출 위험과 관리 파일 이동을
+한곳에 모읍니다. 이 점검을 위해 값을 읽지는 않습니다. AI 정책은 해당 변수 행에서
+관리합니다. 파일 안에서는 **값 없는 변수만**을 켜 미완성 설정에 집중할 수 있습니다.
 
 ![Git 보호와 AI 접근 상태를 보여주는 Kavranta 프로젝트 개요](assets/screenshots/kavranta-overview.png)
 
@@ -290,7 +298,12 @@ cargo clippy --workspace --all-targets -- -D warnings
 
 ## 프로젝트 상태
 
-Kavranta는 초기 단계의 macOS·Windows 데스크톱 프로젝트입니다. `0.7.1`은 기존 앱 데이터, 프로젝트 manifest, Broker 명령과 AI 플러그인 선택자를 유지하면서 제품 이름을 Kavranta로 전환합니다. 서명·공증된 macOS 빌드와 명확히 표시된 Windows x64 미서명 베타를 제공합니다. Windows 코드 서명, ARM64와 더 많은 언어는 이후 작업으로 남아 있습니다.
+Kavranta는 초기 단계의 macOS·Windows 데스크톱 프로젝트입니다. 서명·공증된
+macOS 빌드와 명확히 표시된 Windows x64 미서명 베타를 제공합니다. Windows 코드
+서명과 Windows ARM64는 이후 작업입니다. 배포된 변경은
+[Releases](https://github.com/haechan1103/kavranta/releases), 개발 중인 작업과
+출시 기준은 [로드맵](ROADMAP.md)에서 확인하세요. 안정판 1.0은 스타 수가 아닌
+호환성·보안·설치·외부 사용자 검증을 통과한 뒤 출시합니다.
 
 ## 커뮤니티
 

@@ -346,4 +346,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           release_tag="v$(jq -r '.version' package.json)"
-          gh release edit "$release_tag" --draft=false --latest
+          gh release edit "$release_tag" --notes-file RELEASE_NOTES.md --draft=false --latest
