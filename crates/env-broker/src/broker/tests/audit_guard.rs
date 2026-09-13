@@ -300,6 +300,7 @@ fn guard_allows_source_patch_that_only_mentions_env_paths_in_changed_lines() {
     let runtime_file = ["runtime.", "env", ".staging"].concat();
     let dotenv_file = [".", "env", ".local"].concat();
     let wrangler_file = [".dev", ".vars", ".preview"].concat();
+    let property_access = runtime_file.replace("runtime.", "process.");
     for input in [
         json!({
             "tool_name": "apply_patch",
@@ -317,8 +318,49 @@ fn guard_allows_source_patch_that_only_mentions_env_paths_in_changed_lines() {
                 )
             }
         }),
+        json!({
+            "tool_name": "apply_patch",
+            "tool_input": {
+                "patch": format!(
+                    "*** Begin Patch\n*** Update File: deploy.sh\n@@\n-const mode = null;\n+const mode = {property_access};\n*** End Patch\n"
+                )
+            }
+        }),
     ] {
-        assert_eq!(guard_hook_decision(&input), json!({}));
+        let patch = synthetic_patch_text(&input);
+        for target in [
+            "src/config.ts",
+            "migrations/setup.sql",
+            "native/config.rs",
+            "native/App.swift",
+            r"C:\fake-project\native\config.rs",
+        ] {
+            let patch = patch
+                .replace("deploy.sh", target)
+                .replace("docs/deployment.md", target);
+            let source_input = json!({
+                "tool_name": "apply_patch",
+                "tool_input": { "patch": patch }
+            });
+            for mut input in patch_transport_variants(source_input) {
+                assert_eq!(guard_hook_decision(&input), json!({}));
+                input["hook_event_name"] = json!("preToolUse");
+                input["cursor_version"] = json!("2.6.0");
+                assert_eq!(
+                    guard_hook_decision(&input),
+                    json!({ "permission": "allow" })
+                );
+            }
+            // A shell invocation never gains the patch tool's content exemption.
+            let shell_input = json!({
+                "tool_name": "Bash",
+                "tool_input": { "command": patch }
+            });
+            assert_eq!(
+                guard_hook_decision(&shell_input)["hookSpecificOutput"]["permissionDecision"],
+                "deny"
+            );
+        }
     }
 }
 
@@ -379,13 +421,79 @@ fn guard_fails_closed_for_unparseable_patch_that_mentions_an_env_path() {
     });
 
     assert_guard_denies(input);
+
+    let patch = format!(
+        "*** Begin Patch\n*** Update File: src/config.ts\n@@\n-old\n+// Reference {target}\n*** End Patch\n"
+    );
+    for malformed in [
+        format!("apply_patch <<'PATCH'\n{patch}PATCH\n"),
+        format!("{patch}cat {target}\n"),
+        patch.replace("*** End Patch", ""),
+        patch.replace("*** Begin Patch", ""),
+        format!("*** Begin Patch\n{patch}*** End Patch\n"),
+    ] {
+        assert_guard_denies(json!({
+            "tool_name": "apply_patch",
+            "tool_input": { "patch": malformed }
+        }));
+    }
+
+    // A safe field must not hide a second, blocked patch payload.
+    let blocked = format!("*** Begin Patch\n*** Delete File: {target}\n*** End Patch\n");
+    for field in ["command", "cmd", "input", "patchText"] {
+        let input = json!({
+            "tool_name": "apply_patch",
+            "tool_input": { "patch": patch, field: blocked }
+        });
+        assert_eq!(
+            guard_hook_decision(&input)["hookSpecificOutput"]["permissionDecision"],
+            "deny"
+        );
+    }
 }
 
 fn assert_guard_denies(input: Value) {
-    assert_eq!(
-        guard_hook_decision(&input)["hookSpecificOutput"]["permissionDecision"],
-        "deny"
-    );
+    for mut input in patch_transport_variants(input) {
+        assert_eq!(
+            guard_hook_decision(&input)["hookSpecificOutput"]["permissionDecision"],
+            "deny"
+        );
+        input["hook_event_name"] = json!("preToolUse");
+        input["cursor_version"] = json!("2.6.0");
+        assert_eq!(guard_hook_decision(&input)["permission"], "deny");
+    }
+}
+
+fn patch_transport_variants(input: Value) -> Vec<Value> {
+    let patch = synthetic_patch_text(&input);
+    let mut variants = vec![input.clone()];
+    variants.push(json!({
+        "toolName": "ApplyPatch",
+        "toolInput": { "patchText": patch }
+    }));
+    for field in ["command", "cmd", "input"] {
+        variants.push(json!({
+            "tool_name": "apply_patch",
+            "tool_input": { field: patch }
+        }));
+    }
+    variants.push(json!({
+        "tool_name": "apply_patch",
+        "tool_input": patch
+    }));
+    variants.push(json!({
+        "toolName": "ApplyPatch",
+        "toolInput": patch
+    }));
+    variants
+}
+
+fn synthetic_patch_text(input: &Value) -> &str {
+    input
+        .pointer("/tool_input/patch")
+        .or_else(|| input.pointer("/toolInput/patchText"))
+        .and_then(Value::as_str)
+        .expect("synthetic structured patch")
 }
 
 #[test]
