@@ -88,7 +88,14 @@ fn patch_field_decision(value: &Value) -> Option<bool> {
             let mut denied = false;
             for (key, value) in fields {
                 let normalized = key.replace(['_', '-'], "").to_ascii_lowercase();
-                if matches!(normalized.as_str(), "patch" | "patchtext") {
+                // Codex sends canonical apply_patch input in `command`, while
+                // other hosts use structured fields or a freeform tool input.
+                // This normalization runs only for a recognized patch tool.
+                let patch_field = matches!(
+                    normalized.as_str(),
+                    "patch" | "patchtext" | "command" | "cmd" | "input"
+                ) || (normalized == "toolinput" && value.is_string());
+                if patch_field {
                     found = true;
                     denied |= patch_value_requests_direct_env_access(value);
                 } else if let Some(nested_denied) = patch_field_decision(value) {
@@ -130,9 +137,19 @@ fn patch_text_requests_direct_env_access(text: &str) -> bool {
         "*** Move to:",
     ];
 
+    // Never mistake patch headers embedded in a shell command or a partial
+    // payload for a complete patch. Those retain conservative inspection.
+    let mut lines = text.trim().lines();
+    if lines.next() != Some("*** Begin Patch") || lines.next_back() != Some("*** End Patch") {
+        return contains_env_reference(text);
+    }
+
     let mut found_target = false;
     let mut malformed_target = false;
-    for line in text.lines() {
+    for line in lines {
+        if matches!(line, "*** Begin Patch" | "*** End Patch") {
+            return contains_env_reference(text);
+        }
         for header in TARGET_HEADERS {
             let Some(path) = line.strip_prefix(header) else {
                 continue;

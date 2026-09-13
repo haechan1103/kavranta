@@ -74,11 +74,66 @@ fn guard_hook_cli_distinguishes_patch_targets_from_changed_line_mentions() {
         }
     });
 
-    assert_eq!(run_guard_hook(binary, &source_patch), json!({}));
-    assert_eq!(
-        run_guard_hook(binary, &data_patch)["hookSpecificOutput"]["permissionDecision"],
-        "deny"
-    );
+    for (fixture, denied) in [(&source_patch, false), (&data_patch, true)] {
+        let patch = fixture["tool_input"]["patch"]
+            .as_str()
+            .expect("synthetic patch");
+        let patch = patch.replace("+new", &format!("+{GUARD_CANARY}"));
+        let mut inputs = Vec::new();
+        for field in ["patch", "patchText", "command", "cmd", "input"] {
+            inputs.push(json!({
+                "tool_name": "apply_patch",
+                "tool_input": { field: patch }
+            }));
+        }
+        inputs.push(json!({ "tool_name": "apply_patch", "tool_input": patch }));
+        for input in inputs {
+            let result = run_guard_hook(binary, &input);
+            if denied {
+                assert_eq!(result["hookSpecificOutput"]["permissionDecision"], "deny");
+            } else {
+                assert_eq!(result, json!({}));
+            }
+            let serialized = result.to_string();
+            assert!(!serialized.contains(GUARD_CANARY));
+            assert!(!serialized.contains(&data_name));
+        }
+    }
+}
+
+#[test]
+fn guard_hook_cli_accepts_codex_prisma_sql_and_native_source_patch_envelopes() {
+    let binary = env!("CARGO_BIN_EXE_kavranta-broker");
+    for path in [
+        "tests/prisma-migration.test.ts",
+        "migrations/verify.sql",
+        "native/Config.swift",
+    ] {
+        let patch = format!(
+            "*** Begin Patch\n*** Add File: {path}\n+// .env.local .dev.vars.preview {GUARD_CANARY}\n*** End Patch\n"
+        );
+        for (tool_name, denied) in [("apply_patch", false), ("Bash", true)] {
+            let result = run_guard_hook(
+                binary,
+                &json!({
+                    "hook_event_name": "PreToolUse",
+                    "tool_name": tool_name,
+                    "tool_use_id": "fake_source_patch_call",
+                    "cwd": "/tmp/fake-source-project",
+                    "tool_input": { "command": patch }
+                }),
+            );
+            assert_eq!(
+                result["hookSpecificOutput"]["permissionDecision"] == "deny",
+                denied
+            );
+            let serialized = result.to_string();
+            assert!(!serialized.contains(GUARD_CANARY));
+            assert!(!serialized.contains(path));
+            assert!(!serialized.contains(".env.local"));
+            assert!(!serialized.contains("fake_source_patch_call"));
+        }
+    }
 }
 
 fn run_guard_hook(binary: &str, input: &Value) -> Value {
