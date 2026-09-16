@@ -67,7 +67,7 @@ Kavranta is a local-first desktop app. Register a project and it discovers the r
 
 | Keep your current workflow | Update linked values once | Work with AI more safely |
 | --- | --- | --- |
-| Your existing files and commands remain authoritative. Kavranta preserves paths, comments, ordering, and unrelated formatting. | Explicitly link the same key across two, three, or more files. Edit from any member and save every linked occurrence together. | Codex, Claude Code, Copilot, and Cursor can inspect structure and perform approved operations through a redacted local broker. Protected values stay out of normal inspection responses. |
+| Your existing files and commands remain authoritative. Kavranta preserves paths, comments, ordering, and unrelated formatting. | Explicitly link the same key across two, three, or more files. Edit from any member and save every linked occurrence together. | Codex, Claude Code, Copilot, Cursor, and OpenCode can inspect structure and perform approved operations through a redacted local broker. Protected values stay out of normal inspection responses. |
 | **Share without committing env files** | **Deploy only what you select** | **Catch Git mistakes early** |
 | Export all or selected variables as a passphrase-encrypted package, or publish immutable packages through a mounted team folder. | Send selected values to GitHub Actions, Cloudflare Workers, Expo EAS, AWS, or a locally installed CLI Pack without creating a temporary env file. | Detect missing ignore rules, already tracked env files, historical paths, and suspicious public frontend variable names. |
 | **Finish incomplete setup faster** | **Keep reusable accounts out of project files** | **Grant access per project** |
@@ -157,7 +157,7 @@ Install and sign in to [`gh`](https://cli.github.com/manual/gh_secret_set), [Wra
 
 ## Connect your AI coding agent
 
-One independently versioned local bundle supports **Codex**, **Claude Code**, **GitHub Copilot / VS Code**, and **Cursor**. The app detects supported tools and installs or updates their Kavranta configuration. Its single `kavranta-env` Skill recognizes both English and Korean env-management requests, so separate language-specific installations are not required.
+One independently versioned local bundle supports **Codex**, **Claude Code**, **GitHub Copilot / VS Code**, **Cursor**, and **OpenCode**. The app detects supported tools and installs or updates their Kavranta configuration. Its single `kavranta-env` Skill recognizes both English and Korean env-management requests, so separate language-specific installations are not required.
 
 <table>
   <tr>
@@ -165,12 +165,12 @@ One independently versioned local bundle supports **Codex**, **Claude Code**, **
     <td width="50%"><strong>Value-free activity history</strong><br />See broker structure checks, value-read attempts, mutations, provider checks, and allowed/blocked results. Values and value fragments are never logged.</td>
   </tr>
   <tr>
-    <td><img src="assets/screenshots/kavranta-ai-integrations.png" alt="Kavranta connections for Codex, Claude Code, GitHub Copilot, and Cursor" /></td>
+    <td><img src="assets/screenshots/kavranta-ai-integrations.png" alt="Kavranta connections for supported AI coding agents" /></td>
     <td><img src="assets/screenshots/kavranta-ai-activity.png" alt="Value-free AI broker activity with allowed and blocked outcomes" /></td>
   </tr>
 </table>
 
-You can also install the integration from a terminal:
+Host installation notes:
 
 <details>
   <summary><strong>Codex</strong></summary>
@@ -179,6 +179,16 @@ You can also install the integration from a terminal:
 codex plugin marketplace add haechan1103/kavranta
 codex plugin add kavranta@kavranta
 ```
+</details>
+
+<details>
+  <summary><strong>OpenCode</strong></summary>
+
+Install OpenCode, then choose **Install connection** on Kavranta's AI tools screen.
+Kavranta uses OpenCode's global Skill, MCP, and plugin interfaces. The app refuses
+to overwrite an unrelated `kavranta` connection or plugin, and reports the
+connection as **Configured** until a new OpenCode process loads it. Restart
+OpenCode after installation or an update.
 </details>
 
 <details>

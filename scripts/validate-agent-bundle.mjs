@@ -12,6 +12,8 @@ const mcp = JSON.parse(await read("plugins/kavranta/.mcp.json"));
 const cursorMcp = JSON.parse(await read("plugins/kavranta/mcp.json"));
 const hooks = JSON.parse(await read("plugins/kavranta/hooks/hooks.json"));
 const cursorHooks = JSON.parse(await read("plugins/kavranta/cursor-hooks/hooks.json"));
+const opencode = JSON.parse(await read("plugins/kavranta/opencode/manifest.json"));
+const opencodeGuard = await read("plugins/kavranta/opencode/kavranta-guard.js");
 const skill = await read("plugins/kavranta/skills/kavranta-env/SKILL.md");
 const skillInterface = await read("plugins/kavranta/skills/kavranta-env/agents/openai.yaml");
 const normalizedSkill = skill.replace(/\r\n?/g, "\n");
@@ -40,6 +42,9 @@ assert(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version),
 assert(codex.version === version, "Codex plugin version must match the agent bundle");
 assert(claude.version === version, "Claude plugin version must match the agent bundle");
 assert(cursor.version === version, "Cursor plugin version must match the agent bundle");
+assert(opencode.version === version, "OpenCode manifest version must match the agent bundle");
+assert(opencode.name === "kavranta", "OpenCode integration name must be kavranta");
+assert(opencode.repository === repository, "OpenCode integration must reference the Kavranta repository");
 assert(claudeMarketplace.plugins?.[0]?.version === version, "Claude marketplace version must match the agent bundle");
 assert(mcp.mcpServers?.kavranta?.command === "kavranta-broker", "MCP must use the Kavranta broker command");
 assert(cursorMcp.mcpServers?.kavranta?.command === "kavranta-broker", "Cursor MCP must use the Kavranta broker command");
@@ -59,8 +64,25 @@ assert(
   cursorHooks.hooks.preToolUse[0]?.matcher === "Shell|Read|Write|Grep|Delete",
   "Cursor preToolUse must cover every direct env tool type",
 );
+assert(opencode.skill === "skills/kavranta-env", "OpenCode must install the shared Skill");
+assert(opencode.guard === "opencode/kavranta-guard.js", "OpenCode must install its Guard plugin");
+assert(
+  opencodeGuard.includes('const KAVRANTA_BROKER = "__KAVRANTA_BROKER_PATH__";'),
+  "OpenCode Guard must contain exactly one broker placeholder",
+);
+assert(
+  opencodeGuard.match(/__KAVRANTA_BROKER_PATH__/g)?.length === 1,
+  "OpenCode Guard broker placeholder must be unique",
+);
+assert(opencodeGuard.includes('"tool.execute.before"'), "OpenCode Guard must run before tool execution");
+assert(opencodeGuard.includes("GUARD_TIMEOUT_MS = 5_000"), "OpenCode Guard must use a bounded timeout");
+assert(opencodeGuard.includes("child.kill()"), "OpenCode Guard must terminate timed-out checks");
+assert(opencodeGuard.includes("GUARD_UNAVAILABLE"), "OpenCode Guard must fail closed when unavailable");
+assert(!opencodeGuard.includes("console."), "OpenCode Guard must not log tool inputs or env values");
+await assertOpenCodeGuardFailsClosed(opencodeGuard);
 assert(normalizedSkill.startsWith("---\nname: kavranta-env\n"), "Skill frontmatter is missing");
 assert(normalizedSkill.includes("Kavranta"), "Skill discovery must include the Kavranta product name");
+assert(normalizedSkill.includes("OpenCode"), "Skill must identify OpenCode as a compatible host");
 assert(normalizedSkill.includes("환경변수"), "Skill discovery must include a Korean environment-variable trigger");
 assert(skillInterface.includes('display_name: "Kavranta Env Management"'), "Skill display name must use Kavranta");
 assert(skillInterface.includes("한국어"), "Skill default prompt must advertise the Korean workflow");
@@ -82,6 +104,30 @@ process.stdout.write(`Agent bundle ${version} is internally consistent and versi
 
 async function read(path) {
   return readFile(resolve(root, path), "utf8");
+}
+
+async function assertOpenCodeGuardFailsClosed(source) {
+  const missingBroker = resolve(root, ".synthetic-missing-kavranta-broker");
+  const moduleSource = source.replace(
+    '"__KAVRANTA_BROKER_PATH__"',
+    JSON.stringify(missingBroker),
+  );
+  const moduleUrl = `data:text/javascript;base64,${Buffer.from(moduleSource).toString("base64")}`;
+  const plugin = await import(moduleUrl);
+  const hooks = await plugin.KavrantaGuard();
+  let error;
+  try {
+    await hooks["tool.execute.before"](
+      { tool: "read" },
+      { args: { filePath: "/synthetic/project/example.txt" } },
+    );
+  } catch (caught) {
+    error = caught;
+  }
+  assert(
+    error instanceof Error && error.message.includes("could not validate"),
+    "OpenCode Guard must block when the Kavranta Broker is unavailable",
+  );
 }
 
 function assert(condition, message) {

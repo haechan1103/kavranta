@@ -1,6 +1,6 @@
 {
   "name": "kavranta",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Manage registered project env files through a redacted local MCP broker, portable Skill, and fail-closed Cursor access guard.",
   "author": {
     "name": "haechan1103"
@@ -13,6 +13,7 @@
     "environment-variables",
     "env",
     "cursor",
+    "opencode",
     "agent-skills"
   ],
   "skills": "./skills/",

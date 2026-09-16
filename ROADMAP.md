@@ -1,6 +1,6 @@
 # Kavranta roadmap: earn repeat use first
 
-Planning baseline: 2026-09-09; release scope updated 2026-09-10. This is an execution
+Planning baseline: 2026-09-09; release scope updated 2026-09-16. This is an execution
 plan, not a release promise.
 The next 90 days start when the first external testing cohort is recruited.
 Unfinished work below is not advertised as part of the latest installer.
@@ -43,6 +43,7 @@ See the [security boundary](SECURITY.md).
 | No-files recovery | 0.7.6 release scope | Explain excluded templates and folder/refresh recovery; do not present zero discovered files as a healthy setup. |
 | EN/KO entry page and hands-on linking sample | [GitHub Pages](https://haechan1103.github.io/kavranta/) deployment | Language survives reload in the URL; production starts unselected; changed selection invalidates preview; no real data or external operation. |
 | Install-first documentation and feedback loop | In this source change | One clear first desktop task, optional AI step, public roadmap, no unsupported security/sync claim. |
+| OpenCode host integration | 0.7.8 release scope | Install the shared Skill, MCP connection, and fail-closed Guard through documented global interfaces; refuse unrelated same-name configuration and require an OpenCode restart before claiming activation. |
 
 ## 90-day sequence
 

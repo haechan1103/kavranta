@@ -12,7 +12,7 @@
       "name": "kavranta",
       "source": "./plugins/kavranta",
       "description": "Redacted env inspection, controlled mutations, and direct-access guardrails.",
-      "version": "2.3.0"
+      "version": "2.4.0"
     }
   ]
 }

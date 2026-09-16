@@ -151,6 +151,7 @@ fn install_args(id: AgentIntegrationId) -> Vec<OsString> {
         | AgentIntegrationId::Cursor => {
             vec!["plugin".into(), "install".into(), plugin.into()]
         }
+        AgentIntegrationId::OpenCode => Vec::new(),
     }
 }
 
@@ -163,6 +164,7 @@ fn update_args(id: AgentIntegrationId) -> Vec<OsString> {
         | AgentIntegrationId::Cursor => {
             vec!["plugin".into(), "update".into(), plugin.into()]
         }
+        AgentIntegrationId::OpenCode => Vec::new(),
     }
 }
 
@@ -179,6 +181,7 @@ fn remove_plugin_args(id: AgentIntegrationId, plugin: String) -> Vec<OsString> {
         | AgentIntegrationId::Cursor => {
             vec!["plugin".into(), "uninstall".into(), plugin.into()]
         }
+        AgentIntegrationId::OpenCode => Vec::new(),
     }
 }
 

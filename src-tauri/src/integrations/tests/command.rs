@@ -9,6 +9,7 @@ fn windows_agent_cli_candidates_include_native_and_script_launchers() {
         vec!["codex.exe", "codex.cmd", "codex.bat"]
     );
     assert_eq!(executable_file_names("codex", false), vec!["codex"]);
+    assert_eq!(executable_file_names("opencode", false), vec!["opencode"]);
 }
 
 #[test]

@@ -5,6 +5,7 @@ const brandAssets: Record<string, { name: string; src: string }> = {
   "claude-code": { name: "Claude Code", src: "/brand/agents/claude.svg" },
   "github-copilot": { name: "GitHub Copilot", src: "/brand/agents/github.svg" },
   cursor: { name: "Cursor", src: "/brand/agents/cursor.svg" },
+  opencode: { name: "OpenCode", src: "/brand/agents/opencode.svg" },
 };
 
 interface Props {

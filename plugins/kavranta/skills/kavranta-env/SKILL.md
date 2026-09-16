@@ -7,8 +7,8 @@ description: Safely manage registered project environment variables through Kavr
 
 Use only the `kavranta` MCP tools for every supported env-data operation, including
 `.env*`, `*.env*`, and Wrangler `.dev.vars*` files, regardless
-of whether the host is Codex, Claude Code, GitHub Copilot, Cursor, or another compatible
-agent. Never read, search, print, patch, or write an env file with shell, filesystem,
+of whether the host is Codex, Claude Code, GitHub Copilot, Cursor, OpenCode, or another
+compatible agent. Never read, search, print, patch, or write an env file with shell, filesystem,
 interpreter, or generic editing tools.
 
 ## Workflow

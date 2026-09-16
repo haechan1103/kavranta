@@ -5,10 +5,11 @@ mod cursor;
 mod installation;
 mod marketplace;
 mod model;
+mod opencode;
 
 use std::path::Path;
 
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 use broker::ensure_current_broker;
 use catalog::{catalog_source, materialize_catalog};
@@ -41,6 +42,7 @@ pub fn list(app: &AppHandle) -> Vec<AgentIntegrationStatus> {
         AgentIntegrationId::ClaudeCode,
         AgentIntegrationId::GithubCopilot,
         AgentIntegrationId::Cursor,
+        AgentIntegrationId::OpenCode,
     ]
     .into_iter()
     .map(|id| status(app, id, broker.as_deref(), catalog_available))
@@ -65,6 +67,20 @@ pub fn install(
     }
     let broker = ensure_current_broker(app)?;
     let catalog = materialize_catalog(app, &broker, id)?;
+    if id == AgentIntegrationId::OpenCode {
+        let executable = integration_executable(id).ok_or(IntegrationError {
+            code: "AGENT_NOT_FOUND",
+            message: "먼저 해당 AI 코딩 도구를 설치해주세요.",
+        })?;
+        let app_data = app.path().app_data_dir().map_err(|_| IntegrationError {
+            code: "APP_DATA_UNAVAILABLE",
+            message: "앱 데이터 경로를 확인하지 못했습니다.",
+        })?;
+        opencode::install(&catalog, &executable, &broker, &app_data)?;
+        validate_installed_connection(app, id, &broker)?;
+        persist_marker(app, id)?;
+        return Ok(status(app, id, Some(&broker), true));
+    }
     if id == AgentIntegrationId::Cursor {
         install_cursor_plugin(&catalog)?;
         validate_installed_connection(app, id, &broker)?;
@@ -175,7 +191,11 @@ fn status(
         broker.is_some_and(|broker| connection_configuration_is_current(app, id, broker));
     let needs_repair =
         integration_requires_repair(installed, update_available, configuration_current);
-    let activation_unverified = id == AgentIntegrationId::Cursor && installed && !needs_repair;
+    let activation_unverified = matches!(
+        id,
+        AgentIntegrationId::Cursor | AgentIntegrationId::OpenCode
+    ) && installed
+        && !needs_repair;
     let install_host_available = cli_detected || cursor_detected;
     let action_blocker =
         action_blocker(install_host_available, broker.is_some(), catalog_available);
@@ -254,6 +274,10 @@ fn integration_detail(
         (AgentIntegrationId::Cursor, true, false, _, _, _) => (
             "guarded",
             "공통 Skill, MCP broker, Cursor fail-closed env 접근 Guard가 연결되어 있습니다.".to_owned(),
+        ),
+        (AgentIntegrationId::OpenCode, true, false, _, _, _) => (
+            "guarded",
+            "공통 Skill, MCP broker, OpenCode fail-closed env 접근 Guard가 구성되어 있습니다.".to_owned(),
         ),
         (AgentIntegrationId::GithubCopilot, false, false, false, true, _) => (
             "inactive",
