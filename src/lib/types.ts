@@ -1,6 +1,6 @@
 export type CodexAccess = "read-write" | "protected" | "unclassified";
 export type ValueState = "empty" | "present";
-export type AgentIntegrationId = "codex" | "claude-code" | "github-copilot" | "cursor";
+export type AgentIntegrationId = "codex" | "claude-code" | "github-copilot" | "cursor" | "opencode";
 export type AgentProtection = "broker" | "guarded" | "inactive";
 export type AgentIntegrationBlocker = "tool-not-found" | "broker-unavailable" | "bundle-unavailable";
 export type GitSafetyState = "protected" | "needs-attention" | "not-repository" | "unavailable";

@@ -69,6 +69,22 @@ export const demoAgentIntegrations: AgentIntegrationStatus[] = [
     canInstall: true,
     actionBlocker: null,
   },
+  {
+    id: "opencode",
+    name: "OpenCode",
+    detected: true,
+    installed: false,
+    installedVersion: null,
+    legacyVersion: false,
+    currentVersion: "2.4.0",
+    updateAvailable: false,
+    needsRepair: false,
+    activationUnverified: false,
+    protection: "inactive",
+    detail: "OpenCode was detected and can be connected to Kavranta.",
+    canInstall: true,
+    actionBlocker: null,
+  },
 ];
 
 export const demoProjects: ProjectSummary[] = [

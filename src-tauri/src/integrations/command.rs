@@ -20,6 +20,7 @@ fn executable_candidates(id: AgentIntegrationId) -> Vec<PathBuf> {
         AgentIntegrationId::ClaudeCode => "claude",
         AgentIntegrationId::GithubCopilot => "copilot",
         AgentIntegrationId::Cursor => "cursor",
+        AgentIntegrationId::OpenCode => "opencode",
     };
     let mut candidates = executable_candidates_named(name);
     if cfg!(target_os = "macos") && id == AgentIntegrationId::Codex {

@@ -33,12 +33,15 @@ pub(super) fn catalog_is_valid(root: &Path) -> bool {
     let codex_manifest = plugin.join(".codex-plugin/plugin.json");
     let claude_manifest = plugin.join(".claude-plugin/plugin.json");
     let cursor_manifest = plugin.join(".cursor-plugin/plugin.json");
+    let opencode_manifest = plugin.join("opencode/manifest.json");
     let marketplace = root.join(".claude-plugin/marketplace.json");
     plugin.join("VERSION").is_file()
         && root.join(".agents/plugins/marketplace.json").is_file()
         && manifest_version(&codex_manifest).as_deref() == Some(agent_bundle_version())
         && manifest_version(&claude_manifest).as_deref() == Some(agent_bundle_version())
         && manifest_version(&cursor_manifest).as_deref() == Some(agent_bundle_version())
+        && manifest_version(&opencode_manifest).as_deref() == Some(agent_bundle_version())
+        && plugin.join("opencode/kavranta-guard.js").is_file()
         && marketplace_version(&marketplace).as_deref() == Some(agent_bundle_version())
 }
 
@@ -100,7 +103,32 @@ pub(super) fn materialize_catalog(
         &format!("\"{}\" guard-hook", broker.to_string_lossy()),
     )?;
     write_json(&cursor_hook_path, &cursor_hooks)?;
+
+    rewrite_opencode_guard(&plugin.join("opencode/kavranta-guard.js"), broker)?;
     Ok(target)
+}
+
+pub(super) fn rewrite_opencode_guard(path: &Path, broker: &Path) -> Result<(), IntegrationError> {
+    const PLACEHOLDER: &str = "\"__KAVRANTA_BROKER_PATH__\"";
+    let source = fs::read_to_string(path).map_err(|_| IntegrationError {
+        code: "PLUGIN_CONFIG_UNAVAILABLE",
+        message: "OpenCode Guard 설정을 읽지 못했습니다.",
+    })?;
+    if source.matches(PLACEHOLDER).count() != 1 {
+        return Err(IntegrationError {
+            code: "PLUGIN_CONFIG_INVALID",
+            message: "OpenCode Guard 설정 형식이 올바르지 않습니다.",
+        });
+    }
+    let broker =
+        serde_json::to_string(&broker.to_string_lossy()).map_err(|_| IntegrationError {
+            code: "PLUGIN_CONFIG_INVALID",
+            message: "OpenCode Guard broker 경로를 직렬화하지 못했습니다.",
+        })?;
+    fs::write(path, source.replace(PLACEHOLDER, &broker)).map_err(|_| IntegrationError {
+        code: "PLUGIN_CONFIG_WRITE_FAILED",
+        message: "OpenCode Guard 설정을 저장하지 못했습니다.",
+    })
 }
 
 fn rewrite_cursor_hook_commands(config: &mut Value, command: &str) -> Result<(), IntegrationError> {

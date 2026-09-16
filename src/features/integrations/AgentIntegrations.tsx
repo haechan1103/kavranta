@@ -20,6 +20,7 @@ const providers: Record<AgentIntegrationId, string> = {
   "claude-code": "Anthropic",
   "github-copilot": "GitHub",
   cursor: "Anysphere",
+  opencode: "Anomaly",
 };
 
 export function AgentIntegrations({ onError, onNotice }: Props) {
@@ -46,7 +47,11 @@ export function AgentIntegrations({ onError, onNotice }: Props) {
       replace(result);
       onNotice(
         t(
-          item.id === "cursor" ? "integration.installSuccessCursor" : "integration.installSuccess",
+          item.id === "cursor"
+            ? "integration.installSuccessCursor"
+            : item.id === "opencode"
+              ? "integration.installSuccessOpenCode"
+              : "integration.installSuccess",
           { name: item.name, version: result.currentVersion },
         ),
       );
@@ -166,6 +171,7 @@ function integrationDetail(
   if (item.needsRepair) return t("integration.detailRepair");
   if (item.installed && item.id === "codex") return t("integration.detailCodex");
   if (item.installed && item.id === "cursor") return t("integration.detailCursor");
+  if (item.installed && item.id === "opencode") return t("integration.detailOpenCode");
   if (item.installed) return t("integration.detailGuarded");
   if (item.id === "github-copilot" && item.detected && !item.canInstall) {
     return t("integration.detailCopilotCli");

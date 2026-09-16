@@ -13,6 +13,7 @@ use super::model::{
     MCP_SERVER_NAME, PLUGIN_NAME, agent_bundle_version, integration_slug, legacy_marketplace_names,
     marketplace_name,
 };
+use super::opencode;
 
 pub(super) fn current_bundle_is_cached(id: AgentIntegrationId) -> bool {
     current_cached_bundle(id)
@@ -26,6 +27,12 @@ pub(super) fn connection_configuration_is_current(
     id: AgentIntegrationId,
     broker: &Path,
 ) -> bool {
+    if id == AgentIntegrationId::OpenCode {
+        let Ok(app_data) = app.path().app_data_dir() else {
+            return false;
+        };
+        return opencode::connection_configuration_is_current(broker, &app_data);
+    }
     let Some((version, root)) = current_cached_bundle(id) else {
         return false;
     };
@@ -108,6 +115,7 @@ pub(super) fn cached_bundle_is_official(id: AgentIntegrationId) -> bool {
             ".claude-plugin/plugin.json"
         }
         AgentIntegrationId::Cursor => ".cursor-plugin/plugin.json",
+        AgentIntegrationId::OpenCode => "manifest.json",
     };
     let Ok(manifest) = read_plugin_json(&root.join(manifest_name)) else {
         return false;
@@ -260,6 +268,9 @@ fn cache_version(id: AgentIntegrationId) -> Option<String> {
 }
 
 fn current_cached_bundle(id: AgentIntegrationId) -> Option<(String, PathBuf)> {
+    if id == AgentIntegrationId::OpenCode {
+        return opencode::installed_bundle();
+    }
     if id == AgentIntegrationId::Cursor {
         let root = cursor_local_plugin_root()?;
         let manifest = root.join(".cursor-plugin/plugin.json");
@@ -319,6 +330,7 @@ fn cached_bundle_in_marketplace(
             ".claude-plugin/plugin.json",
         ),
         AgentIntegrationId::Cursor => return None,
+        AgentIntegrationId::OpenCode => return None,
     };
     newest_manifest_bundle(&root, manifest)
 }
@@ -334,6 +346,7 @@ pub(super) fn official_legacy_cached_marketplaces(id: AgentIntegrationId) -> Vec
             ".claude-plugin/plugin.json"
         }
         AgentIntegrationId::Cursor => ".cursor-plugin/plugin.json",
+        AgentIntegrationId::OpenCode => "manifest.json",
     };
     legacy_marketplace_names(id)
         .iter()

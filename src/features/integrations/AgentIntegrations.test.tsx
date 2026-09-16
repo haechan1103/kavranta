@@ -72,6 +72,22 @@ const integrations: AgentIntegrationStatus[] = [
     canInstall: true,
     actionBlocker: null,
   },
+  {
+    id: "opencode",
+    name: "OpenCode",
+    detected: true,
+    installed: false,
+    installedVersion: null,
+    legacyVersion: false,
+    currentVersion: "1.0.0",
+    updateAvailable: false,
+    needsRepair: false,
+    activationUnverified: false,
+    protection: "inactive",
+    detail: "The integration can be installed.",
+    canInstall: true,
+    actionBlocker: null,
+  },
 ];
 
 vi.mock("../../lib/api", () => ({
@@ -100,10 +116,12 @@ describe("AgentIntegrations", () => {
     expect(screen.getByText("Claude Code")).toBeInTheDocument();
     expect(screen.getByText("GitHub Copilot / VS Code")).toBeInTheDocument();
     expect(screen.getByText("Cursor")).toBeInTheDocument();
+    expect(screen.getByText("OpenCode")).toBeInTheDocument();
     expect(container.querySelector('img[src="/brand/agents/openai.svg"]')).toBeInTheDocument();
     expect(container.querySelector('img[src="/brand/agents/claude.svg"]')).toBeInTheDocument();
     expect(container.querySelector('img[src="/brand/agents/github.svg"]')).toBeInTheDocument();
     expect(container.querySelector('img[src="/brand/agents/cursor.svg"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/brand/agents/opencode.svg"]')).toBeInTheDocument();
     expect(screen.queryByText(/API_KEY=/)).not.toBeInTheDocument();
   });
 
@@ -137,6 +155,19 @@ describe("AgentIntegrations", () => {
     expect(within(cursorCard!).getByText("Configured")).toBeInTheDocument();
     expect(within(cursorCard!).queryByText("Connected")).not.toBeInTheDocument();
     expect(within(cursorCard!).getByText(/confirm Kavranta is active/)).toBeInTheDocument();
+  });
+
+  it("tells OpenCode users to restart after installing the global integration", async () => {
+    const user = userEvent.setup();
+    const onNotice = vi.fn();
+    renderIntegrations(vi.fn(), onNotice);
+
+    const opencodeCard = (await screen.findByText("OpenCode")).closest("article");
+    expect(opencodeCard).not.toBeNull();
+    await user.click(within(opencodeCard!).getByRole("button", { name: "Install connection" }));
+
+    expect(api.installAgentIntegration).toHaveBeenCalledWith("opencode");
+    expect(onNotice).toHaveBeenCalledWith(expect.stringContaining("Restart OpenCode"));
   });
 
   it("installs the selected host through the shared integration API", async () => {

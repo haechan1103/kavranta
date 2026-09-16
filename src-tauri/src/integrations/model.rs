@@ -21,6 +21,7 @@ pub enum AgentIntegrationId {
     ClaudeCode,
     GithubCopilot,
     Cursor,
+    OpenCode,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -91,6 +92,7 @@ pub(super) fn integration_name(id: AgentIntegrationId) -> &'static str {
         AgentIntegrationId::ClaudeCode => "Claude Code",
         AgentIntegrationId::GithubCopilot => "GitHub Copilot / VS Code",
         AgentIntegrationId::Cursor => "Cursor",
+        AgentIntegrationId::OpenCode => "OpenCode",
     }
 }
 
@@ -100,6 +102,7 @@ pub(super) fn integration_slug(id: AgentIntegrationId) -> &'static str {
         AgentIntegrationId::ClaudeCode => "claude-code",
         AgentIntegrationId::GithubCopilot => "github-copilot",
         AgentIntegrationId::Cursor => "cursor",
+        AgentIntegrationId::OpenCode => "opencode",
     }
 }
 
@@ -108,7 +111,8 @@ pub(super) fn marketplace_name(id: AgentIntegrationId) -> &'static str {
         AgentIntegrationId::Codex => CODEX_MARKETPLACE_NAME,
         AgentIntegrationId::ClaudeCode
         | AgentIntegrationId::GithubCopilot
-        | AgentIntegrationId::Cursor => MARKETPLACE_NAME,
+        | AgentIntegrationId::Cursor
+        | AgentIntegrationId::OpenCode => MARKETPLACE_NAME,
     }
 }
 
@@ -118,6 +122,6 @@ pub(super) fn legacy_marketplace_names(id: AgentIntegrationId) -> &'static [&'st
         AgentIntegrationId::ClaudeCode | AgentIntegrationId::GithubCopilot => {
             &[LEGACY_MARKETPLACE_NAME]
         }
-        AgentIntegrationId::Cursor => &[],
+        AgentIntegrationId::Cursor | AgentIntegrationId::OpenCode => &[],
     }
 }
