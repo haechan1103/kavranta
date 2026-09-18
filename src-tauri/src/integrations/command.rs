@@ -116,13 +116,7 @@ fn executable_candidates_named(name: &str) -> Vec<PathBuf> {
         .collect::<Vec<_>>();
 
     if let Some(base) = BaseDirs::new() {
-        for directory in [
-            base.home_dir().join(".local/bin"),
-            base.home_dir().join(".cargo/bin"),
-            base.home_dir().join(".npm-global/bin"),
-            base.home_dir().join(".bun/bin"),
-            base.home_dir().join("Library/pnpm"),
-        ] {
+        for directory in home_cli_directories(base.home_dir()) {
             append_named_candidates(&mut candidates, &directory, &file_names);
         }
         if cfg!(windows) {
@@ -140,6 +134,17 @@ fn executable_candidates_named(name: &str) -> Vec<PathBuf> {
         }
     }
     deduplicate_paths(candidates)
+}
+
+pub(super) fn home_cli_directories(home: &Path) -> Vec<PathBuf> {
+    vec![
+        home.join(".local/bin"),
+        home.join(".cargo/bin"),
+        home.join(".npm-global/bin"),
+        home.join(".bun/bin"),
+        home.join(".opencode/bin"),
+        home.join("Library/pnpm"),
+    ]
 }
 
 fn append_named_candidates(candidates: &mut Vec<PathBuf>, directory: &Path, names: &[String]) {

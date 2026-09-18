@@ -173,6 +173,11 @@
   opacity: 1;
 }
 
+.value-editor .icon-button.copied {
+  color: var(--green);
+  background: var(--green-pale);
+}
+
 .variable-actions {
   display: flex;
   align-items: center;

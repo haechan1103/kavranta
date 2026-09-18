@@ -31,6 +31,45 @@ const variable: OccurrenceProjection = {
 };
 
 describe("VariableRow", () => {
+  it("briefly confirms value copy only after the backend succeeds", async () => {
+    vi.useFakeTimers();
+    let finishCopy: () => void = () => {};
+    vi.mocked(api.copyValue).mockImplementationOnce(() => new Promise((resolve) => { finishCopy = resolve; }));
+    vi.mocked(api.readValue).mockClear();
+    try {
+      render(<VariableRow projectId="demo" file={variable.linkedFiles[0]!}
+        variable={variable} currentGroup="GPT" groups={["GPT"]}
+        sameKeyFiles={variable.linkedFiles} onMutate={vi.fn()} onLink={vi.fn()} />);
+
+      fireEvent.click(screen.getByTitle("Copy value"));
+      expect(screen.queryByText("Copied")).not.toBeInTheDocument();
+      await act(async () => finishCopy());
+      expect(screen.getByRole("status")).toHaveTextContent("Copied");
+      expect(api.copyValue).toHaveBeenCalledWith("demo", variable.linkedFiles[0], variable.key);
+      expect(api.readValue).not.toHaveBeenCalled();
+      expect(screen.getByLabelText("GPT_API_KEY value")).toHaveValue("");
+
+      act(() => vi.advanceTimersByTime(2_001));
+      expect(screen.queryByText("Copied")).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not restore late copy feedback after a filter hides and restores the row", async () => {
+    let finishCopy: () => void = () => {};
+    vi.mocked(api.copyValue).mockImplementationOnce(() => new Promise((resolve) => { finishCopy = resolve; }));
+    const row = (hidden: boolean) => <VariableRow hidden={hidden} projectId="demo"
+      file={variable.linkedFiles[0]!} variable={variable} currentGroup="GPT" groups={["GPT"]}
+      sameKeyFiles={variable.linkedFiles} onMutate={vi.fn()} onLink={vi.fn()} />;
+    const view = render(row(false));
+    fireEvent.click(screen.getByTitle("Copy value"));
+    view.rerender(row(true));
+    view.rerender(row(false));
+    await act(async () => finishCopy());
+    expect(screen.queryByText("Copied")).not.toBeInTheDocument();
+  });
+
   it("clears a reveal when filtering hides its row", async () => {
     const user = userEvent.setup();
     const row = (hidden: boolean) => <VariableRow hidden={hidden} projectId="demo"
@@ -217,6 +256,7 @@ describe("VariableRow", () => {
 
     expect(api.copyKey).toHaveBeenCalledWith("demo", "GPT_API_KEY");
     expect(screen.getByTitle("Copied")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Copied");
   });
 
   it("suggests an explicit link for unlinked same-name occurrences", () => {

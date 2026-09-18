@@ -1,6 +1,19 @@
 use std::path::Path;
 
-use super::super::command::{cursor_user_app_candidates, executable_file_names};
+use super::super::command::{
+    cursor_user_app_candidates, executable_file_names, home_cli_directories,
+};
+
+#[test]
+fn home_cli_directories_include_opencode_install_bin() {
+    let home = Path::new("/synthetic/home");
+
+    let dirs = home_cli_directories(home);
+
+    assert!(dirs.contains(&home.join(".opencode/bin")));
+    assert!(dirs.contains(&home.join(".local/bin")));
+    assert!(dirs.contains(&home.join(".cargo/bin")));
+}
 
 #[test]
 fn windows_agent_cli_candidates_include_native_and_script_launchers() {

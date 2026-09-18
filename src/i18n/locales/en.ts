@@ -16,6 +16,7 @@ export const en = {
   "common.current": "Current",
   "common.optional": "Optional",
   "common.copied": "Copied",
+  "common.copyFailed": "Copy failed",
   "common.refresh": "Refresh",
   "common.rename": "Rename",
   "common.newName": "New name",

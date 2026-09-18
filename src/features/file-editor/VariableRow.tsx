@@ -1,6 +1,7 @@
 import "./VariableRow.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { CopyButton } from "../../components/CopyButton";
 import { displayGroupName, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type { CodexAccess, OccurrenceProjection } from "../../lib/types";
@@ -34,7 +35,6 @@ export function VariableRow({
   const [dirty, setDirty] = useState(false);
   const [revealed, setRevealed] = useState<string | null>(null);
   const [revealActivity, setRevealActivity] = useState(0);
-  const [keyCopied, setKeyCopied] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const [moving, setMoving] = useState(false);
   const [description, setDescription] = useState(variable.description.join("\n"));
@@ -56,12 +56,6 @@ export function VariableRow({
     const timeout = window.setTimeout(() => setRevealed(null), 30000);
     return () => window.clearTimeout(timeout);
   }, [revealed, revealActivity]);
-
-  useEffect(() => {
-    if (!keyCopied) return;
-    const timeout = window.setTimeout(() => setKeyCopied(false), 1600);
-    return () => window.clearTimeout(timeout);
-  }, [keyCopied]);
 
   useLayoutEffect(() => {
     const field = revealedValueRef.current;
@@ -105,18 +99,14 @@ export function VariableRow({
         <div className="variable-meta">
           <div className="key-line">
             <strong>{variable.key}</strong>
-            <button
-              className={keyCopied ? "key-copy-button copied" : "key-copy-button"}
-              aria-label={t("row.copyKeyLabel", { key: variable.key })}
-              title={keyCopied ? t("common.copied") : t("row.copyKey")}
-              onClick={() => {
-                void api
-                  .copyKey(projectId, variable.key)
-                  .then(() => setKeyCopied(true));
-              }}
-            >
-              {keyCopied ? "✓" : "⧉"}
-            </button>
+            {!hidden && (
+              <CopyButton
+                className="key-copy-button"
+                label={t("row.copyKeyLabel", { key: variable.key })}
+                title={t("row.copyKey")}
+                onCopy={() => api.copyKey(projectId, variable.key)}
+              />
+            )}
             {variable.linkedCount > 1 && (
               <span className="badge linked">{t("row.filesLinked", { count: variable.linkedCount })}</span>
             )}
@@ -205,13 +195,13 @@ export function VariableRow({
           >
             {revealed === null ? "◉" : "○"}
           </button>
-          <button
-            className="icon-button"
-            title={t("row.copyValue")}
-            onClick={() => void api.copyValue(projectId, file, variable.key)}
-          >
-            ⧉
-          </button>
+          {!hidden && (
+            <CopyButton
+              className="icon-button"
+              label={t("row.copyValue")}
+              onCopy={() => api.copyValue(projectId, file, variable.key)}
+            />
+          )}
         </div>
 
         <div className="variable-actions">
