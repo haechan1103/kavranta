@@ -1,6 +1,8 @@
 use std::path::Path;
 
-use super::super::command::{cursor_user_app_candidates, executable_file_names, home_cli_directories};
+use super::super::command::{
+    cursor_user_app_candidates, executable_file_names, home_cli_directories,
+};
 
 #[test]
 fn home_cli_directories_include_opencode_install_bin() {
