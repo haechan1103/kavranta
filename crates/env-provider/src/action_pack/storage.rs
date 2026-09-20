@@ -9,7 +9,7 @@ use semver::{Version, VersionReq};
 use super::error::{ActionPackError, invalid_pack, storage_failed};
 use super::model::{
     ActionBindingInfo, ActionDefinition, ActionKind, ActionPackInfo, ActionPackManifest,
-    CliActionProfile,
+    CliActionProfile, HttpActionMethod,
 };
 use crate::personal_provider::{
     find_executable, is_kebab_identifier, probe_version, validate_executable_candidate,
@@ -17,9 +17,14 @@ use crate::personal_provider::{
 };
 
 const SCHEMA_VERSION: u32 = 1;
-const ACTION_PROTOCOL_VERSION: &str = "0.1.0";
+const ACTION_PROTOCOL_VERSION_V1: &str = "0.1.0";
+const ACTION_PROTOCOL_VERSION_V2: &str = "0.2.0";
 const MAX_MANIFEST_BYTES: u64 = 64 * 1024;
 const MAX_PACKS: usize = 100;
+const MAX_BODY_FIELDS: usize = 32;
+const MAX_PROJECTION_FIELDS: usize = 16;
+const MAX_PROJECTION_BYTES: u32 = 64 * 1024;
+const MAX_PROJECTION_DEPTH: usize = 8;
 
 #[derive(Debug, Clone)]
 pub(crate) struct ResolvedCliAction {
@@ -218,7 +223,10 @@ fn read_manifest(path: &Path) -> Result<ActionPackManifest, ActionPackError> {
 
 fn validate_manifest(manifest: &ActionPackManifest) -> Result<(), ActionPackError> {
     if manifest.schema_version != SCHEMA_VERSION
-        || manifest.action_protocol_version != ACTION_PROTOCOL_VERSION
+        || !matches!(
+            manifest.action_protocol_version.as_str(),
+            ACTION_PROTOCOL_VERSION_V1 | ACTION_PROTOCOL_VERSION_V2
+        )
         || Version::parse(&manifest.pack_version).is_err()
     {
         return Err(invalid_pack());
@@ -275,11 +283,13 @@ fn validate_manifest(manifest: &ActionPackManifest) -> Result<(), ActionPackErro
             }
         }
         ActionDefinition::Http {
+            method,
             url,
             secret_bindings,
+            request_body,
+            response_projection,
             result_policy,
             timeout_seconds,
-            ..
         } => {
             validate_http_url(url)?;
             if secret_bindings.is_empty()
@@ -307,6 +317,37 @@ fn validate_manifest(manifest: &ActionPackManifest) -> Result<(), ActionPackErro
                 HeaderName::from_bytes(header.as_bytes()).map_err(|_| invalid_pack())?;
                 validate_secret_format(&binding.format)?;
             }
+            let v2 = manifest.action_protocol_version == ACTION_PROTOCOL_VERSION_V2;
+            if !v2 && (request_body.is_some() || response_projection.is_some()) {
+                return Err(invalid_pack());
+            }
+            if let Some(body) = request_body {
+                if matches!(method, HttpActionMethod::Get | HttpActionMethod::Head)
+                    || body.fields.is_empty()
+                    || body.fields.len() > MAX_BODY_FIELDS
+                {
+                    return Err(invalid_pack());
+                }
+                let mut seen = BTreeSet::new();
+                for field in &body.fields {
+                    if !is_body_field_name(field) || !seen.insert(field.as_str()) {
+                        return Err(invalid_pack());
+                    }
+                }
+            }
+            if let Some(projection) = response_projection {
+                if projection.fields.is_empty()
+                    || projection.fields.len() > MAX_PROJECTION_FIELDS
+                    || !(1..=MAX_PROJECTION_BYTES).contains(&projection.max_bytes)
+                {
+                    return Err(invalid_pack());
+                }
+                for (result_key, path) in &projection.fields {
+                    if !is_binding_id(result_key) || !is_projection_path(path) {
+                        return Err(invalid_pack());
+                    }
+                }
+            }
         }
     }
     Ok(())
@@ -326,6 +367,27 @@ fn is_binding_id(value: &str) -> bool {
         && value
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
+}
+
+fn is_body_field_name(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 64
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+}
+
+fn is_projection_path(value: &str) -> bool {
+    let segments = value.split('.').collect::<Vec<_>>();
+    !segments.is_empty()
+        && segments.len() <= MAX_PROJECTION_DEPTH
+        && segments.iter().all(|segment| {
+            !segment.is_empty()
+                && segment.len() <= 64
+                && segment
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+        })
 }
 
 fn validate_literal(value: &str, max: usize) -> Result<(), ActionPackError> {
@@ -459,7 +521,8 @@ mod tests {
 
     use super::*;
     use crate::action_pack::{
-        CliResultPolicy, CliSecretTransport, HttpActionMethod, HttpResultPolicy, HttpSecretBinding,
+        CliResultPolicy, CliSecretTransport, HttpActionMethod, HttpBodyContentType,
+        HttpRequestBodyPolicy, HttpResponseProjection, HttpResultPolicy, HttpSecretBinding,
         HttpSecretSource,
     };
 
@@ -482,6 +545,8 @@ mod tests {
                         format: "Bearer {value}".to_owned(),
                     },
                 )]),
+                request_body: None,
+                response_projection: None,
                 result_policy: HttpResultPolicy {
                     status: true,
                     duration: true,
@@ -579,6 +644,72 @@ mod tests {
             .expect("binding")
             .format = "Bearer {value} {other}".to_owned();
         assert!(validate_manifest(&placeholder).is_err());
+    }
+
+    fn http_v2_manifest() -> ActionPackManifest {
+        let mut manifest = http_manifest("https://api.example.com/v1/chat");
+        manifest.action_protocol_version = "0.2.0".to_owned();
+        let ActionDefinition::Http {
+            method,
+            request_body,
+            response_projection,
+            ..
+        } = &mut manifest.action
+        else {
+            unreachable!()
+        };
+        *method = HttpActionMethod::Post;
+        *request_body = Some(HttpRequestBodyPolicy {
+            content_type: HttpBodyContentType::Json,
+            fields: vec!["model".to_owned(), "messages".to_owned()],
+        });
+        *response_projection = Some(HttpResponseProjection {
+            content_type: HttpBodyContentType::Json,
+            fields: BTreeMap::from([(
+                "content".to_owned(),
+                "choices.0.message.content".to_owned(),
+            )]),
+            max_bytes: 4096,
+        });
+        manifest
+    }
+
+    #[test]
+    fn accepts_v2_body_and_projection_but_rejects_v1_carrying_them() {
+        validate_manifest(&http_v2_manifest()).expect("v2 HTTP pack");
+
+        let mut legacy = http_v2_manifest();
+        legacy.action_protocol_version = "0.1.0".to_owned();
+        assert!(validate_manifest(&legacy).is_err());
+
+        let mut get_with_body = http_v2_manifest();
+        let ActionDefinition::Http { method, .. } = &mut get_with_body.action else {
+            unreachable!()
+        };
+        *method = HttpActionMethod::Get;
+        assert!(validate_manifest(&get_with_body).is_err());
+
+        let mut bad_field = http_v2_manifest();
+        let ActionDefinition::Http {
+            request_body: Some(body),
+            ..
+        } = &mut bad_field.action
+        else {
+            unreachable!()
+        };
+        body.fields = vec!["model".to_owned(), "b{ad}".to_owned()];
+        assert!(validate_manifest(&bad_field).is_err());
+
+        let mut bad_path = http_v2_manifest();
+        let ActionDefinition::Http {
+            response_projection: Some(projection),
+            ..
+        } = &mut bad_path.action
+        else {
+            unreachable!()
+        };
+        projection.fields.insert("x".to_owned(), "a..b".to_owned());
+        assert!(validate_manifest(&bad_path).is_err());
     }
 
     #[test]

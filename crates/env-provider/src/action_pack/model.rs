@@ -36,9 +36,34 @@ pub enum ActionDefinition {
         method: HttpActionMethod,
         url: String,
         secret_bindings: BTreeMap<String, HttpSecretBinding>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        request_body: Option<HttpRequestBodyPolicy>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        response_projection: Option<HttpResponseProjection>,
         result_policy: HttpResultPolicy,
         timeout_seconds: u64,
     },
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum HttpBodyContentType {
+    Json,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct HttpRequestBodyPolicy {
+    pub content_type: HttpBodyContentType,
+    pub fields: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct HttpResponseProjection {
+    pub content_type: HttpBodyContentType,
+    pub fields: BTreeMap<String, String>,
+    pub max_bytes: u32,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -144,6 +169,8 @@ pub struct ActionExecutionRequest {
     pub pack_id: String,
     pub file: String,
     pub bindings: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -156,4 +183,6 @@ pub struct ActionExecutionResult {
     pub duration_ms: Option<u64>,
     pub exit_code: Option<i32>,
     pub result_code: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output: Option<BTreeMap<String, String>>,
 }
