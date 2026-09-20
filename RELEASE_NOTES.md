@@ -1,14 +1,16 @@
-# Kavranta 0.7.9 — OpenCode detection and copy feedback
+# Kavranta 0.7.10 — Credentialed API actions
 
-- Detect the OpenCode CLI from its install directory (`~/.opencode/bin`), so the
-  AI tools screen finds it when the app is launched from Finder or the Dock
-  instead of a shell.
-- Show one shared copied or failed result for the key and value copy actions on
-  each variable row.
-- Hide the copy controls for redacted rows that do not expose a key or value.
+- Add Action Protocol 0.2.0. A local Action Pack can now declare an allowlisted JSON
+  request body and an allowlisted response projection for one fixed HTTPS endpoint.
+- Let a connected agent call a credentialed API, such as a model gateway, and receive
+  only the selected result fields. The API key is injected into the fixed request
+  header and never reaches the agent, the plan, the result, or the audit record.
+- Reject a request body that contains a bound secret, and scrub every projected value
+  against the bound secrets. Request and response sizes are bounded.
+- Keep Action Protocol v1 unchanged. A v2 clause is rejected on a v1 pack.
 
-The independently versioned Agent Bundle remains 2.4.0. This release adds no new
-network access, value exposure, or provider behavior.
+The independently versioned Agent Bundle remains 2.4.0. This release adds no
+background network access and no value readback.
 
 ## Install
 
@@ -20,16 +22,19 @@ network access, value exposure, or provider behavior.
 
 ---
 
-# Kavranta 0.7.9 — OpenCode 감지와 복사 피드백
+# Kavranta 0.7.10 — 자격 증명 기반 API Action
 
-- OpenCode CLI를 설치 경로(`~/.opencode/bin`)에서도 찾도록 했습니다. 셸이 아니라
-  Finder나 Dock에서 앱을 실행해도 AI 도구 화면이 CLI를 감지합니다.
-- 각 변수 행의 키·값 복사 동작에 복사 완료 또는 복사 실패 결과를 하나로
-  표시합니다.
-- 키나 값을 노출하지 않는 가려진 행에서는 복사 컨트롤을 숨깁니다.
+- Action Protocol 0.2.0을 추가했습니다. 로컬 Action Pack이 하나의 고정 HTTPS
+  엔드포인트에 대해 허용된 JSON 요청 본문과 허용된 응답 투영을 선언할 수 있습니다.
+- 연결된 에이전트가 모델 게이트웨이 같은 자격 증명 기반 API를 호출하고 선택된 결과
+  필드만 받도록 합니다. API 키는 고정 요청 헤더에만 주입되며 에이전트, 계획, 결과,
+  감사 기록에는 전달되지 않습니다.
+- 비밀 값이 포함된 요청 본문은 거부하고, 투영된 모든 값을 비밀 값과 대조해
+  스크럽합니다. 요청·응답 크기에는 상한이 있습니다.
+- Action Protocol v1은 변경되지 않습니다. v1 팩에 v2 절을 넣으면 거부됩니다.
 
-독립적으로 버전 관리되는 Agent Bundle은 2.4.0입니다. 이 릴리스는 새로운 네트워크
-접근, 값 노출, provider 동작을 추가하지 않습니다.
+독립적으로 버전 관리되는 Agent Bundle은 2.4.0입니다. 이 릴리스는 백그라운드 네트워크
+접근과 값 되읽기를 추가하지 않습니다.
 
 ## 설치
 
