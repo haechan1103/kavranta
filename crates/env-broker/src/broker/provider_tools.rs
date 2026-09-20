@@ -169,6 +169,7 @@ impl Broker {
             pack_id: args.pack_id,
             file: args.file.clone(),
             bindings: args.bindings,
+            body: args.body,
         };
         let app_data = self.provider_app_data()?;
         let pack = env_provider::action_pack::prepare(service.root(), &app_data, &request)

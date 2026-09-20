@@ -1,21 +1,26 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsString;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::process::Stdio;
 use std::time::{Duration, Instant};
 
 use env_core::{ProjectService, ProviderValue};
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use reqwest::header::{CONTENT_TYPE, HeaderMap, HeaderName, HeaderValue};
+use serde_json::Value;
 use wait_timeout::ChildExt;
 use zeroize::Zeroizing;
 
 use super::error::{ActionPackError, invalid_request};
 use super::model::{
     ActionDefinition, ActionExecutionRequest, ActionExecutionResult, ActionKind, ActionPackInfo,
-    HttpActionMethod,
+    HttpActionMethod, HttpRequestBodyPolicy, HttpResponseProjection,
 };
 use super::storage::{ResolvedActionPack, pack_info, resolve};
 use crate::provider_push::cli::provider_command;
+
+const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
+const MAX_PROJECTED_VALUE_BYTES: usize = 64 * 1024;
+const REDACTED_VALUE: &str = "[redacted]";
 
 pub fn prepare(
     root: &std::path::Path,
@@ -24,7 +29,30 @@ pub fn prepare(
 ) -> Result<ActionPackInfo, ActionPackError> {
     let resolved = resolve(&request.pack_id, root, app_data)?;
     validate_bindings(&resolved, &request.bindings)?;
+    ensure_body_shape(&resolved, request)?;
     Ok(pack_info(&resolved.manifest, Some(&resolved)))
+}
+
+fn ensure_body_shape(
+    resolved: &ResolvedActionPack,
+    request: &ActionExecutionRequest,
+) -> Result<(), ActionPackError> {
+    match &resolved.manifest.action {
+        ActionDefinition::Http { request_body, .. } => match request_body {
+            Some(policy) => {
+                let raw = request.body.as_deref().ok_or_else(invalid_request)?;
+                validate_body_shape(policy, raw).map(|_| ())
+            }
+            None => match &request.body {
+                Some(_) => Err(invalid_request()),
+                None => Ok(()),
+            },
+        },
+        ActionDefinition::Cli { .. } => match &request.body {
+            Some(_) => Err(invalid_request()),
+            None => Ok(()),
+        },
+    }
 }
 
 pub fn execute(
@@ -168,6 +196,7 @@ fn execute_cli(
             duration_ms: result_policy.duration.then_some(elapsed),
             exit_code: None,
             result_code: "ACTION_TIMEOUT".to_owned(),
+            output: None,
         });
     };
     if !wrote {
@@ -190,6 +219,7 @@ fn execute_cli(
             "ACTION_CLI_EXITED"
         }
         .to_owned(),
+        output: None,
     })
 }
 
@@ -202,6 +232,8 @@ fn execute_http(
         method,
         url,
         secret_bindings,
+        request_body,
+        response_projection,
         result_policy,
         timeout_seconds,
     } = &resolved.manifest.action
@@ -209,6 +241,7 @@ fn execute_http(
         return Err(invalid_request());
     };
     let mut headers = HeaderMap::new();
+    let mut secrets = Vec::new();
     for (binding_id, binding) in secret_bindings {
         let variable_name = request
             .bindings
@@ -217,6 +250,7 @@ fn execute_http(
         let value = values
             .get(variable_name.as_str())
             .ok_or_else(invalid_request)?;
+        secrets.push(Zeroizing::new(value.value().to_owned()));
         let rendered = Zeroizing::new(binding.format.replace("{value}", value.value()));
         let name = binding.name.as_deref().unwrap_or(binding_id);
         let name = HeaderName::from_bytes(name.as_bytes()).map_err(|_| invalid_request())?;
@@ -230,6 +264,19 @@ fn execute_http(
         headers.insert(name, header_value);
     }
 
+    let body = match request_body {
+        Some(policy) => {
+            let raw = request.body.as_deref().ok_or_else(invalid_request)?;
+            Some(validate_request_body(policy, raw, &secrets)?)
+        }
+        None => {
+            if request.body.is_some() {
+                return Err(invalid_request());
+            }
+            None
+        }
+    };
+
     ensure_http_crypto_provider()?;
     let client = reqwest::blocking::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
@@ -241,16 +288,18 @@ fn execute_http(
             ActionPackError::new("ACTION_HTTP_FAILED", "HTTP Action을 준비하지 못했습니다.")
         })?;
     let started = Instant::now();
-    let response = client
-        .request(http_method(*method), url)
-        .headers(headers)
-        .send()
-        .map_err(|_| {
-            ActionPackError::new(
-                "ACTION_HTTP_FAILED",
-                "HTTP Action 요청을 완료하지 못했습니다.",
-            )
-        })?;
+    let mut builder = client.request(http_method(*method), url).headers(headers);
+    if let Some(body) = &body {
+        builder = builder
+            .header(CONTENT_TYPE, "application/json")
+            .body(body.as_str().to_owned());
+    }
+    let response = builder.send().map_err(|_| {
+        ActionPackError::new(
+            "ACTION_HTTP_FAILED",
+            "HTTP Action 요청을 완료하지 못했습니다.",
+        )
+    })?;
     let elapsed = elapsed_ms(started);
     let status = response.status().as_u16();
     let succeeded = if result_policy.success_status_codes.is_empty() {
@@ -258,7 +307,13 @@ fn execute_http(
     } else {
         result_policy.success_status_codes.contains(&status)
     };
-    drop(response);
+    let output = match response_projection {
+        Some(projection) => project_response(projection, response, &secrets)?,
+        None => {
+            drop(response);
+            None
+        }
+    };
 
     Ok(ActionExecutionResult {
         pack_id: resolved.manifest.id.clone(),
@@ -273,7 +328,117 @@ fn execute_http(
             "ACTION_HTTP_STATUS_REJECTED"
         }
         .to_owned(),
+        output,
     })
+}
+
+fn validate_request_body(
+    policy: &HttpRequestBodyPolicy,
+    raw: &str,
+    secrets: &[Zeroizing<String>],
+) -> Result<Zeroizing<String>, ActionPackError> {
+    let serialized = Zeroizing::new(
+        serde_json::to_string(&validate_body_shape(policy, raw)?).map_err(|_| invalid_request())?,
+    );
+    if secrets
+        .iter()
+        .any(|secret| !secret.is_empty() && serialized.contains(secret.as_str()))
+    {
+        return Err(ActionPackError::new(
+            "ACTION_BODY_REJECTED",
+            "요청 본문에 비밀 값을 넣을 수 없습니다.",
+        ));
+    }
+    Ok(serialized)
+}
+
+fn validate_body_shape(
+    policy: &HttpRequestBodyPolicy,
+    raw: &str,
+) -> Result<Value, ActionPackError> {
+    if raw.len() > MAX_REQUEST_BODY_BYTES {
+        return Err(invalid_request());
+    }
+    let parsed: Value = serde_json::from_str(raw).map_err(|_| invalid_request())?;
+    let Value::Object(map) = parsed else {
+        return Err(invalid_request());
+    };
+    if map.is_empty()
+        || map
+            .keys()
+            .any(|key| !policy.fields.iter().any(|field| field == key))
+    {
+        return Err(invalid_request());
+    }
+    Ok(Value::Object(map))
+}
+
+fn project_response(
+    projection: &HttpResponseProjection,
+    response: reqwest::blocking::Response,
+    secrets: &[Zeroizing<String>],
+) -> Result<Option<BTreeMap<String, String>>, ActionPackError> {
+    let limit = usize::try_from(projection.max_bytes).unwrap_or(usize::MAX);
+    let mut buffer = Vec::new();
+    response
+        .take(u64::try_from(limit + 1).unwrap_or(u64::MAX))
+        .read_to_end(&mut buffer)
+        .map_err(|_| {
+            ActionPackError::new("ACTION_HTTP_FAILED", "HTTP Action 응답을 읽지 못했습니다.")
+        })?;
+    if buffer.len() > limit {
+        return Err(ActionPackError::new(
+            "ACTION_HTTP_RESPONSE_TOO_LARGE",
+            "HTTP Action 응답이 허용 크기를 초과했습니다.",
+        ));
+    }
+    let parsed: Value = serde_json::from_slice(&buffer).map_err(|_| {
+        ActionPackError::new(
+            "ACTION_HTTP_INVALID_RESPONSE",
+            "HTTP Action 응답을 안전하게 해석하지 못했습니다.",
+        )
+    })?;
+    let mut output = BTreeMap::new();
+    for (result_key, path) in &projection.fields {
+        let Some(projected) = resolve_projection_path(&parsed, path) else {
+            continue;
+        };
+        let text = match projected {
+            Value::Null => continue,
+            Value::String(value) => value.clone(),
+            other => other.to_string(),
+        };
+        if text.len() > MAX_PROJECTED_VALUE_BYTES {
+            return Err(ActionPackError::new(
+                "ACTION_HTTP_RESPONSE_TOO_LARGE",
+                "HTTP Action 응답 항목이 허용 크기를 초과했습니다.",
+            ));
+        }
+        output.insert(result_key.clone(), scrub(text, secrets));
+    }
+    Ok(Some(output))
+}
+
+fn resolve_projection_path<'a>(value: &'a Value, path: &str) -> Option<&'a Value> {
+    let mut current = value;
+    for segment in path.split('.') {
+        current = match current {
+            Value::Object(map) => map.get(segment)?,
+            Value::Array(items) => items.get(segment.parse::<usize>().ok()?)?,
+            _ => return None,
+        };
+    }
+    Some(current)
+}
+
+fn scrub(text: String, secrets: &[Zeroizing<String>]) -> String {
+    if secrets
+        .iter()
+        .any(|secret| !secret.is_empty() && text.contains(secret.as_str()))
+    {
+        return REDACTED_VALUE.to_owned();
+    }
+    text
 }
 
 fn ensure_http_crypto_provider() -> Result<(), ActionPackError> {
@@ -313,8 +478,8 @@ mod tests {
 
     use super::*;
     use crate::action_pack::{
-        ActionPackManifest, HttpActionMethod, HttpResultPolicy, HttpSecretBinding,
-        HttpSecretSource, install,
+        ActionPackManifest, HttpActionMethod, HttpBodyContentType, HttpRequestBodyPolicy,
+        HttpResponseProjection, HttpResultPolicy, HttpSecretBinding, HttpSecretSource, install,
     };
     #[cfg(unix)]
     use crate::action_pack::{CliActionProfile, CliResultPolicy, CliSecretTransport};
@@ -371,6 +536,8 @@ mod tests {
                         format: "Bearer {value}".to_owned(),
                     },
                 )]),
+                request_body: None,
+                response_projection: None,
                 result_policy: HttpResultPolicy {
                     status: true,
                     duration: true,
@@ -397,6 +564,7 @@ mod tests {
                     "Authorization".to_owned(),
                     "SERVICE_API_KEY".to_owned(),
                 )]),
+                body: None,
             },
         )
         .expect("execute");
@@ -482,6 +650,7 @@ mod tests {
                 pack_id: manifest.id,
                 file: ".env.local".to_owned(),
                 bindings: BTreeMap::from([("value".to_owned(), "SERVICE_API_KEY".to_owned())]),
+                body: None,
             },
         )
         .expect("execute");
@@ -567,6 +736,7 @@ mod tests {
                 pack_id: manifest.id,
                 file: env_name,
                 bindings: BTreeMap::from([("value".to_owned(), "SERVICE_API_KEY".to_owned())]),
+                body: None,
             },
         )
         .expect("execute");
@@ -581,5 +751,221 @@ mod tests {
                 .expect("result")
                 .contains(canary)
         );
+    }
+
+    fn http_v2_manifest(address: std::net::SocketAddr, canary: &str) -> ActionPackManifest {
+        let _ = canary;
+        ActionPackManifest {
+            schema_version: 1,
+            id: "local.example.chat-gateway".to_owned(),
+            display_name: "Chat gateway".to_owned(),
+            description: "Synthetic credential-bound API call".to_owned(),
+            pack_version: "1.0.0".to_owned(),
+            action_protocol_version: "0.2.0".to_owned(),
+            action: ActionDefinition::Http {
+                method: HttpActionMethod::Post,
+                url: format!("http://{address}/v1/chat"),
+                secret_bindings: BTreeMap::from([(
+                    "Authorization".to_owned(),
+                    HttpSecretBinding {
+                        source: HttpSecretSource::Header,
+                        name: None,
+                        format: "Bearer {value}".to_owned(),
+                    },
+                )]),
+                request_body: Some(HttpRequestBodyPolicy {
+                    content_type: HttpBodyContentType::Json,
+                    fields: vec!["model".to_owned(), "messages".to_owned()],
+                }),
+                response_projection: Some(HttpResponseProjection {
+                    content_type: HttpBodyContentType::Json,
+                    fields: BTreeMap::from([
+                        ("content".to_owned(), "choices.0.message.content".to_owned()),
+                        ("echo".to_owned(), "echo".to_owned()),
+                    ]),
+                    max_bytes: 4096,
+                }),
+                result_policy: HttpResultPolicy {
+                    status: true,
+                    duration: true,
+                    body: false,
+                    success_status_codes: vec![200],
+                },
+                timeout_seconds: 5,
+            },
+        }
+    }
+
+    fn install_v2(
+        manifest: &ActionPackManifest,
+    ) -> (ProjectService, tempfile::TempDir, tempfile::TempDir) {
+        let project = tempfile::tempdir().expect("project");
+        std::fs::write(
+            project.path().join(".env.local"),
+            "SERVICE_API_KEY=fake_ACTION_V2_SECRET_77\n",
+        )
+        .expect("fixture");
+        let service = ProjectService::open(project.path()).expect("service");
+        service.initialize().expect("initialize");
+        let app_data = tempfile::tempdir().expect("app data");
+        let source = tempfile::tempdir().expect("source");
+        std::fs::write(
+            source.path().join("action.json"),
+            serde_json::to_vec(manifest).expect("manifest"),
+        )
+        .expect("write manifest");
+        install(source.path(), app_data.path(), false).expect("install");
+        (service, app_data, project)
+    }
+
+    #[test]
+    fn http_action_projects_allowlisted_response_and_scrubs_echoed_secret() {
+        let canary = "fake_ACTION_V2_SECRET_77";
+        let listener = TcpListener::bind("127.0.0.1:0").expect("listener");
+        let address = listener.local_addr().expect("address");
+        let server = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept");
+            let mut request = [0_u8; 8192];
+            let size = stream.read(&mut request).expect("read request");
+            let request = String::from_utf8_lossy(&request[..size]).to_string();
+            assert!(request.contains("\"model\":\"fake/model\""));
+            assert!(
+                request
+                    .to_ascii_lowercase()
+                    .contains("authorization: bearer")
+            );
+            let body = format!(
+                "{{\"choices\":[{{\"message\":{{\"content\":\"hello from model\"}}}}],\"echo\":\"{canary}\"}}"
+            );
+            write!(
+                stream,
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            )
+            .expect("response");
+        });
+
+        let (service, app_data, _project) = install_v2(&http_v2_manifest(address, canary));
+        let result = execute(
+            &service,
+            app_data.path(),
+            ActionExecutionRequest {
+                pack_id: "local.example.chat-gateway".to_owned(),
+                file: ".env.local".to_owned(),
+                bindings: BTreeMap::from([(
+                    "Authorization".to_owned(),
+                    "SERVICE_API_KEY".to_owned(),
+                )]),
+                body: Some(
+                    "{\"model\":\"fake/model\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"
+                        .to_owned(),
+                ),
+            },
+        )
+        .expect("execute");
+        server.join().expect("server");
+
+        let output = result.output.as_ref().expect("projected output");
+        assert_eq!(
+            output.get("content").map(String::as_str),
+            Some("hello from model")
+        );
+        assert_eq!(output.get("echo").map(String::as_str), Some("[redacted]"));
+        assert!(
+            !serde_json::to_string(&result)
+                .expect("result")
+                .contains(canary)
+        );
+    }
+
+    #[test]
+    fn http_action_rejects_unknown_body_fields() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("listener");
+        let address = listener.local_addr().expect("address");
+        drop(listener);
+        let (service, app_data, _project) = install_v2(&http_v2_manifest(address, "unused"));
+        let error = execute(
+            &service,
+            app_data.path(),
+            ActionExecutionRequest {
+                pack_id: "local.example.chat-gateway".to_owned(),
+                file: ".env.local".to_owned(),
+                bindings: BTreeMap::from([(
+                    "Authorization".to_owned(),
+                    "SERVICE_API_KEY".to_owned(),
+                )]),
+                body: Some("{\"model\":\"fake/model\",\"evil\":true}".to_owned()),
+            },
+        )
+        .expect_err("rejected");
+        assert_eq!(error.code, "ACTION_REQUEST_INVALID");
+    }
+
+    #[test]
+    fn v1_http_action_rejects_a_request_body() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("listener");
+        let address = listener.local_addr().expect("address");
+        drop(listener);
+        let project = tempfile::tempdir().expect("project");
+        std::fs::write(
+            project.path().join(".env.local"),
+            "SERVICE_API_KEY=fake_ACTION_V1_SECRET_11\n",
+        )
+        .expect("fixture");
+        let service = ProjectService::open(project.path()).expect("service");
+        service.initialize().expect("initialize");
+        let app_data = tempfile::tempdir().expect("app data");
+        let source = tempfile::tempdir().expect("source");
+        let manifest = ActionPackManifest {
+            schema_version: 1,
+            id: "local.example.v1-check".to_owned(),
+            display_name: "V1 check".to_owned(),
+            description: "Synthetic v1 action".to_owned(),
+            pack_version: "1.0.0".to_owned(),
+            action_protocol_version: "0.1.0".to_owned(),
+            action: ActionDefinition::Http {
+                method: HttpActionMethod::Post,
+                url: format!("http://{address}/v1/check"),
+                secret_bindings: BTreeMap::from([(
+                    "Authorization".to_owned(),
+                    HttpSecretBinding {
+                        source: HttpSecretSource::Header,
+                        name: None,
+                        format: "Bearer {value}".to_owned(),
+                    },
+                )]),
+                request_body: None,
+                response_projection: None,
+                result_policy: HttpResultPolicy {
+                    status: true,
+                    duration: true,
+                    body: false,
+                    success_status_codes: vec![200],
+                },
+                timeout_seconds: 5,
+            },
+        };
+        std::fs::write(
+            source.path().join("action.json"),
+            serde_json::to_vec(&manifest).expect("manifest"),
+        )
+        .expect("write manifest");
+        install(source.path(), app_data.path(), false).expect("install");
+        let error = execute(
+            &service,
+            app_data.path(),
+            ActionExecutionRequest {
+                pack_id: "local.example.v1-check".to_owned(),
+                file: ".env.local".to_owned(),
+                bindings: BTreeMap::from([(
+                    "Authorization".to_owned(),
+                    "SERVICE_API_KEY".to_owned(),
+                )]),
+                body: Some("{\"model\":\"fake/model\"}".to_owned()),
+            },
+        )
+        .expect_err("rejected");
+        assert_eq!(error.code, "ACTION_REQUEST_INVALID");
     }
 }

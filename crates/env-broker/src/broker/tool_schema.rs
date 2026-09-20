@@ -326,7 +326,7 @@ pub fn tool_definitions() -> Value {
         ),
         tool(
             "plan_action",
-            "Create a redacted plan for one locally installed Action Pack. Bindings map pack binding IDs to managed variable names; raw values, commands, output, and response bodies are never accepted or returned.",
+            "Create a redacted plan for one locally installed Action Pack. Bindings map pack binding IDs to managed variable names. For a protocol 0.2 HTTP pack with an allowlisted body policy, body carries a JSON object whose top-level fields must exactly match that allowlist. Raw values, commands, secret fields, and response bodies are never accepted or returned.",
             json!({
                 "type": "object",
                 "properties": {
@@ -338,7 +338,8 @@ pub fn tool_definitions() -> Value {
                         "additionalProperties": { "type": "string" },
                         "minProperties": 1,
                         "maxProperties": 16
-                    }
+                    },
+                    "body": { "type": "string", "maxLength": 262144 }
                 },
                 "required": ["projectPath", "packId", "file", "bindings"],
                 "additionalProperties": false

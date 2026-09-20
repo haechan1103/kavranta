@@ -8,6 +8,7 @@ pub use error::ActionPackError;
 pub use model::{
     ActionBindingInfo, ActionDefinition, ActionExecutionRequest, ActionExecutionResult, ActionKind,
     ActionPackInfo, ActionPackManifest, CliActionProfile, CliResultPolicy, CliSecretTransport,
-    HttpActionMethod, HttpResultPolicy, HttpSecretBinding, HttpSecretSource,
+    HttpActionMethod, HttpBodyContentType, HttpRequestBodyPolicy, HttpResponseProjection,
+    HttpResultPolicy, HttpSecretBinding, HttpSecretSource,
 };
 pub use storage::{install, install_manifest, list, prepare_install, remove};

@@ -109,6 +109,118 @@ fn action_pack_plan_and_result_never_cross_the_broker_with_the_secret() {
 }
 
 #[test]
+fn action_pack_v2_body_is_allowlisted_and_never_carries_the_secret() {
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let listener = TcpListener::bind("127.0.0.1:0").expect("listener");
+    let address = listener.local_addr().expect("address");
+    let manifest = json!({
+        "schemaVersion": 1,
+        "id": "local.test.chat-gateway",
+        "displayName": "Chat gateway",
+        "description": "Synthetic credential-bound call",
+        "packVersion": "1.0.0",
+        "actionProtocolVersion": "0.2.0",
+        "type": "http",
+        "method": "POST",
+        "url": format!("http://{address}/v1/chat"),
+        "secretBindings": {
+            "Authorization": { "source": "header", "format": "Bearer {value}" }
+        },
+        "requestBody": { "contentType": "json", "fields": ["model", "messages"] },
+        "responseProjection": {
+            "contentType": "json",
+            "fields": { "content": "choices.0.message.content", "echo": "echo" },
+            "maxBytes": 4096
+        },
+        "resultPolicy": {
+            "status": true,
+            "duration": true,
+            "body": false,
+            "successStatusCodes": [200]
+        },
+        "timeoutSeconds": 5
+    });
+    let server = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("accept");
+        let mut request = [0_u8; 8192];
+        let size = stream.read(&mut request).expect("read");
+        let request = String::from_utf8_lossy(&request[..size]).to_string();
+        assert!(request.contains("\"model\":\"fake/model\""));
+        assert!(
+            request
+                .to_ascii_lowercase()
+                .contains("authorization: bearer")
+        );
+        let body = format!(
+            "{{\"choices\":[{{\"message\":{{\"content\":\"hello from model\"}}}}],\"echo\":\"{CANARY}\"}}"
+        );
+        write!(
+            stream,
+            "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            body.len(),
+            body
+        )
+        .expect("respond");
+    });
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+
+    let install_plan = broker
+        .call_tool(
+            "plan_install_action_pack",
+            json!({
+                "projectPath": project.root(),
+                "manifest": manifest,
+                "replace": false
+            }),
+        )
+        .expect("plan Action Pack install");
+    let install_plan_id = install_plan["planId"].as_str().expect("install plan id");
+    broker
+        .call_tool("apply_plan", json!({ "planId": install_plan_id }))
+        .expect("install Action Pack");
+
+    let plan = broker
+        .call_tool(
+            "plan_action",
+            json!({
+                "projectPath": project.root(),
+                "packId": "local.test.chat-gateway",
+                "file": ".env.local",
+                "bindings": { "Authorization": "GPT_API_KEY" },
+                "body": "{\"model\":\"fake/model\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"
+            }),
+        )
+        .expect("plan action");
+    assert!(!plan.to_string().contains(CANARY));
+    let plan_id = plan["planId"].as_str().expect("plan id");
+    let result = broker
+        .call_tool("apply_plan", json!({ "planId": plan_id }))
+        .expect("apply action");
+    server.join().expect("server");
+
+    assert_eq!(result["succeeded"], true);
+    assert_eq!(result["output"]["content"], "hello from model");
+    assert_eq!(result["output"]["echo"], "[redacted]");
+    assert!(!result.to_string().contains(CANARY));
+
+    let rejected = broker.call_tool(
+        "plan_action",
+        json!({
+            "projectPath": project.root(),
+            "packId": "local.test.chat-gateway",
+            "file": ".env.local",
+            "bindings": { "Authorization": "GPT_API_KEY" },
+            "body": "{\"model\":\"fake/model\",\"evil\":true}"
+        }),
+    );
+    assert!(rejected.is_err());
+}
+
+#[test]
 fn action_pack_install_plan_validates_manifest_and_replace_intent() {
     let (project, service) = registered_project();
     let app_data = tempfile::tempdir().expect("app data");

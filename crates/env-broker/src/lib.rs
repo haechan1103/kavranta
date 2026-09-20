@@ -295,6 +295,8 @@ struct PlanActionArgs {
     pack_id: String,
     file: String,
     bindings: std::collections::BTreeMap<String, String>,
+    #[serde(default)]
+    body: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
