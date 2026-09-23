@@ -2,13 +2,16 @@ mod discovery;
 mod effective;
 mod error;
 mod export;
+mod exposure;
 mod git_safety;
+mod guide;
 mod manifest;
 mod migration;
 mod model;
 mod parser;
 mod policy;
 mod provider_push;
+mod secret_input;
 mod service;
 mod team_import;
 mod transaction;
@@ -19,13 +22,19 @@ pub use effective::{
 };
 pub use error::{EnvError, EnvErrorCode, EnvResult};
 pub use export::{ExportFormat, ExportOccurrence, ExportSummary, export_project_env};
+pub use exposure::{
+    ExposureCounts, ExposureDisposition, ExposureFinding, ExposureKind, ExposureProjection,
+    ExposureSeverity, ExposureState,
+};
 pub use git_safety::{
     GitSafetyProjection, GitSafetyState, GitignoreUpdateSummary, apply_gitignore_guard,
     inspect_git_safety,
 };
+pub use guide::{MAX_GUIDE_BYTES, guide_relative_path, read_guide, remove_guide, write_guide};
 pub use manifest::{
-    ClassificationSource, CodexAccess, LinkGroup, LinkMember, MANIFEST_FILE_NAME, Manifest,
-    ManifestStore, VariablePolicy, validate_display_name,
+    AllowedExposureFinding, ClassificationSource, CodexAccess, ExposureConfig, LinkGroup,
+    LinkMember, MANAGED_DIR_NAME, MANIFEST_FILE_NAME, Manifest, ManifestStore, VariablePolicy,
+    validate_display_name,
 };
 pub use migration::{MigrationPlan, MigrationPreview, MigrationSuggestion};
 pub use model::{
@@ -38,6 +47,10 @@ pub use policy::{
     suggest_access,
 };
 pub use provider_push::ProviderValue;
+pub use secret_input::{
+    SECRET_INPUT_SOCKET_FILE, SecretInputEntry, SecretInputOutcome, SecretInputRequest,
+    SecretInputResponse, SecretInputResult, secret_input_socket_path,
+};
 pub use service::{
     AddVariableRequest, CreateEnvFileRequest, CreateGroupRequest, DeleteVariableRequest,
     LinkRequest, MoveVariableRequest, MutationSummary, OpaqueValueCopyRequest,

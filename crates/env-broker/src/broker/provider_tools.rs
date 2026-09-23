@@ -20,6 +20,55 @@ impl Broker {
         serde_json::to_value(providers).map_err(EnvError::serialization)
     }
 
+    pub(super) fn plan_set_variable_guide(
+        &self,
+        args: PlanSetVariableGuideArgs,
+    ) -> Result<Value, EnvError> {
+        let service = self.open_registered(&args.project_path)?;
+        if args.key.trim().is_empty() || args.key.len() > 256 {
+            return Err(EnvError::invalid("가이드 키가 필요합니다."));
+        }
+        let removing = args
+            .markdown
+            .as_deref()
+            .is_none_or(|markdown| markdown.trim().is_empty());
+        let summary = if removing {
+            format!("{}의 가이드를 제거합니다.", args.key)
+        } else {
+            format!("{}의 가이드를 저장합니다.", args.key)
+        };
+        self.store_plan(
+            &service,
+            PlannedOperation::SetVariableGuide {
+                key: args.key.clone(),
+                markdown: args.markdown,
+            },
+            summary,
+            Vec::new(),
+            vec![args.key],
+            if removing {
+                "guide-remove"
+            } else {
+                "guide-write"
+            },
+            None,
+        )
+    }
+
+    pub(super) fn scan_exposure(&self, args: ScanExposureArgs) -> Result<Value, EnvError> {
+        let service = self.open_registered(&args.project_path)?;
+        let projection = service.exposure_scan(args.deep)?;
+        self.audit(
+            service.project_id(),
+            "scan_exposure",
+            &[],
+            &[],
+            "redacted-exposure-metadata",
+            "OK",
+        );
+        serde_json::to_value(projection).map_err(EnvError::serialization)
+    }
+
     pub(super) fn list_action_packs(&self, args: ListProvidersArgs) -> Result<Value, EnvError> {
         let service = self.open_registered(&args.project_path)?;
         let app_data = self.provider_app_data()?;

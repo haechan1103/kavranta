@@ -92,13 +92,21 @@ fn provider_app_data(app: &AppHandle) -> CommandResult<std::path::PathBuf> {
 mod accounts;
 mod agent_tools;
 mod env_files;
+mod exposure;
+mod external;
+mod guides;
 mod projects;
 mod providers;
+mod secret_input;
 mod sharing;
 
 pub use accounts::*;
 pub use agent_tools::*;
 pub use env_files::*;
+pub use exposure::*;
+pub use external::*;
+pub use guides::*;
 pub use projects::*;
 pub use providers::*;
+pub use secret_input::*;
 pub use sharing::*;

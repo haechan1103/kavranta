@@ -15,7 +15,7 @@ import { SidebarNavIcon } from "./SidebarNavIcon";
 import { ProjectSwitcherModal } from "./ProjectSwitcherModal";
 
 interface View {
-  kind: "overview" | "file" | "integrations" | "activity" | "accounts";
+  kind: "overview" | "file" | "integrations" | "activity" | "accounts" | "exposure";
   path?: string;
 }
 
@@ -26,7 +26,7 @@ interface Props {
   view: View;
   onSelectProject: (projectId: string) => void;
   onSelectView: (
-    view: { kind: "overview" } | { kind: "file"; path: string } | { kind: "integrations" } | { kind: "activity" } | { kind: "accounts" },
+    view: { kind: "overview" } | { kind: "file"; path: string } | { kind: "integrations" } | { kind: "activity" } | { kind: "exposure" } | { kind: "accounts" },
   ) => void;
   onRegister: () => void;
   onRenameFileLabel: (projectId: string, path: string, name: string) => void;
@@ -97,6 +97,12 @@ export function ProjectSidebar({
             onClick={() => onSelectView({ kind: "accounts" })}
           >
             <SidebarNavIcon name="accounts" /> {t("sidebar.accounts")}
+          </button>
+          <button
+            className={view.kind === "exposure" ? "nav-item active" : "nav-item"}
+            onClick={() => onSelectView({ kind: "exposure" })}
+          >
+            <SidebarNavIcon name="exposure" /> {t("sidebar.exposure")}
           </button>
           {selectedProject && projectActions}
           <p className="file-label">ENV FILES</p>

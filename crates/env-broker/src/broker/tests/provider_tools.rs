@@ -221,6 +221,150 @@ fn action_pack_v2_body_is_allowlisted_and_never_carries_the_secret() {
 }
 
 #[test]
+fn exposure_scan_returns_paths_and_counts_without_values() {
+    let (project, service) = registered_project();
+    project.write(
+        "credentials.json",
+        "{\"client_email\":\"fake_demo@example.com\",\"private_key\":\"fake_key\"}\n",
+    );
+    let app_data = tempfile::tempdir().expect("app data");
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+
+    let result = broker
+        .call_tool("scan_exposure", json!({ "projectPath": project.root() }))
+        .expect("scan exposure");
+
+    assert_eq!(result["state"], "scanned");
+    assert!(result["counts"]["allowed"].as_u64().unwrap_or(0) >= 1);
+    assert!(result["counts"]["certain"].as_u64().unwrap_or(0) >= 1);
+    assert!(
+        result["findings"]
+            .as_array()
+            .expect("findings")
+            .iter()
+            .any(|finding| finding["path"] == "credentials.json"
+                && finding["disposition"] == "exposed")
+    );
+    assert!(
+        result["findings"]
+            .as_array()
+            .expect("findings")
+            .iter()
+            .any(|finding| finding["path"] == ".env.local"
+                && finding["disposition"] == "allowed"
+                && finding["reason"] == "ai-allowed-variable")
+    );
+    let serialized = result.to_string();
+    assert!(!serialized.contains(CANARY));
+    assert!(!serialized.contains("private_key"));
+}
+
+#[cfg(unix)]
+#[test]
+fn request_value_input_sends_names_only_and_returns_outcomes() {
+    use std::io::{BufRead, BufReader, Write};
+    use std::os::unix::net::UnixListener;
+
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let socket = env_core::secret_input_socket_path(app_data.path());
+    let listener = UnixListener::bind(&socket).expect("socket");
+    let server = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("accept");
+        let mut reader = BufReader::new(stream.try_clone().expect("clone"));
+        let mut line = String::new();
+        reader.read_line(&mut line).expect("read request");
+        let request: env_core::SecretInputRequest =
+            serde_json::from_str(line.trim()).expect("request json");
+        assert_eq!(request.entries[0].name, "GEMINI_API_KEY");
+        assert!(!line.contains("="));
+        let response = env_core::SecretInputResponse::all(
+            &request.request_id,
+            &["GEMINI_API_KEY".to_owned()],
+            env_core::SecretInputOutcome::Added,
+        );
+        stream
+            .write_all(
+                serde_json::to_string(&response)
+                    .expect("response")
+                    .as_bytes(),
+            )
+            .expect("write response");
+        stream.write_all(b"\n").expect("newline");
+    });
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+
+    let result = broker
+        .call_tool(
+            "request_value_input",
+            json!({
+                "projectPath": project.root(),
+                "entries": [{ "name": "GEMINI_API_KEY", "file": ".env.local" }]
+            }),
+        )
+        .expect("request value input");
+    server.join().expect("server");
+
+    assert_eq!(result["results"][0]["name"], "GEMINI_API_KEY");
+    assert_eq!(result["results"][0]["outcome"], "added");
+    assert!(!result.to_string().contains(CANARY));
+}
+
+#[test]
+fn plan_set_variable_guide_writes_a_value_free_guide() {
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+
+    let plan = broker
+        .call_tool(
+            "plan_set_variable_guide",
+            json!({
+                "projectPath": project.root(),
+                "key": "GPT_API_KEY",
+                "markdown": "# Guide\n\nOpen the console to get the key."
+            }),
+        )
+        .expect("plan guide");
+    let plan_id = plan["planId"].as_str().expect("plan id");
+    broker
+        .call_tool("apply_plan", json!({ "planId": plan_id }))
+        .expect("apply guide");
+
+    let guide_path = service.root().join(".env-manager/guides/GPT_API_KEY.md");
+    assert!(guide_path.is_file());
+    let text = std::fs::read_to_string(&guide_path).expect("guide text");
+    assert!(text.contains("Open the console"));
+    assert!(!text.contains(CANARY));
+
+    let inspect = broker
+        .call_tool("inspect_project", json!({ "projectPath": project.root() }))
+        .expect("inspect");
+    let has_guide = inspect["files"]
+        .as_array()
+        .and_then(|files| files.first())
+        .and_then(|file| file["groups"].as_array())
+        .and_then(|groups| groups.first())
+        .and_then(|group| group["variables"].as_array())
+        .map(|variables| {
+            variables
+                .iter()
+                .any(|variable| variable["key"] == "GPT_API_KEY" && variable["hasGuide"] == true)
+        })
+        .unwrap_or(false);
+    assert!(has_guide);
+}
+
+#[test]
 fn action_pack_install_plan_validates_manifest_and_replace_intent() {
     let (project, service) = registered_project();
     let app_data = tempfile::tempdir().expect("app data");

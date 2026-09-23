@@ -94,10 +94,15 @@ pub(crate) fn audit_category(operation: &str, policy_decision: &str) -> &'static
             | "list_team_channels"
             | "list_runtime_targets"
             | "list_action_packs"
+            | "scan_exposure"
     ) {
         "structure-inspection"
     } else if operation == "read_allowed_value" {
         "value-read"
+    } else if operation == "request_value_input" {
+        "secret-input"
+    } else if matches!(policy_decision, "guide-write" | "guide-remove") {
+        "documentation"
     } else if matches!(
         operation,
         "compare_deployment_values" | "verify_android_app_links"

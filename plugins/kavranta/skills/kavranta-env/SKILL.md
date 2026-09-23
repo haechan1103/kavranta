@@ -1,6 +1,6 @@
 ---
 name: kavranta-env
-description: Safely manage registered project environment variables through Kavranta's redacted local broker. Use for `.env` or Wrangler `.dev.vars` inspection and edits, groups, access policies, links, value-hidden generation or reuse, deployment and comparison, encrypted team sharing, and Provider or Action Packs. 한국어로 “환경변수 관리·정리”, “.env를 값 없이 확인”, “키 연결·재사용”, “환경변수 올리기”, “카브란타로 처리”를 요청할 때도 사용한다.
+description: Safely manage registered project environment variables through Kavranta's redacted local broker. Use for `.env` or Wrangler `.dev.vars` inspection and edits, groups, access policies, links, desktop secret input, value-free guides, exposure scans, value-hidden generation or reuse, deployment and comparison, encrypted team sharing, and Provider or Action Packs. 한국어로 “환경변수 관리·정리”, “.env를 값 없이 확인”, “키 연결·재사용”, “시크릿 입력”, “가이드”, “노출 점검”, “환경변수 올리기”, “카브란타로 처리”를 요청할 때도 사용한다.
 ---
 
 # Kavranta Environment Management
@@ -25,9 +25,10 @@ interpreter, or generic editing tools.
    `inspect_project` again.
 3. Work only from its redacted structure, presence state, groups, descriptions,
    relationships, and policies.
-4. Treat `protected` and `unclassified` as unreadable. Human-known protected-value
-   input belongs in the desktop app; a requested local producer may use the opaque
-   stdin workflow below without making the value readable.
+4. Treat `protected` and `unclassified` as unreadable. When a task needs a value the
+   user knows and it is missing, call `request_value_input` (see below) so the desktop
+   app prompts the user; a requested local producer may instead use the opaque stdin
+   workflow without making the value readable.
 5. Keep ambiguous unclassified names protected unless the current task explicitly
    requests an access-policy change.
 6. Create a plan for every mutation, verify that its paths, names, impact, and risk
@@ -41,6 +42,53 @@ interpreter, or generic editing tools.
 Ordinary source, deployment, configuration, and documentation files may mention
 env-data basenames. Edit those non-env files with the host's normal source tools;
 never use that allowance to read or patch an actual env-data file.
+
+## Ask the user for missing values
+
+When a concrete task needs a secret the user knows and `inspect_project` shows it is
+missing, do not ask the user to open the app and find the file. Call
+`request_value_input` with one entry per needed value:
+
+- `name`: the exact variable name, for example `GEMINI_API_KEY`.
+- `file`: the env file that should hold it, usually the file you inspected.
+- optional `group`, `description`, and `classification`.
+
+The desktop app opens a single window where the user types every value at once and
+confirms. The values are written straight into the named env files; the agent receives
+only per-name outcomes (`added`, `updated`, `skipped`, `cancelled`, `timeout`,
+`failed`) and never the values. The app is launched automatically when it is not
+running. The call waits until the user finishes or the timeout elapses; there is no
+second approval step. After it returns, call `inspect_project` again to confirm
+presence before using the value.
+
+Prefer one request with several entries over several requests.
+
+## Value-free guides
+
+A managed variable may carry a short, value-free markdown guide that explains how to
+obtain and enter its value. The desktop app shows a question-mark button for any
+variable with a guide and renders it in a modal.
+
+- Author a guide only when it genuinely helps, for example a third-party key that
+  needs a console visit. Skip it otherwise.
+- Use `plan_set_variable_guide` with the exact variable `key` and the markdown body.
+  Omit `markdown` to remove an existing guide.
+- Never include a value, partial value, or anything derived from a value in a guide.
+  The guide is stored as `.env-manager/guides/<KEY>.md` and referenced from the
+  project manifest, so it may be committed and shared.
+- Keep it short: a heading, the steps, and a link to the official page.
+
+## Scan for agent-readable exposure
+
+When the user asks whether an agent could read secrets, or before a task that may
+touch credential files, call `scan_exposure` on the registered project.
+
+- The result is names, paths, kinds, severities, and dispositions only. Never a value.
+- `managed` is a Kavranta env file. `allowed` was accepted by user policy or an
+  AI-allowed classification. `exposed` is a non-managed file an agent could read.
+- Do not treat `.gitignore` as an allow, and do not change allow policy unless asked.
+- Pass `deep: true` only when the user asks to include home, shell history, global
+  MCP config, or agent session transcripts.
 
 ## Register the current project
 

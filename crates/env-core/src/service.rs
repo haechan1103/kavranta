@@ -19,7 +19,9 @@ use crate::{
 };
 
 mod access;
+mod exposure;
 mod file_paths;
+mod guides;
 mod links;
 mod migration_export;
 mod persistence;
@@ -246,6 +248,7 @@ fn project_file(
                     }),
                     duplicate: duplicates.contains_key(&key),
                     client_exposure: detect_client_exposure(&key),
+                    has_guide: manifest.guides.contains_key(&key),
                     key,
                 });
             }

@@ -258,3 +258,8 @@
     min-height: 0;
   }
 }
+
+.ui-svg {
+  width: 1.05em;
+  height: 1.05em;
+}

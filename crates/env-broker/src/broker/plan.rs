@@ -169,6 +169,12 @@ impl Broker {
                         serde_json::to_value(result).map_err(EnvError::serialization)
                     })
             }
+            PlannedOperation::SetVariableGuide { key, markdown } => match markdown {
+                Some(text) if !text.trim().is_empty() => {
+                    serialize_result(service.save_variable_guide(&key, &text))
+                }
+                _ => serialize_result(service.remove_variable_guide(&key)),
+            },
         };
         let result_code = result
             .as_ref()

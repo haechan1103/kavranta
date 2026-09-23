@@ -350,3 +350,12 @@
     justify-self: start;
   }
 }
+
+.key-line .guide-button {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  place-items: center;
+  color: var(--muted);
+}

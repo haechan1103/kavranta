@@ -1,0 +1,49 @@
+.markdown {
+  color: var(--ink);
+  font-size: calc(12px * var(--font-scale));
+  line-height: 1.7;
+}
+
+.markdown .md-heading {
+  margin: 16px 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.markdown p {
+  margin: 0 0 10px;
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.markdown li {
+  margin: 3px 0;
+}
+
+.markdown code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.06);
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: calc(11px * var(--font-scale));
+}
+
+.markdown .md-code {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  overflow: auto;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.markdown .md-code code {
+  padding: 0;
+  background: none;
+}
+
+.markdown a {
+  color: #2f7fd0;
+}

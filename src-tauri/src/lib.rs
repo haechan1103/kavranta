@@ -3,7 +3,7 @@ mod integrations;
 mod runtime;
 
 use commands::{
-    add_variable, apply_gitignore_guard, apply_migration, apply_team_import,
+    add_variable, apply_gitignore_guard, apply_migration, apply_team_import, cancel_secret_input,
     compare_provider_values, connect_folder_team_channel, copy_account_field, copy_key, copy_value,
     create_account, create_github_environment, create_group, create_link, delete_account,
     delete_variable, detach_link_member, detect_cloudflare_target, detect_eas_target,
@@ -13,15 +13,16 @@ use commands::{
     install_personal_provider_pack, list_accounts, list_action_packs, list_agent_activity,
     list_agent_integrations, list_deployment_providers, list_github_environments,
     list_github_repositories, list_projects, list_provider_push_receipts, list_runtime_targets,
-    list_team_channels, move_variable, plan_migration, plan_team_channel_import, plan_team_import,
-    protect_variables, publish_team_channel, push_to_provider, read_value, register_project,
-    remap_team_import_file, remove_action_pack, remove_personal_provider_pack, remove_project,
-    remove_runtime_target, remove_team_channel, rename_env_file_label, rename_env_file_on_disk,
-    rename_group, rename_project, reveal_team_import_conflict, save_description,
-    save_runtime_target, save_value, scan_project, set_account_project_access, set_codex_access,
-    set_last_selected_project, update_account,
+    list_team_channels, move_variable, open_external, plan_migration, plan_team_channel_import,
+    plan_team_import, protect_variables, publish_team_channel, push_to_provider, read_value,
+    read_variable_guide, register_project, remap_team_import_file, remove_action_pack,
+    remove_personal_provider_pack, remove_project, remove_runtime_target, remove_team_channel,
+    remove_variable_guide, rename_env_file_label, rename_env_file_on_disk, rename_group,
+    rename_project, reveal_team_import_conflict, save_description, save_runtime_target, save_value,
+    save_variable_guide, scan_exposure, scan_project, set_account_project_access, set_codex_access,
+    set_last_selected_project, submit_secret_input, update_account,
 };
-use runtime::{AppRuntime, CredentialRuntime};
+use runtime::{AppRuntime, CredentialRuntime, SecretInputState};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -37,6 +38,8 @@ pub fn run() {
             let credentials = CredentialRuntime::load(&app_data);
             app.manage(runtime);
             app.manage(credentials);
+            app.manage(SecretInputState::default());
+            runtime::secret_input::start(app.handle().clone(), app_data);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -57,6 +60,13 @@ pub fn run() {
             remove_action_pack,
             list_action_packs,
             execute_action_pack,
+            scan_exposure,
+            open_external,
+            submit_secret_input,
+            cancel_secret_input,
+            read_variable_guide,
+            save_variable_guide,
+            remove_variable_guide,
             list_deployment_providers,
             list_github_repositories,
             detect_github_repository,

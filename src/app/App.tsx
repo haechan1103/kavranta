@@ -11,17 +11,20 @@ import { TeamChannelModal } from "../features/team-channel/TeamChannelModal";
 import { AgentActivity } from "../features/activity/AgentActivity";
 import { AccountVault } from "../features/accounts/AccountVault";
 import { AgentIntegrations } from "../features/integrations/AgentIntegrations";
+import { ExposurePanel } from "../features/exposure/ExposurePanel";
 import { Overview } from "../features/overview/Overview";
 import { ProjectActions } from "../features/projects/ProjectActions";
 import { ProjectSidebar } from "../features/projects/ProjectSidebar";
+import { SecretInputController } from "../features/secret-input/SecretInputController";
 import { useEnvManager } from "../hooks/useEnvManager";
 import { useI18n } from "../i18n";
 
 type View =
   | { kind: "overview" }
-  | { kind: "file"; path: string; query?: string }
+  | { kind: "file"; path: string; query?: string; emptyOnly?: boolean }
   | { kind: "integrations" }
   | { kind: "activity" }
+  | { kind: "exposure" }
   | { kind: "accounts" };
 
 export function App() {
@@ -191,18 +194,21 @@ export function App() {
               {view.kind === "overview" && (
                 <Overview
                   projection={manager.projection}
-                  onOpenFile={(path, query) => setView({ kind: "file", path, query })}
+                  onOpenFile={(path, key, options) =>
+                    setView({ kind: "file", path, query: key, emptyOnly: options?.emptyOnly })
+                  }
                   onOpenIntegrations={() => setView({ kind: "integrations" })}
                   onApplyGitignoreGuard={manager.applyGitignoreGuard}
                 />
               )}
               {view.kind === "file" && (
                 <FileEditor
-                  key={`${manager.selectedProject.id}:${view.path}:${view.query ?? ""}`}
+                  key={`${manager.selectedProject.id}:${view.path}:${view.query ?? ""}:${view.emptyOnly ? "empty" : ""}`}
                   projectId={manager.selectedProject.id}
                   projection={manager.projection}
                   filePath={view.path}
                   initialSearch={view.query}
+                  initialEmptyOnly={view.emptyOnly}
                   onRefresh={refresh}
                   onError={manager.showError}
                   onNotice={manager.showNotice}
@@ -210,6 +216,9 @@ export function App() {
               )}
               {view.kind === "activity" && (
                 <AgentActivity projectId={manager.selectedProject.id} onError={manager.showError} />
+              )}
+              {view.kind === "exposure" && (
+                <ExposurePanel projectId={manager.selectedProject.id} onError={manager.showError} />
               )}
               {view.kind === "accounts" && (
                 <AccountVault
@@ -232,6 +241,11 @@ export function App() {
         )}
       </main>
 
+      <SecretInputController
+        projectId={manager.selectedProject?.id ?? null}
+        projection={manager.projection}
+        onError={manager.showError}
+      />
       {(manager.error || manager.notice) && (
         <div
           className={`toast ${manager.error ? "toast-error" : "toast-success"}`}

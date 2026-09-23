@@ -7,9 +7,9 @@ use std::time::{Duration, Instant};
 
 use env_core::{
     ClassificationReviewReason, ClassificationSource, DiscoveryOptions, EnvError, EnvErrorCode,
-    EnvResult, MigrationPlan, MigrationPreview, MutationSummary, ProjectService,
-    RenameEnvFileRequest, RenameEnvFileSummary, TeamImportPlan, TeamImportPreview,
-    TeamImportSummary, TeamImportValueSide, is_env_candidate,
+    EnvResult, MANAGED_DIR_NAME, MANIFEST_FILE_NAME, MigrationPlan, MigrationPreview,
+    MutationSummary, ProjectService, RenameEnvFileRequest, RenameEnvFileSummary, TeamImportPlan,
+    TeamImportPreview, TeamImportSummary, TeamImportValueSide, is_env_candidate,
 };
 use env_registry::{ProjectRegistration, RegistryData};
 use notify::{
@@ -26,9 +26,11 @@ mod watcher;
 
 mod agent_activity;
 mod credentials;
+pub mod secret_input;
 mod team_channels;
 
 pub use credentials::CredentialRuntime;
+pub use secret_input::SecretInputState;
 pub use team_channels::TeamChannelProjection;
 
 #[derive(Debug, Clone, Serialize)]
@@ -127,6 +129,9 @@ fn should_rescan_for_event(
         return false;
     }
     if managed_paths.contains(path) {
+        return true;
+    }
+    if relative == Path::new(MANIFEST_FILE_NAME) || relative.starts_with(MANAGED_DIR_NAME) {
         return true;
     }
     if path
