@@ -1,12 +1,14 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
+#[cfg(unix)]
 use std::time::Duration;
 
-use env_core::{
-    SecretInputOutcome, SecretInputRequest, SecretInputResponse, SecretInputResult,
-    secret_input_socket_path,
-};
-use tauri::{AppHandle, Emitter, Manager};
+use env_core::{SecretInputOutcome, SecretInputResult};
+#[cfg(unix)]
+use env_core::{SecretInputRequest, SecretInputResponse, secret_input_socket_path};
+use tauri::AppHandle;
+#[cfg(unix)]
+use tauri::{Emitter, Manager};
 
 /// Tracks in-flight human secret-input requests triggered by the local broker.
 #[derive(Default)]
@@ -20,6 +22,7 @@ struct Pending {
 }
 
 impl SecretInputState {
+    #[cfg(unix)]
     fn register(
         &self,
         request_id: String,

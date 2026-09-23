@@ -1,9 +1,10 @@
 use std::path::Path;
+#[cfg(unix)]
 use std::time::{Duration, Instant};
 
-use env_core::{
-    SecretInputEntry, SecretInputRequest, SecretInputResponse, secret_input_socket_path,
-};
+#[cfg(unix)]
+use env_core::secret_input_socket_path;
+use env_core::{SecretInputEntry, SecretInputRequest, SecretInputResponse};
 
 use super::super::*;
 
@@ -11,6 +12,7 @@ const DEFAULT_TIMEOUT_SECONDS: u64 = 300;
 const MIN_TIMEOUT_SECONDS: u64 = 30;
 const MAX_TIMEOUT_SECONDS: u64 = 900;
 const MAX_ENTRIES: usize = 16;
+#[cfg(unix)]
 const SOCKET_READY_WAIT: Duration = Duration::from_secs(10);
 
 impl Broker {
@@ -147,6 +149,7 @@ fn request_secret_input(
     ))
 }
 
+#[cfg(unix)]
 fn connection_failed() -> EnvError {
     EnvError::invalid("값 입력 요청을 처리하지 못했습니다.")
 }
@@ -159,5 +162,5 @@ fn launch_desktop_app() {
         .spawn();
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(all(unix, not(target_os = "macos")))]
 fn launch_desktop_app() {}
