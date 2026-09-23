@@ -25,6 +25,7 @@ pub struct OccurrenceProjection {
     pub linked_files: Vec<String>,
     pub duplicate: bool,
     pub client_exposure: Option<ClientExposureWarning>,
+    pub has_guide: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

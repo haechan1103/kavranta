@@ -28,6 +28,7 @@ const variable: OccurrenceProjection = {
   linkedFiles: [".env.local", ".env.development", "apps/api/.env"],
   duplicate: false,
   clientExposure: null,
+  hasGuide: false,
 };
 
 describe("VariableRow", () => {

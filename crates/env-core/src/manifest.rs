@@ -9,6 +9,7 @@ use tempfile::NamedTempFile;
 use crate::{EnvError, EnvResult};
 
 pub const MANIFEST_FILE_NAME: &str = ".env-manager.json";
+pub const MANAGED_DIR_NAME: &str = ".env-manager";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -55,14 +56,35 @@ pub struct ScanConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AllowedExposureFinding {
+    pub id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExposureConfig {
+    #[serde(default)]
+    pub allowed_paths: Vec<String>,
+    #[serde(default)]
+    pub allowed_findings: Vec<AllowedExposureFinding>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Manifest {
     pub version: u32,
     #[serde(default)]
     pub scan: ScanConfig,
     #[serde(default)]
+    pub exposure: ExposureConfig,
+    #[serde(default)]
     pub variables: BTreeMap<String, VariablePolicy>,
     #[serde(default)]
     pub links: Vec<LinkGroup>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub guides: BTreeMap<String, String>,
     #[serde(
         default,
         alias = "fileLabels",
@@ -76,8 +98,10 @@ impl Default for Manifest {
         Self {
             version: 1,
             scan: ScanConfig::default(),
+            exposure: ExposureConfig::default(),
             variables: BTreeMap::new(),
             links: Vec::new(),
+            guides: BTreeMap::new(),
             file_labels: BTreeMap::new(),
         }
     }
@@ -124,6 +148,29 @@ impl Manifest {
         for (path, label) in &self.file_labels {
             validate_relative_path(path)?;
             validate_display_name(label)?;
+        }
+        for (key, path) in &self.guides {
+            if key.trim().is_empty() || key.len() > 256 || key.chars().any(char::is_control) {
+                return Err(EnvError::invalid("가이드 키가 올바르지 않습니다."));
+            }
+            validate_relative_path(path)?;
+            let expected = format!(".env-manager/guides/{key}.md");
+            if path != &expected {
+                return Err(EnvError::invalid("가이드 경로가 규칙과 맞지 않습니다."));
+            }
+        }
+        for path in &self.exposure.allowed_paths {
+            validate_relative_path(path)?;
+        }
+        for finding in &self.exposure.allowed_findings {
+            if finding.id.trim().is_empty()
+                || finding.id.chars().count() > 200
+                || finding.id.chars().any(char::is_control)
+            {
+                return Err(EnvError::invalid(
+                    "허용된 노출 항목 ID가 올바르지 않습니다.",
+                ));
+            }
         }
         Ok(())
     }

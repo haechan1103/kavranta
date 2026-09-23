@@ -285,6 +285,7 @@ export interface OccurrenceProjection {
   linkedFiles: string[];
   duplicate: boolean;
   clientExposure: ClientExposureWarning | null;
+  hasGuide: boolean;
 }
 
 export type ClassificationSource = "heuristic" | "user" | "codex";
@@ -414,4 +415,73 @@ export interface MutationSummary {
 export interface CommandError {
   code?: string;
   message?: string;
+}
+
+export type ExposureKind =
+  | "env-file"
+  | "dev-vars"
+  | "credential-file"
+  | "npmrc"
+  | "pypirc"
+  | "netrc"
+  | "ssh-private-key"
+  | "aws-credentials"
+  | "mcp-config"
+  | "google-services"
+  | "shell-history"
+  | "agent-transcript";
+
+export type ExposureSeverity = "certain" | "likely" | "possible";
+
+export type ExposureDisposition = "exposed" | "allowed" | "managed";
+
+export interface ExposureFinding {
+  path: string;
+  kind: ExposureKind;
+  severity: ExposureSeverity;
+  disposition: ExposureDisposition;
+  reason?: string;
+}
+
+export interface ExposureCounts {
+  certain: number;
+  likely: number;
+  possible: number;
+  allowed: number;
+  managed: number;
+}
+
+export interface ExposureProjection {
+  state: "scanned" | "unavailable";
+  deep: boolean;
+  counts: ExposureCounts;
+  findings: ExposureFinding[];
+}
+
+export type SecretInputOutcome =
+  | "added"
+  | "updated"
+  | "skipped"
+  | "cancelled"
+  | "timeout"
+  | "failed";
+
+export interface SecretInputEntry {
+  name: string;
+  file: string;
+  group?: string;
+  description?: string;
+  classification?: CodexAccess;
+}
+
+export interface SecretInputRequest {
+  requestId: string;
+  projectRoot: string;
+  timeoutSeconds: number;
+  entries: SecretInputEntry[];
+}
+
+export interface SecretInputResult {
+  name: string;
+  outcome: SecretInputOutcome;
 }

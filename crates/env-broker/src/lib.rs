@@ -83,6 +83,10 @@ enum PlannedOperation {
         replace: bool,
     },
     ActionPack(ActionExecutionRequest),
+    SetVariableGuide {
+        key: String,
+        markdown: Option<String>,
+    },
 }
 
 #[derive(Debug, Serialize)]
@@ -286,6 +290,32 @@ struct PlanMigrationArgs {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ListProvidersArgs {
     project_path: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ScanExposureArgs {
+    project_path: String,
+    #[serde(default)]
+    deep: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RequestValueInputArgs {
+    project_path: String,
+    entries: Vec<env_core::SecretInputEntry>,
+    #[serde(default)]
+    timeout_seconds: Option<u64>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PlanSetVariableGuideArgs {
+    project_path: String,
+    key: String,
+    #[serde(default)]
+    markdown: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

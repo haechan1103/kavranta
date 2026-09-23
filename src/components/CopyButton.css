@@ -33,3 +33,14 @@
   background: var(--red-pale);
   border-color: #efc6c4;
 }
+
+.copy-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-svg {
+  width: 1.05em;
+  height: 1.05em;
+}

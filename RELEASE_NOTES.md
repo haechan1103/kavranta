@@ -1,20 +1,21 @@
-# Kavranta 0.7.10 — Credentialed API actions
+# Kavranta 0.7.11 — Desktop secret input and variable guides
 
-- Add Action Protocol 0.2.0. A local Action Pack can now declare an allowlisted JSON
-  request body and an allowlisted response projection for one fixed HTTPS endpoint.
-- Let a connected agent call a credentialed API, such as a model gateway, and receive
-  only the selected result fields. The API key is injected into the fixed request
-  header and never reaches the agent, the plan, the result, or the audit record.
-- Reject a request body that contains a bound secret, and scrub every projected value
-  against the bound secrets. Request and response sizes are bounded.
-- Keep Action Protocol v1 unchanged. A v2 clause is rejected on a v1 pack.
+- Ask for missing secrets in the desktop app. A connected agent can request several
+  values at once; the user types them in one window, and the agent receives only
+  per-name outcomes.
+- Store a short, value-free markdown guide for a variable. The app shows it from the
+  variable row and from the input window, and opens http(s) links in the system browser.
+- Scan a registered project for files an agent could read that may hold secrets.
+  Results are paths, kinds, and dispositions only. User-allowed and managed files stay
+  quiet.
+- Agent Bundle 2.5.0 updates Codex, Claude Code, GitHub Copilot, Cursor, and OpenCode
+  together. Use Update on each detected AI tool after installing this app.
 
-The independently versioned Agent Bundle remains 2.4.0. This release adds no
-background network access and no value readback.
+This release adds no background network access and no value readback.
 
 ## Install
 
-- macOS (Homebrew): `brew install --cask haechan1103/kavranta/kavranta`
+- macOS (Homebrew): `brew install --cask haechan1103/tap/kavranta`
 - Apple Silicon: download the `aarch64` DMG.
 - Intel Mac: download the `x86_64` DMG.
 - Windows 10/11 x64 beta: download the `x64-setup.exe` installer. This beta remains
@@ -22,23 +23,22 @@ background network access and no value readback.
 
 ---
 
-# Kavranta 0.7.10 — 자격 증명 기반 API Action
+# Kavranta 0.7.11 — 데스크톱 시크릿 입력과 변수 가이드
 
-- Action Protocol 0.2.0을 추가했습니다. 로컬 Action Pack이 하나의 고정 HTTPS
-  엔드포인트에 대해 허용된 JSON 요청 본문과 허용된 응답 투영을 선언할 수 있습니다.
-- 연결된 에이전트가 모델 게이트웨이 같은 자격 증명 기반 API를 호출하고 선택된 결과
-  필드만 받도록 합니다. API 키는 고정 요청 헤더에만 주입되며 에이전트, 계획, 결과,
-  감사 기록에는 전달되지 않습니다.
-- 비밀 값이 포함된 요청 본문은 거부하고, 투영된 모든 값을 비밀 값과 대조해
-  스크럽합니다. 요청·응답 크기에는 상한이 있습니다.
-- Action Protocol v1은 변경되지 않습니다. v1 팩에 v2 절을 넣으면 거부됩니다.
+- 빠진 시크릿을 데스크톱 앱에서 받습니다. 연결된 에이전트가 여러 값을 한 번에
+  요청하면 사용자가 한 창에서 입력하고, 에이전트는 이름별 결과만 받습니다.
+- 변수에 값이 없는 짧은 마크다운 가이드를 저장합니다. 앱은 변수 행과 입력 창에서
+  가이드를 보여주고, http(s) 링크는 시스템 브라우저로 엽니다.
+- 등록 프로젝트에서 에이전트가 읽을 수 있는 시크릿 후보 파일을 점검합니다. 결과는
+  경로, 종류, 처분뿐입니다. 사용자가 허용한 파일과 관리 파일은 조용히 둡니다.
+- Agent Bundle 2.5.0은 Codex, Claude Code, GitHub Copilot, Cursor, OpenCode를 함께
+  갱신합니다. 이 앱을 설치한 뒤 감지된 AI 도구마다 Update를 실행하세요.
 
-독립적으로 버전 관리되는 Agent Bundle은 2.4.0입니다. 이 릴리스는 백그라운드 네트워크
-접근과 값 되읽기를 추가하지 않습니다.
+이 릴리스는 백그라운드 네트워크 접근과 값 되읽기를 추가하지 않습니다.
 
 ## 설치
 
-- macOS(Homebrew): `brew install --cask haechan1103/kavranta/kavranta`
+- macOS(Homebrew): `brew install --cask haechan1103/tap/kavranta`
 - Apple Silicon: `aarch64` DMG를 받으세요.
 - Intel Mac: `x86_64` DMG를 받으세요.
 - Windows 10/11 x64 베타: `x64-setup.exe`를 받으세요. 이 베타는 정책상 아직

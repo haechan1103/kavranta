@@ -5,6 +5,7 @@ pub(super) mod guard;
 mod plan;
 mod project_tools;
 mod provider_tools;
+mod secret_input;
 pub(super) mod tool_schema;
 
 use super::*;
@@ -99,6 +100,9 @@ impl Broker {
                 self.plan_copy_variable_from_project(parse(arguments)?)
             }
             "list_deployment_providers" => self.list_deployment_providers(parse(arguments)?),
+            "scan_exposure" => self.scan_exposure(parse(arguments)?),
+            "request_value_input" => self.request_value_input(parse(arguments)?),
+            "plan_set_variable_guide" => self.plan_set_variable_guide(parse(arguments)?),
             "list_action_packs" => self.list_action_packs(parse(arguments)?),
             "list_runtime_targets" => self.list_runtime_targets(parse(arguments)?),
             "list_team_channels" => self.list_team_channels(parse(arguments)?),

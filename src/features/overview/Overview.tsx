@@ -7,7 +7,7 @@ import { VariableFinder } from "./VariableFinder";
 
 interface Props {
   projection: ProjectProjection;
-  onOpenFile: (path: string, key?: string) => void;
+  onOpenFile: (path: string, key?: string, options?: { emptyOnly?: boolean }) => void;
   onOpenIntegrations?: () => void;
   onApplyGitignoreGuard: () => Promise<void>;
 }
@@ -58,7 +58,7 @@ export function Overview({ projection, onOpenFile, onOpenIntegrations, onApplyGi
         <div className="next-step-actions">
           <button className="primary-button" onClick={() => {
             const next = empty[0];
-            if (next) onOpenFile(next.file, next.key);
+            if (next) onOpenFile(next.file, undefined, { emptyOnly: true });
             else if (projection.files[0]) onOpenFile(projection.files[0].path);
           }}>{t(empty.length > 0 ? "overview.fillNext" : "overview.openEditor")}</button>
           {onOpenIntegrations && <button className="secondary-button" onClick={onOpenIntegrations}>

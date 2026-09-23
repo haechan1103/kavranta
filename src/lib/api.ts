@@ -1,7 +1,11 @@
 export * from "./api/accounts";
 export * from "./api/environment";
+export * from "./api/exposure";
+export * from "./api/external";
+export * from "./api/guides";
 export * from "./api/integrations";
 export * from "./api/projects";
 export * from "./api/providers";
+export * from "./api/secretInput";
 export * from "./api/sharing";
 export { ApiError, isTauriRuntime } from "./api/shared";

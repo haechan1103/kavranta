@@ -18,6 +18,7 @@ interface Props {
   projection: ProjectProjection;
   filePath: string;
   initialSearch?: string;
+  initialEmptyOnly?: boolean;
   onRefresh: () => Promise<void>;
   onError: (message: string) => void;
   onNotice: (message: string) => void;
@@ -28,6 +29,7 @@ export function FileEditor({
   projection,
   filePath,
   initialSearch = "",
+  initialEmptyOnly = false,
   onRefresh,
   onError,
   onNotice,
@@ -38,7 +40,7 @@ export function FileEditor({
   const [addingGroup, setAddingGroup] = useState(false);
   const [linking, setLinking] = useState<OccurrenceProjection | null>(null);
   const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
-  const [showEmptyOnly, setShowEmptyOnly] = useState(false);
+  const [showEmptyOnly, setShowEmptyOnly] = useState(initialEmptyOnly);
   const [search, setSearch] = useState(initialSearch);
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const editorRef = useRef<HTMLElement>(null);

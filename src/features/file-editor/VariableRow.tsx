@@ -2,10 +2,12 @@ import "./VariableRow.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { CopyButton } from "../../components/CopyButton";
+import { EyeIcon, EyeOffIcon, HelpIcon } from "../../components/icons";
 import { displayGroupName, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type { CodexAccess, OccurrenceProjection } from "../../lib/types";
 import { MoveVariableModal } from "./MoveVariableModal";
+import { VariableGuideModal } from "./VariableGuideModal";
 
 interface Props {
   hidden?: boolean;
@@ -37,6 +39,7 @@ export function VariableRow({
   const [revealActivity, setRevealActivity] = useState(0);
   const [editingDescription, setEditingDescription] = useState(false);
   const [moving, setMoving] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const [description, setDescription] = useState(variable.description.join("\n"));
   const revealedValueRef = useRef<HTMLTextAreaElement>(null);
   const revealRequest = useRef(0);
@@ -107,6 +110,17 @@ export function VariableRow({
                 onCopy={() => api.copyKey(projectId, variable.key)}
               />
             )}
+            {variable.hasGuide && (
+              <button
+                type="button"
+                className="icon-button guide-button"
+                aria-label={t("guide.open", { key: variable.key })}
+                title={t("guide.open", { key: variable.key })}
+                onClick={() => setShowGuide(true)}
+              >
+                <HelpIcon />
+              </button>
+            )}
             {variable.linkedCount > 1 && (
               <span className="badge linked">{t("row.filesLinked", { count: variable.linkedCount })}</span>
             )}
@@ -170,6 +184,7 @@ export function VariableRow({
           <button
             className="icon-button"
             title={revealed === null ? t("row.reveal") : t("row.hide")}
+            aria-label={revealed === null ? t("row.reveal") : t("row.hide")}
             onClick={() => {
               const request = ++revealRequest.current;
               if (revealed !== null) {
@@ -193,7 +208,7 @@ export function VariableRow({
               }
             }}
           >
-            {revealed === null ? "◉" : "○"}
+            {revealed === null ? <EyeIcon /> : <EyeOffIcon />}
           </button>
           {!hidden && (
             <CopyButton
@@ -358,6 +373,15 @@ export function VariableRow({
             }),
             t("row.moved", { key: variable.key, group: displayGroupName(targetGroup, t) }),
           )}
+        />
+      )}
+
+      {showGuide && (
+        <VariableGuideModal
+          projectId={projectId}
+          name={variable.key}
+          onClose={() => setShowGuide(false)}
+          onError={() => undefined}
         />
       )}
     </article>

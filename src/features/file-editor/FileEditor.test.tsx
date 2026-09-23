@@ -245,5 +245,6 @@ function variable(
     linkedFiles: [],
     duplicate: false,
     clientExposure: null,
+    hasGuide: false,
   };
 }

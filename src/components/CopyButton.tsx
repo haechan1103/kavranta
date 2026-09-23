@@ -65,8 +65,10 @@ export function CopyButton({ className, label, title = label, onCopy }: Props) {
         disabled={pending}
         onClick={() => void copy()}
       >
-        <span aria-hidden="true">{feedback === "copied" ? "✓" : "⧉"}</span>
-      </button>
+      <span className="copy-icon" aria-hidden="true">
+        {feedback === "copied" ? <CheckIcon /> : <CopyIcon />}
+      </span>
+    </button>
       <span
         className="copy-feedback"
         data-outcome={feedback ?? undefined}
@@ -77,5 +79,22 @@ export function CopyButton({ className, label, title = label, onCopy }: Props) {
         {message}
       </span>
     </span>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="copy-svg">
+      <rect x="9" y="9" width="11" height="11" rx="2.4" />
+      <path d="M15 5.6A2.6 2.6 0 0 0 12.4 3H6.6A2.6 2.6 0 0 0 4 5.6v5.8A2.6 2.6 0 0 0 6.6 14" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="copy-svg">
+      <path d="M5 12.5l4.5 4.5L19 7" />
+    </svg>
   );
 }

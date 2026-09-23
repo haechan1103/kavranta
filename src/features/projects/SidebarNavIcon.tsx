@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 
-type SidebarNavIconName = "overview" | "activity" | "accounts" | "actions" | "integrations";
+type SidebarNavIconName =
+  | "overview"
+  | "activity"
+  | "accounts"
+  | "actions"
+  | "integrations"
+  | "exposure";
 
 interface Props {
   name: SidebarNavIconName;
@@ -57,6 +63,12 @@ const iconPaths: Record<SidebarNavIconName, ReactNode> = {
       <path d="M8.5 9V5.5M15.5 9V5.5" />
       <rect x="5" y="9" width="14" height="9" rx="3" />
       <path d="M9 13h.01M15 13h.01M9.5 18v2M14.5 18v2" />
+    </>
+  ),
+  exposure: (
+    <>
+      <path d="M12 3l7 3v5c0 4.4-3 8.2-7 9.5C8 19.2 5 15.4 5 11V6z" />
+      <path d="M12 8.5v4M12 15.5h.01" />
     </>
   ),
 };

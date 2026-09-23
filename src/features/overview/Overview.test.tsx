@@ -15,14 +15,14 @@ describe("Overview", () => {
     expect(screen.queryByText("Action inbox")).not.toBeInTheDocument();
   });
 
-  it("opens the exact missing occurrence and leaves AI setup optional", async () => {
+  it("opens the missing file with the empty-values filter and leaves AI setup optional", async () => {
     const user = userEvent.setup();
     const open = vi.fn();
     const connect = vi.fn();
     render(<Overview projection={demoProjection} onOpenFile={open} onOpenIntegrations={connect} onApplyGitignoreGuard={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: "Fill the next missing value" }));
     const missingFile = demoProjection.files.find((file) => file.groups.some((group) => group.variables.some((variable) => variable.valueState === "empty")));
-    expect(open).toHaveBeenCalledWith(missingFile?.path, "NEXT_PUBLIC_APP_URL");
+    expect(open).toHaveBeenCalledWith(missingFile?.path, undefined, { emptyOnly: true });
     expect(connect).not.toHaveBeenCalled();
   });
 

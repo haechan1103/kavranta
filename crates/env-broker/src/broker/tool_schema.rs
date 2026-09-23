@@ -212,6 +212,60 @@ pub fn tool_definitions() -> Value {
             })
         ),
         tool(
+            "scan_exposure",
+            "Scan a registered project for files an agent could read that may hold secrets, and report names, paths, kinds, and counts only. Findings already allowed by user policy or an AI-allowed variable classification are marked allowed; managed env files are marked managed. Never reads or returns values, and is advisory only.",
+            json!({
+                "type": "object", "properties": {
+                    "projectPath": { "type": "string" },
+                    "deep": { "type": "boolean", "default": false, "description": "Also check known home, shell-history, global MCP config, and agent session transcript paths." }
+                }, "required": ["projectPath"], "additionalProperties": false
+            })
+        ),
+        tool(
+            "plan_set_variable_guide",
+            "Plan writing or removing the value-free markdown guide for one managed variable name. The guide explains how to obtain and enter the value and must never contain a value. Omit markdown (or pass an empty string) to remove the guide.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "projectPath": { "type": "string" },
+                    "key": { "type": "string" },
+                    "markdown": { "type": "string", "maxLength": 65536 }
+                },
+                "required": ["projectPath", "key"],
+                "additionalProperties": false
+            })
+        ),
+        tool(
+            "request_value_input",
+            "Ask the user to type one or more missing secret values in the Kavranta desktop app, then write them into the named env files without the value ever reaching the agent. Returns per-name outcomes only (added/updated/skipped/cancelled/timeout/failed). Use this instead of asking the user to open the app manually. The app is launched automatically when needed.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "projectPath": { "type": "string" },
+                    "timeoutSeconds": { "type": "integer", "minimum": 30, "maximum": 900 },
+                    "entries": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 16,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": { "type": "string" },
+                                "file": { "type": "string" },
+                                "group": { "type": "string" },
+                                "description": { "type": "string" },
+                                "classification": { "type": "string", "enum": ["read-write", "protected", "unclassified"] }
+                            },
+                            "required": ["name", "file"],
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "required": ["projectPath", "entries"],
+                "additionalProperties": false
+            })
+        ),
+        tool(
             "list_runtime_targets",
             "List registered fixed-verifier Runtime targets for a project. Returns target IDs, display names, source files, and transport labels only; never returns recipients, destinations, remote paths, values, or commands.",
             json!({

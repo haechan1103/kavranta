@@ -99,6 +99,9 @@ assert(normalizedSkill.includes("action-packs.md"), "Skill must route Action Pac
 assert(normalizedSkill.includes("plan_stdin_value_write"), "Skill must route opaque stdin value plans");
 assert(normalizedSkill.includes("stdin-value-ingest.md"), "Skill must route opaque stdin value guidance");
 assert(normalizedSkill.includes(".dev.vars"), "Skill must route Wrangler .dev.vars files through the broker");
+assert(normalizedSkill.includes("request_value_input"), "Skill must route desktop secret input");
+assert(normalizedSkill.includes("plan_set_variable_guide"), "Skill must route value-free variable guides");
+assert(normalizedSkill.includes("scan_exposure"), "Skill must route value-free exposure scans");
 
 process.stdout.write(`Agent bundle ${version} is internally consistent and versioned independently from the app.\n`);
 
