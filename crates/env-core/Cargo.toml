@@ -7,7 +7,7 @@ rust-version.workspace = true
 
 [dependencies]
 age.workspace = true
-base64 = "0.22"
+base64 = "0.23"
 blake3.workspace = true
 secrecy.workspace = true
 serde.workspace = true
