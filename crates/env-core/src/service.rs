@@ -26,7 +26,10 @@ mod links;
 mod migration_export;
 mod persistence;
 mod project;
+mod redaction_proof;
 mod search;
+
+pub use redaction_proof::{ProofCheck, RedactionProof, run_redaction_self_check};
 mod structure;
 mod values;
 

@@ -456,6 +456,20 @@ export interface ExposureProjection {
   deep: boolean;
   counts: ExposureCounts;
   findings: ExposureFinding[];
+  filesScanned: number;
+  durationMs: number;
+}
+
+export interface ProofCheck {
+  name: string;
+  passed: boolean;
+}
+
+export interface RedactionProof {
+  checks: ProofCheck[];
+  passed: number;
+  total: number;
+  durationMs: number;
 }
 
 export type SecretInputOutcome =

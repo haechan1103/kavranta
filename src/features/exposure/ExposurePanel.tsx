@@ -3,7 +3,12 @@ import { useCallback, useEffect, useState } from "react";
 
 import { localizeError, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
-import type { ExposureDisposition, ExposureProjection, ExposureSeverity } from "../../lib/types";
+import type {
+  ExposureDisposition,
+  ExposureProjection,
+  ExposureSeverity,
+  RedactionProof,
+} from "../../lib/types";
 
 interface Props {
   projectId: string;
@@ -15,6 +20,8 @@ export function ExposurePanel({ projectId, onError }: Props) {
   const [deep, setDeep] = useState(false);
   const [loading, setLoading] = useState(true);
   const [projection, setProjection] = useState<ExposureProjection | null>(null);
+  const [proof, setProof] = useState<RedactionProof | null>(null);
+  const [proving, setProving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -26,6 +33,17 @@ export function ExposurePanel({ projectId, onError }: Props) {
       setLoading(false);
     }
   }, [deep, locale, onError, projectId]);
+
+  const prove = useCallback(async () => {
+    setProving(true);
+    try {
+      setProof(await api.runRedactionSelfCheck());
+    } catch (error) {
+      onError(localizeError(error, locale, "error.proof"));
+    } finally {
+      setProving(false);
+    }
+  }, [locale, onError]);
 
   useEffect(() => {
     void load();
@@ -71,6 +89,32 @@ export function ExposurePanel({ projectId, onError }: Props) {
             : t("exposure.headline", { count: exposedTotal(projection) })}
         </p>
       )}
+
+      {projection && (
+        <p className="exposure-metrics">
+          {t("exposure.summary", {
+            files: projection.filesScanned,
+            duration: projection.durationMs,
+          })}
+        </p>
+      )}
+
+      <div className="exposure-proof">
+        <button className="quiet-button" onClick={() => void prove()} disabled={proving}>
+          {proving ? t("exposure.proofRunning") : t("exposure.proof")}
+        </button>
+        {proof && (
+          <span className="exposure-proof-result" aria-live="polite">
+            {proof.passed === proof.total
+              ? t("exposure.proofPassed", {
+                  passed: proof.passed,
+                  total: proof.total,
+                  duration: proof.durationMs,
+                })
+              : t("exposure.proofFailed", { passed: proof.passed, total: proof.total })}
+          </span>
+        )}
+      </div>
 
       {projection && projection.findings.length > 0 && (
         <ul className="exposure-list">

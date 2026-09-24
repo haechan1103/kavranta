@@ -57,9 +57,9 @@ pub use secret_input::{
 pub use service::{
     AddVariableRequest, CreateEnvFileRequest, CreateGroupRequest, DeleteVariableRequest,
     LinkRequest, MoveVariableRequest, MutationSummary, OpaqueValueCopyRequest,
-    PreparedOpaqueValueWrite, ProjectService, RedactedOccurrenceReference, RedactedVariableMatch,
-    RenameEnvFileRequest, RenameEnvFileSummary, RenameGroupRequest, SaveDescriptionRequest,
-    SaveValueRequest,
+    PreparedOpaqueValueWrite, ProjectService, ProofCheck, RedactedOccurrenceReference,
+    RedactedVariableMatch, RedactionProof, RenameEnvFileRequest, RenameEnvFileSummary,
+    RenameGroupRequest, SaveDescriptionRequest, SaveValueRequest, run_redaction_self_check,
 };
 pub use team_import::{
     TeamImportFileProjection, TeamImportOccurrenceProjection, TeamImportOccurrenceState,

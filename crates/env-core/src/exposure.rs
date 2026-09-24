@@ -103,6 +103,12 @@ pub struct ExposureProjection {
     pub deep: bool,
     pub counts: ExposureCounts,
     pub findings: Vec<ExposureFinding>,
+    /// Files examined by the scan. The scan reads names only, never values.
+    #[serde(default)]
+    pub files_scanned: usize,
+    /// Wall-clock scan time in milliseconds.
+    #[serde(default)]
+    pub duration_ms: u64,
 }
 
 impl ExposureProjection {
@@ -112,6 +118,8 @@ impl ExposureProjection {
             deep,
             counts: ExposureCounts::default(),
             findings: Vec::new(),
+            files_scanned: 0,
+            duration_ms: 0,
         }
     }
 
@@ -133,6 +141,8 @@ impl ExposureProjection {
             deep,
             counts,
             findings,
+            files_scanned: 0,
+            duration_ms: 0,
         }
     }
 }

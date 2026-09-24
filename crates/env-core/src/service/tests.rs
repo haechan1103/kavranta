@@ -8,6 +8,8 @@ mod guides;
 mod links_and_providers;
 #[path = "tests/project.rs"]
 mod project;
+#[path = "tests/redaction_proof.rs"]
+mod redaction_proof;
 #[path = "tests/search.rs"]
 mod search;
 #[path = "tests/structure.rs"]
