@@ -1,6 +1,6 @@
 {
   "name": "kavranta",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Safely inspect, plan, and manage registered project env files through a redacted local broker shared by AI coding agents.",
   "author": {
     "name": "haechan1103",
@@ -48,7 +48,7 @@
       "Request-authorized Action Pack installation and execution",
       "Opaque stdin value generation and storage",
       "Desktop secret input",
-      "Value-free variable guides",
+      "Value-free variable guides with image attachments",
       "Agent-readable exposure scan",
       "Multi-agent compatible workflow"
     ],

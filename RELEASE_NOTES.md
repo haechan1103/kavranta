@@ -1,14 +1,17 @@
-# Kavranta 0.7.11 — Desktop secret input and variable guides
+# Kavranta 0.7.12 — Rich variable guides with images
 
-- Ask for missing secrets in the desktop app. A connected agent can request several
-  values at once; the user types them in one window, and the agent receives only
-  per-name outcomes.
-- Store a short, value-free markdown guide for a variable. The app shows it from the
-  variable row and from the input window, and opens http(s) links in the system browser.
-- Scan a registered project for files an agent could read that may hold secrets.
-  Results are paths, kinds, and dispositions only. User-allowed and managed files stay
-  quiet.
-- Agent Bundle 2.5.0 updates Codex, Claude Code, GitHub Copilot, Cursor, and OpenCode
+- Illustrate a variable guide with local images. Drop a file under
+  `.env-manager/guides/attachments/` and reference it as
+  `![caption](attachments/<file>)`. Remote images are shown as links and never
+  fetched.
+- Page through long guides one `## ` section at a time with Previous and Next
+  buttons. Short guides still show whole on one screen.
+- Re-read an edited guide with the Refresh button. The app never polls the file.
+- Secret input windows now resolve the requesting project, so guide buttons appear
+  even when another project is selected.
+- The AI activity screen renders every audit category instead of blanking on new
+  ones.
+- Agent Bundle 2.6.0 updates Codex, Claude Code, GitHub Copilot, Cursor, and OpenCode
   together. Use Update on each detected AI tool after installing this app.
 
 This release adds no background network access and no value readback.
@@ -23,15 +26,19 @@ This release adds no background network access and no value readback.
 
 ---
 
-# Kavranta 0.7.11 — 데스크톱 시크릿 입력과 변수 가이드
+# Kavranta 0.7.12 — 이미지가 들어가는 변수 가이드
 
-- 빠진 시크릿을 데스크톱 앱에서 받습니다. 연결된 에이전트가 여러 값을 한 번에
-  요청하면 사용자가 한 창에서 입력하고, 에이전트는 이름별 결과만 받습니다.
-- 변수에 값이 없는 짧은 마크다운 가이드를 저장합니다. 앱은 변수 행과 입력 창에서
-  가이드를 보여주고, http(s) 링크는 시스템 브라우저로 엽니다.
-- 등록 프로젝트에서 에이전트가 읽을 수 있는 시크릿 후보 파일을 점검합니다. 결과는
-  경로, 종류, 처분뿐입니다. 사용자가 허용한 파일과 관리 파일은 조용히 둡니다.
-- Agent Bundle 2.5.0은 Codex, Claude Code, GitHub Copilot, Cursor, OpenCode를 함께
+- 변수 가이드에 로컬 이미지를 넣을 수 있습니다. `.env-manager/guides/attachments/`
+  아래에 파일을 두고 `![설명](attachments/<파일>)`로 참조하세요. 원격 이미지는
+  링크로만 보이고 내려받지 않습니다.
+- 긴 가이드는 `## ` 섹션마다 이전·다음 버튼으로 넘겨 봅니다. 짧은 가이드는 그대로
+  한 화면에 나옵니다.
+- AI가 가이드를 고쳤으면 새로고침 버튼으로 다시 읽습니다. 앱이 파일을 계속
+  감시하지 않습니다.
+- 시크릿 입력 창이 요청한 프로젝트를 직접 찾아 가이드 버튼을 보여줍니다. 다른
+  프로젝트를 보고 있어도 됩니다.
+- AI 활동 화면이 새 감사 카테고리에서도 하얗게 비지 않고 모두 표시합니다.
+- Agent Bundle 2.6.0은 Codex, Claude Code, GitHub Copilot, Cursor, OpenCode를 함께
   갱신합니다. 이 앱을 설치한 뒤 감지된 AI 도구마다 Update를 실행하세요.
 
 이 릴리스는 백그라운드 네트워크 접근과 값 되읽기를 추가하지 않습니다.

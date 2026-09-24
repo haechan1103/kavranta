@@ -24,6 +24,20 @@ impl ProjectService {
         })
     }
 
+    /// Reads one local image attached to a variable guide, when both exist.
+    /// Attachments are never projected; the desktop UI reads them directly.
+    pub fn guide_attachment(
+        &self,
+        key: &str,
+        file: &str,
+    ) -> EnvResult<Option<guide::GuideAttachment>> {
+        let manifest = ManifestStore::for_root(&self.root).load()?;
+        if !manifest.guides.contains_key(key) {
+            return Ok(None);
+        }
+        guide::read_guide_attachment(&self.root, key, file)
+    }
+
     /// Removes the guide for one variable and its manifest pointer.
     pub fn remove_variable_guide(&self, key: &str) -> EnvResult<MutationSummary> {
         let store = ManifestStore::for_root(&self.root);

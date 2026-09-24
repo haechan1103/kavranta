@@ -194,25 +194,35 @@ function groupEventsByDay(
 }
 
 function categoryKey(category: AgentActivityEvent["category"]) {
-  return ({
-    "structure-inspection": "activity.category.structure",
-    "value-read": "activity.category.read",
-    "provider-compare": "activity.category.providerCompare",
-    "action-execution": "activity.category.actionExecution",
-    "policy-change": "activity.category.policy",
-    mutation: "activity.category.mutation",
-  } as const)[category];
+  return (
+    ({
+      "structure-inspection": "activity.category.structure",
+      "value-read": "activity.category.read",
+      "provider-compare": "activity.category.providerCompare",
+      "action-execution": "activity.category.actionExecution",
+      "policy-change": "activity.category.policy",
+      mutation: "activity.category.mutation",
+      "secret-input": "activity.category.secretInput",
+      documentation: "activity.category.documentation",
+      "project-registration": "activity.category.registration",
+    } as const)[category] ?? "activity.category.mutation"
+  );
 }
 
 function descriptionKey(category: AgentActivityEvent["category"]) {
-  return ({
-    "structure-inspection": "activity.description.structure",
-    "value-read": "activity.description.read",
-    "provider-compare": "activity.description.providerCompare",
-    "action-execution": "activity.description.actionExecution",
-    "policy-change": "activity.description.policy",
-    mutation: "activity.description.mutation",
-  } as const)[category];
+  return (
+    ({
+      "structure-inspection": "activity.description.structure",
+      "value-read": "activity.description.read",
+      "provider-compare": "activity.description.providerCompare",
+      "action-execution": "activity.description.actionExecution",
+      "policy-change": "activity.description.policy",
+      mutation: "activity.description.mutation",
+      "secret-input": "activity.description.secretInput",
+      documentation: "activity.description.documentation",
+      "project-registration": "activity.description.registration",
+    } as const)[category] ?? "activity.description.mutation"
+  );
 }
 
 function outcomeKey(outcome: AgentActivityEvent["outcome"]) {

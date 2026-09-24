@@ -47,3 +47,37 @@
 .markdown a {
   color: #2f7fd0;
 }
+
+.markdown .md-figure {
+  margin: 0 0 12px;
+}
+
+.markdown .md-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.markdown .md-figure figcaption {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale));
+}
+
+.markdown .md-image-missing {
+  display: inline-block;
+  padding: 6px 10px;
+  border: 1px dashed rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale));
+}
+
+.markdown .md-image-loading {
+  display: inline-block;
+  width: 100%;
+  min-height: 48px;
+}

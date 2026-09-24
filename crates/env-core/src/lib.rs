@@ -30,7 +30,10 @@ pub use git_safety::{
     GitSafetyProjection, GitSafetyState, GitignoreUpdateSummary, apply_gitignore_guard,
     inspect_git_safety,
 };
-pub use guide::{MAX_GUIDE_BYTES, guide_relative_path, read_guide, remove_guide, write_guide};
+pub use guide::{
+    GuideAttachment, MAX_ATTACHMENT_BYTES, MAX_GUIDE_BYTES, guide_relative_path, read_guide,
+    read_guide_attachment, remove_guide, write_guide,
+};
 pub use manifest::{
     AllowedExposureFinding, ClassificationSource, CodexAccess, ExposureConfig, LinkGroup,
     LinkMember, MANAGED_DIR_NAME, MANIFEST_FILE_NAME, Manifest, ManifestStore, VariablePolicy,

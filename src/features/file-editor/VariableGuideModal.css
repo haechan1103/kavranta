@@ -11,3 +11,28 @@
   color: var(--muted);
   font-size: calc(11px * var(--font-scale));
 }
+
+.guide-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.guide-step-count {
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale));
+}
+
+.guide-refresh {
+  padding: 2px 8px;
+  font-size: calc(11px * var(--font-scale));
+}
+
+.guide-steps {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+}

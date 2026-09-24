@@ -398,7 +398,7 @@ export interface AgentActivityEvent {
   timestampMs: number;
   projectId: string;
   actor: string;
-  category: "structure-inspection" | "value-read" | "provider-compare" | "action-execution" | "policy-change" | "mutation";
+  category: "structure-inspection" | "value-read" | "provider-compare" | "action-execution" | "policy-change" | "mutation" | "secret-input" | "documentation" | "project-registration";
   operation: string;
   relativePaths: string[];
   variableNames: string[];
@@ -479,6 +479,11 @@ export interface SecretInputRequest {
   projectRoot: string;
   timeoutSeconds: number;
   entries: SecretInputEntry[];
+}
+
+export interface SecretInputEvent {
+  request: SecretInputRequest;
+  projectId: string | null;
 }
 
 export interface SecretInputResult {

@@ -1,6 +1,6 @@
 {
   "name": "kavranta",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "repository": "https://github.com/haechan1103/kavranta",
   "skill": "skills/kavranta-env",
   "guard": "opencode/kavranta-guard.js"

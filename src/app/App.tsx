@@ -244,6 +244,7 @@ export function App() {
       <SecretInputController
         projectId={manager.selectedProject?.id ?? null}
         projection={manager.projection}
+        refreshProject={manager.refreshProject}
         onError={manager.showError}
       />
       {(manager.error || manager.notice) && (

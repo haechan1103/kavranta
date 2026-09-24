@@ -348,6 +348,58 @@ mod tests {
         assert_eq!(runtime.last_selected_project_id(), Some(first_id));
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn secret_input_resolves_the_requesting_project_by_root() {
+        let app_data = tempfile::tempdir().expect("app data");
+        let first_root = tempfile::tempdir().expect("first project");
+        let second_root = tempfile::tempdir().expect("second project");
+        let first_service = ProjectService::open(first_root.path()).expect("first service");
+        let second_service = ProjectService::open(second_root.path()).expect("second service");
+        let registry_path = app_data.path().join("projects.json");
+        let registry = RegistryData {
+            projects: vec![
+                ProjectRegistration {
+                    id: first_service.project_id().to_owned(),
+                    name: "First".to_owned(),
+                    display_path: first_root.path().to_string_lossy().into_owned(),
+                    root: first_root.path().to_path_buf(),
+                    file_labels: BTreeMap::new(),
+                },
+                ProjectRegistration {
+                    id: second_service.project_id().to_owned(),
+                    name: "Second".to_owned(),
+                    display_path: second_root.path().to_string_lossy().into_owned(),
+                    root: second_root.path().to_path_buf(),
+                    file_labels: BTreeMap::new(),
+                },
+            ],
+            last_selected_project_id: None,
+            team_channels: Vec::new(),
+            provider_push_receipts: Vec::new(),
+        };
+        persist_registry(&registry_path, &registry).expect("persist registry");
+        let runtime = AppRuntime {
+            registry_path: registry_path.clone(),
+            audit_dir: app_data.path().join("agent-activity"),
+            registry: Mutex::new(registry),
+            watchers: Mutex::new(HashMap::new()),
+            migration_plans: Mutex::new(HashMap::new()),
+            team_import_plans: Mutex::new(HashMap::new()),
+            next_plan_id: AtomicU64::new(1),
+        };
+
+        assert_eq!(
+            runtime.project_id_for_root(second_root.path()),
+            Some(second_service.project_id().to_owned())
+        );
+        assert_eq!(
+            runtime.project_id_for_root(first_root.path()),
+            Some(first_service.project_id().to_owned())
+        );
+        assert_eq!(runtime.project_id_for_root(app_data.path()), None);
+    }
+
     #[test]
     fn refreshes_projects_registered_by_the_broker_without_restarting() {
         let app_data = tempfile::tempdir().expect("app data");

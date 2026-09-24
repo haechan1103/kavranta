@@ -44,4 +44,38 @@ describe("AgentActivity", () => {
     await user.click(screen.getByRole("button", { name: /Allowed/ }));
     expect(screen.getByText("No activity matches these filters.")).toBeInTheDocument();
   });
+
+  it("renders newer audit categories instead of crashing", async () => {
+    const { listAgentActivity } = await import("../../lib/api");
+    vi.mocked(listAgentActivity).mockResolvedValue([
+      {
+        timestampMs: 2,
+        projectId: "demo",
+        actor: "codex",
+        category: "secret-input",
+        operation: "request_value_input",
+        relativePaths: [],
+        variableNames: ["GEMINI_API_KEY"],
+        policyDecision: "redacted",
+        outcome: "allowed",
+        resultCode: "OK",
+      },
+      {
+        timestampMs: 3,
+        projectId: "demo",
+        actor: "codex",
+        category: "documentation",
+        operation: "plan_set_variable_guide",
+        relativePaths: [],
+        variableNames: ["GEMINI_API_KEY"],
+        policyDecision: "guide-write",
+        outcome: "allowed",
+        resultCode: "OK",
+      },
+    ]);
+    render(<AgentActivity projectId="demo" onError={vi.fn()} />);
+
+    expect(await screen.findByText("Secret input request")).toBeInTheDocument();
+    expect(screen.getByText("Guide documentation")).toBeInTheDocument();
+  });
 });

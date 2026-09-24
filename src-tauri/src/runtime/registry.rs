@@ -175,6 +175,21 @@ impl AppRuntime {
         ProjectService::open(root)
     }
 
+    /// Resolves the registered project id for a request root without touching values.
+    /// Symlinked roots (for example `/var` on macOS) are compared canonically.
+    #[cfg(unix)]
+    pub fn project_id_for_root(&self, root: &std::path::Path) -> Option<String> {
+        self.refresh_registry_best_effort();
+        let target = Self::canonical_root(root);
+        self.registry
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .projects
+            .iter()
+            .find(|project| Self::canonical_root(&project.root) == target)
+            .map(|project| project.id.clone())
+    }
+
     pub(super) fn root(&self, project_id: &str) -> EnvResult<PathBuf> {
         self.refresh_registry()?;
         self.registry
@@ -198,6 +213,11 @@ impl AppRuntime {
 
     pub(super) fn refresh_registry_best_effort(&self) {
         let _ = self.refresh_registry();
+    }
+
+    #[cfg(unix)]
+    fn canonical_root(path: &std::path::Path) -> std::path::PathBuf {
+        std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
     }
 
     pub(super) fn update_registry<R>(

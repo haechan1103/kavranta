@@ -9,6 +9,20 @@ export async function readVariableGuide(
   return call("read_variable_guide", { request: { projectId, key } });
 }
 
+export interface GuideAttachment {
+  mimeType: string;
+  base64: string;
+}
+
+export async function readGuideAttachment(
+  projectId: string,
+  key: string,
+  file: string,
+): Promise<GuideAttachment | null> {
+  if (!isTauriRuntime) return null;
+  return call("read_guide_attachment", { request: { projectId, key, file } });
+}
+
 export async function saveVariableGuide(
   projectId: string,
   key: string,
