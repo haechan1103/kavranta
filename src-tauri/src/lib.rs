@@ -19,9 +19,9 @@ use commands::{
     remap_team_import_file, remove_action_pack, remove_personal_provider_pack, remove_project,
     remove_runtime_target, remove_team_channel, remove_variable_guide, rename_env_file_label,
     rename_env_file_on_disk, rename_group, rename_project, reveal_team_import_conflict,
-    save_description, save_runtime_target, save_value, save_variable_guide, scan_exposure,
-    scan_project, set_account_project_access, set_codex_access, set_last_selected_project,
-    submit_secret_input, update_account,
+    run_redaction_self_check, save_description, save_runtime_target, save_value,
+    save_variable_guide, scan_exposure, scan_project, set_account_project_access, set_codex_access,
+    set_last_selected_project, submit_secret_input, update_account,
 };
 use runtime::{AppRuntime, CredentialRuntime, SecretInputState};
 use tauri::Manager;
@@ -62,6 +62,7 @@ pub fn run() {
             list_action_packs,
             execute_action_pack,
             scan_exposure,
+            run_redaction_self_check,
             open_external,
             submit_secret_input,
             cancel_secret_input,

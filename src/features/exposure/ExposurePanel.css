@@ -149,3 +149,22 @@
   color: var(--muted);
   font-size: calc(10px * var(--font-scale));
 }
+
+.exposure-metrics {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: calc(11px * var(--font-scale));
+}
+
+.exposure-proof {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.exposure-proof-result {
+  color: #2f9e6f;
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 650;
+}

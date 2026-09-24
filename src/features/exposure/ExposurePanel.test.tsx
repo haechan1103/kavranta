@@ -8,12 +8,14 @@ import { ExposurePanel } from "./ExposurePanel";
 
 vi.mock("../../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../../lib/api")>("../../lib/api");
-  return { ...actual, scanExposure: vi.fn() };
+  return { ...actual, scanExposure: vi.fn(), runRedactionSelfCheck: vi.fn() };
 });
 
 const projection: ExposureProjection = {
   state: "scanned",
   deep: false,
+  filesScanned: 128,
+  durationMs: 41,
   counts: { certain: 1, likely: 0, possible: 0, allowed: 1, managed: 1 },
   findings: [
     {
@@ -49,6 +51,29 @@ describe("ExposurePanel", () => {
     expect(container.textContent ?? "").not.toContain("fake_");
 
     expect(api.scanExposure).toHaveBeenCalledWith("project-1", false);
+  });
+
+  it("shows scan metrics and proves no leaks on demand", async () => {
+    vi.mocked(api.scanExposure).mockResolvedValue(projection);
+    vi.mocked(api.runRedactionSelfCheck).mockResolvedValue({
+      checks: [
+        { name: "inspect", passed: true },
+        { name: "exposure-scan", passed: true },
+        { name: "redacted-occurrences", passed: true },
+        { name: "inspect-after-write", passed: true },
+        { name: "guide-roundtrip", passed: true },
+      ],
+      passed: 5,
+      total: 5,
+      durationMs: 12,
+    });
+    const user = userEvent.setup();
+    renderPanel();
+
+    expect(await screen.findByText("128 files scanned in 41 ms · 0 values read")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Prove no leaks" }));
+    expect(await screen.findByText("5/5 checks passed in 12 ms · 0 leaks")).toBeInTheDocument();
   });
 
   it("rescans with the deep option when enabled", async () => {

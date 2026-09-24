@@ -61,9 +61,11 @@ impl ProjectService {
         manifest: &Manifest,
         deep: bool,
     ) -> EnvResult<ExposureProjection> {
+        let started = std::time::Instant::now();
         let mut findings = Vec::new();
         let mut seen = BTreeSet::new();
         let managed = self.discover(manifest)?;
+        let mut files_scanned = managed.len();
         let managed_paths = managed
             .iter()
             .map(|relative| to_manifest_path(relative))
@@ -99,6 +101,7 @@ impl ProjectService {
             if !entry.file_type().is_file() {
                 continue;
             }
+            files_scanned += 1;
             let relative = entry
                 .path()
                 .strip_prefix(&self.root)
@@ -114,11 +117,20 @@ impl ProjectService {
         }
 
         if deep && let Some(home) = home_directory() {
-            collect_deep_findings(&home, manifest, &mut findings, &mut seen);
+            collect_deep_findings(
+                &home,
+                manifest,
+                &mut findings,
+                &mut seen,
+                &mut files_scanned,
+            );
         }
 
         findings.sort_by_key(|left| left.id());
-        Ok(ExposureProjection::from_findings(deep, findings))
+        let mut projection = ExposureProjection::from_findings(deep, findings);
+        projection.files_scanned = files_scanned;
+        projection.duration_ms = started.elapsed().as_millis().min(u128::from(u64::MAX)) as u64;
+        Ok(projection)
     }
 
     fn managed_variables_are_ai_allowed(
@@ -277,10 +289,12 @@ fn collect_deep_findings(
     manifest: &Manifest,
     findings: &mut Vec<ExposureFinding>,
     seen: &mut BTreeSet<String>,
+    scanned: &mut usize,
 ) {
     for name in SHELL_HISTORY_NAMES {
         let candidate = home.join(name);
         if candidate.is_file() {
+            *scanned += 1;
             push_deep(
                 findings,
                 seen,
@@ -292,6 +306,7 @@ fn collect_deep_findings(
     }
     for relative in GLOBAL_MCP_PATHS {
         if home.join(relative).is_file() {
+            *scanned += 1;
             push_deep(
                 findings,
                 seen,
@@ -318,6 +333,7 @@ fn collect_deep_findings(
             if !entry.file_type().is_file() {
                 continue;
             }
+            *scanned += 1;
             if entry.path().extension().and_then(|value| value.to_str()) != Some("jsonl") {
                 continue;
             }
