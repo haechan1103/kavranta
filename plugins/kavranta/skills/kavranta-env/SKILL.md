@@ -76,7 +76,20 @@ variable with a guide and renders it in a modal.
 - Never include a value, partial value, or anything derived from a value in a guide.
   The guide is stored as `.env-manager/guides/<KEY>.md` and referenced from the
   project manifest, so it may be committed and shared.
-- Keep it short: a heading, the steps, and a link to the official page.
+- Structure decides the display, so follow it exactly:
+  1. Write the steps first as one numbered list with the official link.
+  2. If the list has 5 or fewer steps on a single site, stop. Do not add
+     `## ` headings; the app shows the guide whole.
+  3. If the list has 6 or more steps, or touches two or more consoles or sites,
+     group the steps by phase or site and give each group a `## ` heading.
+     The app pages through one group at a time with Previous and Next buttons.
+- Each `## ` section must stand alone: repeat the site name and link inside it
+  instead of pointing back at another section.
+- Illustrate with local images only: put the file under
+  `.env-manager/guides/attachments/` (`png`, `jpg`, `webp`, `gif`, `svg`, 1 MiB
+  each) and reference it as `![caption](attachments/<file>)`. Ask the user to
+  drop the file there; never invent an attachment name, and never hotlink a
+  remote image (the app does not fetch the network).
 
 ## Scan for agent-readable exposure
 

@@ -102,6 +102,7 @@ assert(normalizedSkill.includes(".dev.vars"), "Skill must route Wrangler .dev.va
 assert(normalizedSkill.includes("request_value_input"), "Skill must route desktop secret input");
 assert(normalizedSkill.includes("plan_set_variable_guide"), "Skill must route value-free variable guides");
 assert(normalizedSkill.includes("scan_exposure"), "Skill must route value-free exposure scans");
+assert(normalizedSkill.includes("attachments/"), "Skill must document local guide image attachments");
 
 process.stdout.write(`Agent bundle ${version} is internally consistent and versioned independently from the app.\n`);
 

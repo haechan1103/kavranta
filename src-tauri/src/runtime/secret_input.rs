@@ -16,6 +16,16 @@ pub struct SecretInputState {
     pending: Mutex<HashMap<String, Pending>>,
 }
 
+/// Desktop event for one secret-input request, resolved to its registered project
+/// so the UI shows that project's guides instead of the selected project's.
+#[cfg(unix)]
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SecretInputEvent {
+    request: SecretInputRequest,
+    project_id: Option<String>,
+}
+
 struct Pending {
     names: Vec<String>,
     sender: std::sync::mpsc::Sender<Vec<SecretInputResult>>,
@@ -113,7 +123,16 @@ fn handle_connection(app: &AppHandle, stream: std::os::unix::net::UnixStream) {
     let receiver = app
         .state::<SecretInputState>()
         .register(request.request_id.clone(), names.clone());
-    let _ = app.emit("secret-input-request", &request);
+    let project_id = app
+        .state::<super::AppRuntime>()
+        .project_id_for_root(std::path::Path::new(&request.project_root));
+    let _ = app.emit(
+        "secret-input-request",
+        &SecretInputEvent {
+            request: request.clone(),
+            project_id,
+        },
+    );
 
     let response = match receiver.recv_timeout(Duration::from_secs(request.timeout_seconds)) {
         Ok(results) => SecretInputResponse {
