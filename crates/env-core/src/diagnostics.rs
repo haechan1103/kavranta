@@ -141,21 +141,37 @@ pub fn project_diagnostic_for(root: &std::path::Path) -> ProjectDiagnostic {
     }
 }
 
-/// Replaces anything that looks like a filesystem path with `~`, so a report
-/// never carries the user's folder layout.
+/// Replaces anything path-like with `<path>`, so a report never carries the user's
+/// folder layout. Handles POSIX, `~/`, Windows drive letters, and backslash paths.
 fn redact_diagnostic_text(text: &str) -> String {
     let mut output = String::with_capacity(text.len());
     for (index, token) in text.split_whitespace().enumerate() {
         if index > 0 {
             output.push(' ');
         }
-        if token.starts_with('/') || token.starts_with('~') {
+        if is_path_like(token) {
             output.push_str("<path>");
         } else {
             output.push_str(token);
         }
     }
     output
+}
+
+fn is_path_like(token: &str) -> bool {
+    if token.starts_with('/') || token.starts_with('~') {
+        return true;
+    }
+    // Windows drive letter such as `C:\Users` or `C:/Users`.
+    let bytes = token.as_bytes();
+    if bytes.len() >= 3
+        && bytes[0].is_ascii_alphabetic()
+        && bytes[1] == b':'
+        && matches!(bytes[2], b'\\' | b'/')
+    {
+        return true;
+    }
+    token.contains('\\')
 }
 
 /// Aggregates per-key counts for a compact summary line.

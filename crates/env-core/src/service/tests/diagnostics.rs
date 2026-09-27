@@ -61,9 +61,10 @@ fn diagnostics_load_error_redacts_absolute_paths() {
     let report = project_diagnostic_for(&directory.path().join("gone"));
     let message = report.load_error.expect("load error");
     assert!(!message.contains(&directory.path().to_string_lossy().to_string()));
+    // The guarantee holds on every platform: no separator survives redaction.
     assert!(
-        !message.contains('/'),
-        "message kept a path-like token: {message}"
+        !message.contains('/') && !message.contains('\\'),
+        "message kept a path separator: {message}"
     );
 }
 
