@@ -1,3 +1,4 @@
+mod diagnostics;
 mod discovery;
 mod effective;
 mod error;
@@ -16,6 +17,10 @@ mod service;
 mod team_import;
 mod transaction;
 
+pub use diagnostics::{
+    DIAGNOSTICS_SCHEMA_VERSION, GitDiagnosticCounts, ProjectDiagnostic, VariableDiagnostic,
+    project_diagnostic, project_diagnostic_for, render_diagnostics_json, variable_summary,
+};
 pub use discovery::{DiscoveryOptions, discover_env_files, is_env_candidate};
 pub use effective::{
     EffectiveContext, EffectiveOccurrence, EffectiveProjection, FrameworkKind, resolve_effective,

@@ -17,7 +17,8 @@ import { ProjectActions } from "../features/projects/ProjectActions";
 import { ProjectSidebar } from "../features/projects/ProjectSidebar";
 import { SecretInputController } from "../features/secret-input/SecretInputController";
 import { useEnvManager } from "../hooks/useEnvManager";
-import { useI18n } from "../i18n";
+import { localizeError, useI18n } from "../i18n";
+import * as api from "../lib/api";
 
 type View =
   | { kind: "overview" }
@@ -28,7 +29,7 @@ type View =
   | { kind: "accounts" };
 
 export function App() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const manager = useEnvManager();
   const [view, setView] = useState<View>({ kind: "overview" });
   const [exporting, setExporting] = useState(false);
@@ -63,16 +64,34 @@ export function App() {
     await manager.refreshProject(manager.selectedProjectId);
   };
 
+  const exportDiagnostics = async (dialogTitle: string) => {
+    try {
+      const result = await api.exportDiagnosticsReport(dialogTitle);
+      if (!result) return;
+      manager.showNotice(
+        t("diagnostics.saved", {
+          count: result.projectCount,
+          variables: result.variableCount,
+          failed: result.failedProjectCount,
+        }),
+      );
+    } catch (error) {
+      manager.showError(localizeError(error, locale, "error.diagnostics"));
+    }
+  };
+
   return (
     <div className="app-shell">
       <ProjectSidebar
         projects={manager.projects}
         selectedProjectId={manager.selectedProjectId}
         projection={manager.projection}
+        projectFailures={manager.projectFailures}
         view={view}
         onSelectProject={manager.selectProject}
         onSelectView={setView}
         onRegister={() => void manager.register()}
+        onExportDiagnostics={(dialogTitle) => void exportDiagnostics(dialogTitle)}
         onRenameFileLabel={(projectId, path, name) => void manager.renameEnvFileLabel(projectId, path, name)}
         onRenameFileOnDisk={(projectId, path, newName) => {
           void manager.renameEnvFileOnDisk(projectId, path, newName).then((summary) => {

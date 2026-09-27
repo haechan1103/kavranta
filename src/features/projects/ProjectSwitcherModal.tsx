@@ -6,6 +6,7 @@ import type { ProjectSummary } from "../../lib/types";
 interface Props {
   projects: ProjectSummary[];
   selectedProjectId: string | null;
+  projectFailures: Record<string, string>;
   onClose: () => void;
   onRegister: () => void;
   onSelectProject: (projectId: string) => void;
@@ -14,6 +15,7 @@ interface Props {
 export function ProjectSwitcherModal({
   projects,
   selectedProjectId,
+  projectFailures,
   onClose,
   onRegister,
   onSelectProject,
@@ -30,10 +32,17 @@ export function ProjectSwitcherModal({
       <nav className="project-switcher-list" aria-label={t("sidebar.registeredProjects")}>
         {projects.map((project) => {
           const isCurrent = project.id === selectedProjectId;
+          const failure = projectFailures[project.id];
           return (
             <button
               type="button"
-              className={isCurrent ? "project-switcher-option current" : "project-switcher-option"}
+              className={[
+                "project-switcher-option",
+                isCurrent ? "current" : null,
+                failure ? "failed" : null,
+              ]
+                .filter(Boolean)
+                .join(" ")}
               aria-current={isCurrent ? "true" : undefined}
               key={project.id}
               onClick={() => {
@@ -47,6 +56,11 @@ export function ProjectSwitcherModal({
               <span className="project-switcher-copy">
                 <strong>{project.name}</strong>
                 <small>{project.displayPath}</small>
+                {failure && (
+                  <small className="project-switcher-failure" title={failure}>
+                    {t("projectSwitcher.loadFailedBadge")}
+                  </small>
+                )}
               </span>
               {isCurrent && <span className="current-project-badge">{t("common.current")}</span>}
             </button>

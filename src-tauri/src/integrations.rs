@@ -25,12 +25,11 @@ use marketplace::{
     reconnect_owned_marketplace, refresh_after_marketplace_reconnect,
     stage_owned_codex_marketplace,
 };
-use model::{
-    agent_bundle_version, integration_name, is_legacy_bundle_version, is_update_available,
-};
+use model::{integration_name, is_legacy_bundle_version, is_update_available};
 
 pub use model::{
     AgentIntegrationBlocker, AgentIntegrationId, AgentIntegrationStatus, IntegrationError,
+    agent_bundle_version,
 };
 
 /// Returns redacted integration health for every supported agent host.

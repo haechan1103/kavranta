@@ -190,7 +190,7 @@ impl AppRuntime {
             .map(|project| project.id.clone())
     }
 
-    pub(super) fn root(&self, project_id: &str) -> EnvResult<PathBuf> {
+    pub fn root(&self, project_id: &str) -> EnvResult<PathBuf> {
         self.refresh_registry()?;
         self.registry
             .lock()

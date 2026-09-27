@@ -38,10 +38,12 @@ describe("ProjectSidebar", () => {
           ]}
           selectedProjectId="demo"
           projection={projection}
+          projectFailures={{}}
           view={{ kind: "overview" }}
           onSelectProject={selectProject}
           onSelectView={vi.fn()}
           onRegister={vi.fn()}
+          onExportDiagnostics={vi.fn()}
           onRenameFileLabel={vi.fn()}
           onRenameFileOnDisk={vi.fn()}
           projectActions={<button type="button">Project actions</button>}
@@ -74,12 +76,14 @@ describe("ProjectSidebar", () => {
           projects={[{ id: "demo", name: "demo", displayPath: "/fake/demo" }]}
           selectedProjectId="demo"
           projection={projection}
+          projectFailures={{}}
           view={{ kind: "overview" }}
           onSelectProject={vi.fn()}
           onSelectView={vi.fn()}
           onRegister={register}
           onRenameFileLabel={vi.fn()}
           onRenameFileOnDisk={vi.fn()}
+          onExportDiagnostics={vi.fn()}
         />
       </AgentIntegrationStatusProvider>,
     );
@@ -100,10 +104,12 @@ describe("ProjectSidebar", () => {
             projects={[{ id: "demo", name: "demo", displayPath: "/fake/demo" }]}
             selectedProjectId="demo"
             projection={projection}
+            projectFailures={{}}
             view={{ kind: "overview" }}
             onSelectProject={vi.fn()}
             onSelectView={vi.fn()}
             onRegister={vi.fn()}
+            onExportDiagnostics={vi.fn()}
             onRenameFileLabel={vi.fn()}
             onRenameFileOnDisk={vi.fn()}
           />
@@ -116,5 +122,63 @@ describe("ProjectSidebar", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("marks only the project that failed to load", async () => {
+    const user = userEvent.setup();
+    render(
+      <AgentIntegrationStatusProvider>
+        <ProjectSidebar
+          projects={[
+            { id: "broken", name: "broken", displayPath: "/fake/broken" },
+            { id: "healthy", name: "healthy", displayPath: "/fake/healthy" },
+          ]}
+          selectedProjectId="broken"
+          projection={null}
+          projectFailures={{ broken: "IO_ERROR" }}
+          view={{ kind: "overview" }}
+          onSelectProject={vi.fn()}
+          onSelectView={vi.fn()}
+          onRegister={vi.fn()}
+          onExportDiagnostics={vi.fn()}
+          onRenameFileLabel={vi.fn()}
+          onRenameFileOnDisk={vi.fn()}
+        />
+      </AgentIntegrationStatusProvider>,
+    );
+
+    expect(screen.getAllByText("Failed to load")).toHaveLength(1);
+
+    await user.click(screen.getByRole("button", { name: "Change" }));
+    const brokenRow = screen.getByRole("button", { name: /broken/ });
+    const healthyRow = screen.getByRole("button", { name: /healthy/ });
+    expect(brokenRow.className).toContain("failed");
+    expect(healthyRow.className).not.toContain("failed");
+  });
+
+  it("offers a value-free diagnostics export from the sidebar footer", async () => {
+    const user = userEvent.setup();
+    const onExportDiagnostics = vi.fn();
+    render(
+      <AgentIntegrationStatusProvider>
+        <ProjectSidebar
+          projects={[{ id: "demo", name: "demo", displayPath: "/fake/demo" }]}
+          selectedProjectId="demo"
+          projection={projection}
+          projectFailures={{}}
+          view={{ kind: "overview" }}
+          onSelectProject={vi.fn()}
+          onSelectView={vi.fn()}
+          onRegister={vi.fn()}
+          onExportDiagnostics={onExportDiagnostics}
+          onRenameFileLabel={vi.fn()}
+          onRenameFileOnDisk={vi.fn()}
+        />
+      </AgentIntegrationStatusProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Export diagnostics" }));
+
+    expect(onExportDiagnostics).toHaveBeenCalledWith("Save diagnostics report");
   });
 });

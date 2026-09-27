@@ -71,7 +71,7 @@ pub(super) struct CodexMarketplaceAlias {
     pub(super) remove_marketplace: bool,
 }
 
-pub(super) fn agent_bundle_version() -> &'static str {
+pub fn agent_bundle_version() -> &'static str {
     AGENT_BUNDLE_VERSION.trim()
 }
 

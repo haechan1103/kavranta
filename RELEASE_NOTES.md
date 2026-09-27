@@ -1,15 +1,16 @@
-# Kavranta 0.7.14 — One project can no longer hide the rest
+# Kavranta 0.7.15 — Value-free diagnostics and visible project load failures
 
-- Loading projects no longer fails as a group. Each project loads independently, so a
-  single unreadable folder can no longer empty every other project's view.
-- The first-run onboarding screen now appears only when no project is registered.
-  When a registered project fails to load, Kavranta names that project, shows the
-  reason, and offers a retry, while the rest of the sidebar keeps working.
-- A project that loads but contains no env files now shows its own project view
-  instead of the registration screen.
+- Export a diagnostics report for a bug report. The report lists app and platform
+  version, agent connection health, and per-project structure, variable names,
+  presence, access policy, parser issue counts, and Git exposure counts.
+- The report is built from an allowlist that has no field able to hold a value, and
+  Rust writes it directly. Values and absolute folder paths cannot reach the file,
+  and nested files are reduced to bare names so your folder layout is not reported.
+- A project that fails to load is now marked in the project switcher and in the
+  sidebar, so a broken project is visible before you open it instead of after.
 
 The independently versioned Agent Bundle remains 2.6.0. This release adds no
-background network access and no value readback.
+background network access, sends nothing anywhere, and no value readback.
 
 ## Install
 
@@ -21,18 +22,19 @@ background network access and no value readback.
 
 ---
 
-# Kavranta 0.7.14 — 프로젝트 하나가 나머지를 가리지 않음
+# Kavranta 0.7.15 — 값 없는 진단 리포트와 프로젝트 오류 표시
 
-- 프로젝트 로딩이 전체 일괄 실패하지 않습니다. 각 프로젝트가 독립적으로
-  로드되어, 폴더 하나를 못 읽어도 다른 프로젝트 화면이 비워지지 않습니다.
-- 첫 실행 안내 화면은 등록된 프로젝트가 진짜 없을 때만 나타납니다. 등록된
-  프로젝트가 로드에 실패하면 그 프로젝트 이름과 사유를 보여주고 다시 시도할 수
-  있으며, 사이드바의 나머지 프로젝트는 계속 사용할 수 있습니다.
-- 로드는 되지만 env 파일이 없는 프로젝트는 등록 화면 대신 그 프로젝트의 빈
-  화면을 보여줍니다.
+- 버그 제보를 위한 진단 리포트를 내보냅니다. 앱·플랫폼 버전, AI 도구 연결
+  상태, 프로젝트별 구조·변수 이름·값 존재 여부·접근 정책·파싱 경고 수·Git 노출
+  개수를 담습니다.
+- 리포트는 값을 담을 수 없는 필드가 없는 allowlist로 만들고 Rust가 직접
+  기록합니다. 값과 절대 경로는 파일에 들어갈 수 없고, 중첩 파일은 이름만
+  남겨 폴더 구조도 노출되지 않습니다.
+- 로드에 실패한 프로젝트를 프로젝트 전환 화면과 사이드바에 표시해, 열기 전에
+  미리 보이도록 했습니다.
 
 독립적으로 버전 관리되는 Agent Bundle은 2.6.0입니다. 이 릴리스는 백그라운드 네트워크
-접근과 값 되읽기를 추가하지 않습니다.
+접근을 추가하지 않고, 아무것도 전송하지 않으며, 값 되읽기도 없습니다.
 
 ## 설치
 
