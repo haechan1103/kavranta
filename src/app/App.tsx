@@ -113,7 +113,7 @@ export function App() {
             <span className="spinner" />
             <p>{t("app.loadingProjects")}</p>
           </div>
-        ) : !manager.selectedProject || !manager.projection ? (
+        ) : manager.projects.length === 0 || !manager.selectedProject ? (
           <section className="empty-project-page">
             <header className="empty-project-header">
               <div>
@@ -187,6 +187,66 @@ export function App() {
               <span className="status-dot" />
               {t("app.localFootnote")}
             </p>
+          </section>
+        ) : !manager.projection ? (
+          <section className="empty-project-page">
+            <header className="empty-project-header">
+              <div>
+                <h1>{t("app.loadFailedTitle")}</h1>
+                <p>{t("app.loadFailedBody", { name: manager.selectedProject.name })}</p>
+              </div>
+              <button className="primary-button" onClick={() => void manager.reload()}>
+                {t("app.loadFailedRetry")}
+              </button>
+            </header>
+
+            <div className="onboarding-layout">
+              <section className="register-project-card">
+                <div className="folder-mark" aria-hidden="true">
+                  <span />
+                </div>
+                <div className="register-project-copy">
+                  <p className="eyebrow">{manager.selectedProject.displayPath}</p>
+                  <h2>{t("app.loadFailedHeading")}</h2>
+                  <p className="load-failed-reason">
+                    {manager.selectedProjectFailure ?? t("app.loadFailedUnknown")}
+                  </p>
+                </div>
+                <button className="primary-button large" onClick={() => void manager.reload()}>
+                  {t("app.loadFailedRetry")}
+                </button>
+              </section>
+
+              <aside className="registration-details">
+                <header>
+                  <span>{t("app.loadFailedAside")}</span>
+                  <small>LOCAL ONLY</small>
+                </header>
+                <dl>
+                  <div>
+                    <dt>01</dt>
+                    <dd>
+                      <strong>{t("app.loadFailedMoveTitle")}</strong>
+                      <span>{t("app.loadFailedMoveBody")}</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>02</dt>
+                    <dd>
+                      <strong>{t("app.loadFailedReaddTitle")}</strong>
+                      <span>{t("app.loadFailedReaddBody")}</span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>03</dt>
+                    <dd>
+                      <strong>{t("app.loadFailedOtherTitle")}</strong>
+                      <span>{t("app.loadFailedOtherBody")}</span>
+                    </dd>
+                  </div>
+                </dl>
+              </aside>
+            </div>
           </section>
         ) : (
           <>

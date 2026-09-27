@@ -10,15 +10,30 @@ export function useEnvManager() {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [projections, setProjections] = useState<Record<string, ProjectProjection>>({});
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [projectFailures, setProjectFailures] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const refreshProject = useCallback(async (projectId: string) => {
-    const projection = await api.scanProject(projectId);
-    setProjections((current) => ({ ...current, [projectId]: projection }));
-    return projection;
-  }, []);
+    try {
+      const projection = await api.scanProject(projectId);
+      setProjections((current) => ({ ...current, [projectId]: projection }));
+      setProjectFailures((current) => {
+        if (!(projectId in current)) return current;
+        const next = { ...current };
+        delete next[projectId];
+        return next;
+      });
+      return projection;
+    } catch (cause) {
+      setProjectFailures((current) => ({
+        ...current,
+        [projectId]: localizeError(cause, locale, "error.loadProject"),
+      }));
+      throw cause;
+    }
+  }, [locale]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -30,10 +45,16 @@ export function useEnvManager() {
       ]);
       setProjects(items);
       setSelectedProjectId((current) => resolveSelectedProjectId(items, current, rememberedProjectId));
-      const scans = await Promise.all(
-        items.map(async (project) => [project.id, await api.scanProject(project.id)] as const),
+      // One unreadable project must not discard every other project's projection,
+      // so each scan settles independently.
+      const results = await Promise.allSettled(
+        items.map((project) => api.scanProject(project.id)),
       );
-      setProjections(Object.fromEntries(scans));
+      const settled = collectSettledProjectScans(items, results, (cause) =>
+        localizeError(cause, locale, "error.loadProject"),
+      );
+      setProjections(settled.projections);
+      setProjectFailures(settled.failures);
     } catch (cause) {
       setError(localizeError(cause, locale, "error.loadProjects"));
     } finally {
@@ -95,6 +116,12 @@ export function useEnvManager() {
         await api.removeProject(projectId);
         setProjects((current) => current.filter((project) => project.id !== projectId));
         setProjections((current) => {
+          const next = { ...current };
+          delete next[projectId];
+          return next;
+        });
+        setProjectFailures((current) => {
+          if (!(projectId in current)) return current;
           const next = { ...current };
           delete next[projectId];
           return next;
@@ -214,6 +241,9 @@ export function useEnvManager() {
     [projects, selectedProjectId],
   );
   const projection = selectedProjectId ? projections[selectedProjectId] ?? null : null;
+  const selectedProjectFailure = selectedProjectId
+    ? projectFailures[selectedProjectId] ?? null
+    : null;
   const clearError = useCallback(() => setError(null), []);
   const clearNotice = useCallback(() => setNotice(null), []);
 
@@ -222,6 +252,7 @@ export function useEnvManager() {
     selectedProject,
     selectedProjectId,
     projection,
+    selectedProjectFailure,
     loading,
     error,
     notice,
@@ -233,6 +264,7 @@ export function useEnvManager() {
     renameEnvFileOnDisk,
     applyGitignoreGuard,
     refreshProject,
+    reload: load,
     clearError,
     clearNotice,
     showError: setError,
@@ -253,4 +285,28 @@ export function resolveSelectedProjectId(
   if (currentProjectId && available.has(currentProjectId)) return currentProjectId;
   if (rememberedProjectId && available.has(rememberedProjectId)) return rememberedProjectId;
   return projects[0]?.id ?? null;
+}
+
+/**
+ * Splits settled scan results into a projection map and a per-project failure map.
+ * A project that fails to load keeps its own error and never removes another
+ * project's data.
+ */
+export function collectSettledProjectScans(
+  projects: ProjectSummary[],
+  results: PromiseSettledResult<ProjectProjection>[],
+  describe: (cause: unknown) => string,
+): { projections: Record<string, ProjectProjection>; failures: Record<string, string> } {
+  const projections: Record<string, ProjectProjection> = {};
+  const failures: Record<string, string> = {};
+  results.forEach((result, index) => {
+    const project = projects[index];
+    if (!project) return;
+    if (result.status === "fulfilled") {
+      projections[project.id] = result.value;
+    } else {
+      failures[project.id] = describe(result.reason);
+    }
+  });
+  return { projections, failures };
 }
