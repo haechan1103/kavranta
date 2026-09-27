@@ -126,6 +126,20 @@
   line-height: 1.75;
 }
 
+.load-failed-reason {
+  display: block;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid rgba(192, 122, 30, 0.28);
+  border-radius: 9px;
+  background: rgba(192, 122, 30, 0.1);
+  color: #a9701a;
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: calc(11px * var(--font-scale));
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
 .registration-details {
   overflow: hidden;
 }

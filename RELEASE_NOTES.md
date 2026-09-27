@@ -1,11 +1,12 @@
-# Kavranta 0.7.13 — Measured scans and a leakproof check
+# Kavranta 0.7.14 — One project can no longer hide the rest
 
-- The exposure scan now reports its own cost: files examined, milliseconds taken,
-  and the standing zero-values-read claim on one line.
-- One button proves zero leaks at runtime. Five synthetic canary secrets run
-  through inspect, exposure scan, redacted reads, inspect-after-write, and guide
-  roundtrip in an isolated temporary project, then report passed checks and
-  duration. No registry, audit log, or real project is touched.
+- Loading projects no longer fails as a group. Each project loads independently, so a
+  single unreadable folder can no longer empty every other project's view.
+- The first-run onboarding screen now appears only when no project is registered.
+  When a registered project fails to load, Kavranta names that project, shows the
+  reason, and offers a retry, while the rest of the sidebar keeps working.
+- A project that loads but contains no env files now shows its own project view
+  instead of the registration screen.
 
 The independently versioned Agent Bundle remains 2.6.0. This release adds no
 background network access and no value readback.
@@ -20,14 +21,15 @@ background network access and no value readback.
 
 ---
 
-# Kavranta 0.7.13 — 측정되는 점검과 유출 증명
+# Kavranta 0.7.14 — 프로젝트 하나가 나머지를 가리지 않음
 
-- 노출 점검이 비용을 스스로 보고합니다. 본 파일 수, 걸린 시간, 읽은 값 0개를
-  한 줄로 표시합니다.
-- 버튼 하나로 실행 중 유출 없음을 증명합니다. 합성 카나리아 비밀 5개가 확인,
-  노출 점검, 가려진 읽기, 쓰기 후 재확인, 가이드 왕복을 격리된 임시 프로젝트에서
-  통과한 뒤 통과 수와 시간을 보고합니다. 레지스트리, 감사 로그, 실제 프로젝트는
-  건드리지 않습니다.
+- 프로젝트 로딩이 전체 일괄 실패하지 않습니다. 각 프로젝트가 독립적으로
+  로드되어, 폴더 하나를 못 읽어도 다른 프로젝트 화면이 비워지지 않습니다.
+- 첫 실행 안내 화면은 등록된 프로젝트가 진짜 없을 때만 나타납니다. 등록된
+  프로젝트가 로드에 실패하면 그 프로젝트 이름과 사유를 보여주고 다시 시도할 수
+  있으며, 사이드바의 나머지 프로젝트는 계속 사용할 수 있습니다.
+- 로드는 되지만 env 파일이 없는 프로젝트는 등록 화면 대신 그 프로젝트의 빈
+  화면을 보여줍니다.
 
 독립적으로 버전 관리되는 Agent Bundle은 2.6.0입니다. 이 릴리스는 백그라운드 네트워크
 접근과 값 되읽기를 추가하지 않습니다.
