@@ -1,3 +1,5 @@
+#[path = "tests/diagnostics.rs"]
+mod diagnostics;
 #[path = "tests/exposure.rs"]
 mod exposure;
 #[path = "tests/files_and_values.rs"]

@@ -253,6 +253,7 @@ export function useEnvManager() {
     selectedProjectId,
     projection,
     selectedProjectFailure,
+    projectFailures,
     loading,
     error,
     notice,

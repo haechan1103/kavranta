@@ -37,6 +37,7 @@ function manager(overrides: Record<string, unknown>) {
     selectedProjectId: null,
     projection: null,
     selectedProjectFailure: null,
+    projectFailures: {},
     loading: false,
     error: null,
     notice: null,

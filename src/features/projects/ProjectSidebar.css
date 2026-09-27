@@ -448,3 +448,27 @@
     text-align: center;
   }
 }
+
+.project-failed-badge {
+  color: #e0a34a;
+  font-size: calc(10px * var(--font-scale));
+  font-weight: 650;
+}
+
+.sidebar-diagnostics-button {
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: #8fa39b;
+  font-size: calc(10px * var(--font-scale));
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-diagnostics-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #d8e5e0;
+}

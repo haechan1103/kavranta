@@ -90,3 +90,12 @@
 .project-switcher-actions {
   border-top: 1px solid var(--line-soft);
 }
+
+.project-switcher-failure {
+  color: #c07a1e;
+  font-weight: 600;
+}
+
+.project-switcher-option.failed .project-switcher-copy strong {
+  color: #c07a1e;
+}

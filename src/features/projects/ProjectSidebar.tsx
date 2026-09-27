@@ -23,6 +23,7 @@ interface Props {
   projects: ProjectSummary[];
   selectedProjectId: string | null;
   projection: ProjectProjection | null;
+  projectFailures: Record<string, string>;
   view: View;
   onSelectProject: (projectId: string) => void;
   onSelectView: (
@@ -31,6 +32,7 @@ interface Props {
   onRegister: () => void;
   onRenameFileLabel: (projectId: string, path: string, name: string) => void;
   onRenameFileOnDisk: (projectId: string, path: string, newName: string) => void;
+  onExportDiagnostics: (destinationLabel: string) => void;
   projectActions?: ReactNode;
 }
 
@@ -38,12 +40,14 @@ export function ProjectSidebar({
   projects,
   selectedProjectId,
   projection,
+  projectFailures,
   view,
   onSelectProject,
   onSelectView,
   onRegister,
   onRenameFileLabel,
   onRenameFileOnDisk,
+  onExportDiagnostics,
   projectActions,
 }: Props) {
   const { locale, setLocale, t } = useI18n();
@@ -51,6 +55,7 @@ export function ProjectSidebar({
   const { needsAttention: agentIntegrationNeedsAttention } = useAgentIntegrationStatus();
   const [switchingProject, setSwitchingProject] = useState(false);
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null;
+  const selectedFailure = selectedProjectId ? projectFailures[selectedProjectId] ?? null : null;
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -67,6 +72,11 @@ export function ProjectSidebar({
           </span>
           <span className="current-project-copy">
             <strong>{selectedProject?.name ?? t("projectSwitcher.noneSelected")}</strong>
+            {selectedFailure && (
+              <small className="project-failed-badge" title={selectedFailure}>
+                {t("projectSwitcher.loadFailedBadge")}
+              </small>
+            )}
           </span>
         </div>
         <button className="project-change-button" type="button" onClick={() => setSwitchingProject(true)}>
@@ -175,11 +185,19 @@ export function ProjectSidebar({
           </label>
         </div>
         <AppUpdater />
+        <button
+          className="sidebar-diagnostics-button"
+          type="button"
+          onClick={() => onExportDiagnostics(t("diagnostics.dialogTitle"))}
+        >
+          {t("diagnostics.action")}
+        </button>
       </div>
       {switchingProject && (
         <ProjectSwitcherModal
           projects={projects}
           selectedProjectId={selectedProjectId}
+          projectFailures={projectFailures}
           onClose={() => setSwitchingProject(false)}
           onRegister={onRegister}
           onSelectProject={onSelectProject}

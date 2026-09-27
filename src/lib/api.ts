@@ -1,4 +1,5 @@
 export * from "./api/accounts";
+export * from "./api/diagnostics";
 export * from "./api/environment";
 export * from "./api/exposure";
 export * from "./api/external";
