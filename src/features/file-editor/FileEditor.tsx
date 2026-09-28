@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Modal } from "../../components/Modal";
 import { RenameModal } from "../../components/RenameModal";
+import { CheckIcon, EmptyValueIcon } from "../../components/icons";
 import { displayGroupName, localizeError, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type {
@@ -179,21 +180,17 @@ export function FileEditor({
             aria-pressed={showEmptyOnly}
             onClick={() => setShowEmptyOnly((current) => !current)}
           >
-            <span>{t("file.emptyOnly")}</span>
-            <strong aria-label={t("file.emptyCount", { count: emptyVariableCount })}>
-              {emptyVariableCount}
-            </strong>
-          </button>
-          {(showEmptyOnly || search.trim()) && (
-            <span className="file-filter-result">
-              {t("file.filteredCount", { visible: visibleVariableCount, total: variableCount })}
+            <span className="file-filter-toggle-icon" aria-hidden="true">
+              {showEmptyOnly ? <CheckIcon /> : <EmptyValueIcon />}
             </span>
-          )}
-          {(showEmptyOnly || search) && (
-            <button className="quiet-button" onClick={() => { setSearch(""); setShowEmptyOnly(false); }}>
-              {t("file.clearFilters")}
-            </button>
-          )}
+            <span className="file-filter-toggle-copy">
+              <strong>{t("file.emptyOnly")}</strong>
+              <small>{t("file.emptyCount", { count: emptyVariableCount })}</small>
+            </span>
+            <span className="file-filter-toggle-state" aria-hidden="true">
+              {showEmptyOnly ? t("file.emptyOnlyOn") : t("file.emptyOnlyOff")}
+            </span>
+          </button>
         </div>
       )}
 

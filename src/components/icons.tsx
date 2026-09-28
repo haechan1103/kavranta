@@ -27,3 +27,50 @@ export function HelpIcon() {
     </svg>
   );
 }
+
+export function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="ui-svg" aria-hidden="true">
+      <path d="M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6" />
+    </svg>
+  );
+}
+
+export function MoveIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="ui-svg" aria-hidden="true">
+      <path d="M12 3.5v17" />
+      <path d="M8.2 7.1L12 3.3l3.8 3.8" />
+      <path d="M8.2 16.9L12 20.7l3.8-3.8" />
+    </svg>
+  );
+}
+
+export function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="ui-svg" aria-hidden="true">
+      <path d="M5 12.6l4.6 4.4L19 6.8" />
+    </svg>
+  );
+}
+
+export function EmptyValueIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="ui-svg" aria-hidden="true">
+      <path d="M4.5 6.6h15" />
+      <path d="M6.6 6.6l.8 12.1a1.7 1.7 0 0 0 1.7 1.6h5.8a1.7 1.7 0 0 0 1.7-1.6l.8-12.1" />
+      <path d="M9.6 10.6h4.8" />
+    </svg>
+  );
+}
+
+export function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="ui-svg" aria-hidden="true">
+      <path d="M4.5 6.6h15" />
+      <path d="M9.2 6.6V5.2A1.7 1.7 0 0 1 10.9 3.5h2.2a1.7 1.7 0 0 1 1.7 1.7v1.4" />
+      <path d="M6.6 6.6l.8 12.1a1.7 1.7 0 0 0 1.7 1.6h5.8a1.7 1.7 0 0 0 1.7-1.6l.8-12.1" />
+      <path d="M10.3 10.3v6.2M13.7 10.3v6.2" />
+    </svg>
+  );
+}

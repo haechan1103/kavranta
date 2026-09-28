@@ -2,7 +2,7 @@ import "./VariableRow.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { CopyButton } from "../../components/CopyButton";
-import { EyeIcon, EyeOffIcon, HelpIcon } from "../../components/icons";
+import { EyeIcon, EyeOffIcon, HelpIcon, MoveIcon, TrashIcon } from "../../components/icons";
 import { displayGroupName, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type { CodexAccess, OccurrenceProjection } from "../../lib/types";
@@ -253,16 +253,18 @@ export function VariableRow({
             </button>
           ) : null}
           <button
-            className="quiet-button compact"
+            className="icon-button row-action-button"
             title={t("row.moveTitle")}
+            aria-label={t("row.moveTitle")}
             disabled={groups.filter((group) => group !== currentGroup).length === 0}
             onClick={() => setMoving(true)}
           >
-            {t("common.move")}
+            <MoveIcon />
           </button>
           <button
-            className="danger-quiet-button compact"
+            className="icon-button row-action-button row-action-danger"
             title={t("row.deleteTitle")}
+            aria-label={t("row.deleteTitle")}
             onClick={() => {
               if (
                 window.confirm(
@@ -276,7 +278,7 @@ export function VariableRow({
               }
             }}
           >
-            {t("common.delete")}
+            <TrashIcon />
           </button>
         </div>
       </div>

@@ -359,3 +359,31 @@
   place-items: center;
   color: var(--muted);
 }
+
+/* Move and delete are icon-only actions; keep the target comfortable. */
+.row-action-button {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  color: #69746f;
+}
+
+.row-action-button .ui-svg {
+  width: 16px;
+  height: 16px;
+}
+
+.row-action-button:hover:not(:disabled) {
+  background: #eef1ee;
+  color: var(--ink);
+}
+
+.row-action-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.row-action-button.row-action-danger:hover {
+  background: rgba(210, 74, 58, 0.12);
+  color: #d24a3a;
+}
