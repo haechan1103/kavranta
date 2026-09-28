@@ -54,13 +54,15 @@ export function ProjectSwitcherModal({
                 {project.name.slice(0, 1).toUpperCase()}
               </span>
               <span className="project-switcher-copy">
-                <strong>{project.name}</strong>
+                <span className="project-switcher-title">
+                  <strong>{project.name}</strong>
+                  {failure && (
+                    <span className="project-switcher-failure" title={failure}>
+                      {t("projectSwitcher.loadFailedBadge")}
+                    </span>
+                  )}
+                </span>
                 <small>{project.displayPath}</small>
-                {failure && (
-                  <small className="project-switcher-failure" title={failure}>
-                    {t("projectSwitcher.loadFailedBadge")}
-                  </small>
-                )}
               </span>
               {isCurrent && <span className="current-project-badge">{t("common.current")}</span>}
             </button>

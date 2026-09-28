@@ -10,7 +10,6 @@ use crate::exposure::{
 };
 
 const MAX_EXPOSURE_ENTRIES: usize = 20_000;
-const MAX_DEEP_DEPTH: usize = 5;
 const DEFAULT_EXCLUDED_DIRECTORIES: &[&str] = &[
     "node_modules",
     ".git",
@@ -42,12 +41,12 @@ const GLOBAL_MCP_PATHS: &[&str] = &[
     ".codex/config.toml",
 ];
 
-const AGENT_SESSION_DIRECTORIES: &[&str] = &[
-    ".claude/projects",
-    ".codex/sessions",
-    ".codex/archived_sessions",
-    ".copilot/session-state",
-];
+// Agent session transcript directories are deliberately not scanned. A coding agent
+// reads its own transcript as part of normal work, and Kavranta is the tool the agent
+// is already using, so reporting that directory is expected behavior rather than a
+// finding the user can act on. Listing every transcript file also buried the
+// actionable deep findings (shell history and global MCP configuration) under
+// hundreds of identical rows. See ADR-0035.
 
 impl ProjectService {
     /// Value-free exposure scan: reports names, paths, and counts only.
@@ -316,38 +315,6 @@ fn collect_deep_findings(
             );
         }
     }
-    for relative in AGENT_SESSION_DIRECTORIES {
-        let directory = home.join(relative);
-        if !directory.is_dir() {
-            continue;
-        }
-        for entry in WalkDir::new(&directory)
-            .follow_links(false)
-            .max_depth(MAX_DEEP_DEPTH)
-            .into_iter()
-            .flatten()
-        {
-            if findings.len() >= MAX_EXPOSURE_ENTRIES {
-                return;
-            }
-            if !entry.file_type().is_file() {
-                continue;
-            }
-            *scanned += 1;
-            if entry.path().extension().and_then(|value| value.to_str()) != Some("jsonl") {
-                continue;
-            }
-            if let Ok(stripped) = entry.path().strip_prefix(home) {
-                push_deep(
-                    findings,
-                    seen,
-                    manifest,
-                    format!("~/{}", to_manifest_path(stripped)),
-                    ExposureKind::AgentTranscript,
-                );
-            }
-        }
-    }
 }
 
 fn push_deep(
@@ -368,4 +335,79 @@ fn home_directory() -> Option<PathBuf> {
         .or_else(|| std::env::var_os("USERPROFILE"))
         .map(PathBuf::from)
         .filter(|path| path.is_dir())
+}
+
+#[cfg(test)]
+mod deep_scan_tests {
+    use super::*;
+
+    /// ADR-0035: agent session transcripts are not scanned, because an agent reading its
+    /// own transcript is expected behavior rather than a finding the user can act on.
+    /// Shell history and global MCP config stay scanned, since those are user-authored
+    /// credential surfaces. This guards both halves of that decision.
+    #[test]
+    fn deep_scan_skips_agent_transcripts_but_keeps_credential_surfaces() {
+        let home = tempfile::tempdir().expect("temporary home");
+        std::fs::write(home.path().join(".zsh_history"), "export FAKE=fake_1\n").expect("history");
+        std::fs::create_dir_all(home.path().join(".codex")).expect("codex directory");
+        std::fs::write(home.path().join(".codex/config.toml"), "").expect("mcp config");
+
+        for relative in [
+            ".codex/sessions",
+            ".codex/archived_sessions",
+            ".claude/projects",
+            ".copilot/session-state",
+        ] {
+            let directory = home.path().join(relative).join("2026/09/27");
+            std::fs::create_dir_all(&directory).expect("transcript directory");
+            std::fs::write(
+                directory.join("rollout-fake.jsonl"),
+                "{\"fake\":\"fake_1\"}\n",
+            )
+            .expect("transcript");
+        }
+
+        let manifest = Manifest::default();
+        let mut findings = Vec::new();
+        let mut seen = BTreeSet::new();
+        let mut scanned = 0;
+        collect_deep_findings(
+            home.path(),
+            &manifest,
+            &mut findings,
+            &mut seen,
+            &mut scanned,
+        );
+
+        let paths = findings
+            .iter()
+            .map(|finding| finding.path.as_str())
+            .collect::<Vec<_>>();
+
+        assert!(
+            paths.contains(&"~/.zsh_history"),
+            "shell history stays scanned"
+        );
+        assert!(
+            paths.contains(&"~/.codex/config.toml"),
+            "MCP config stays scanned"
+        );
+        assert!(
+            !paths
+                .iter()
+                .any(|path| path.contains("sessions") || path.contains("projects")),
+            "agent session transcripts must not be reported, got {paths:?}"
+        );
+        assert_eq!(
+            findings.len(),
+            2,
+            "only the two credential surfaces are reported"
+        );
+        assert!(
+            !serde_json::to_string(&findings)
+                .expect("serialized findings")
+                .contains("fake_1"),
+            "deep findings stay value-free"
+        );
+    }
 }

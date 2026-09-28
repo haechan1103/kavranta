@@ -39,6 +39,24 @@
   font-size: calc(10px * var(--font-scale));
 }
 
+/* Shared close control: one comfortable target for every modal. */
+.modal > header .modal-close-button {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  color: #6d7a74;
+}
+
+.modal > header .modal-close-button .ui-svg {
+  width: 17px;
+  height: 17px;
+}
+
+.modal > header .modal-close-button:hover {
+  background: #e8ece9;
+  color: var(--ink);
+}
+
 .modal-form {
   display: flex;
   flex-direction: column;

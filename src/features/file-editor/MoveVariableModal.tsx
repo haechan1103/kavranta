@@ -49,7 +49,6 @@ export function MoveVariableModal({ variableKey, currentGroup, groups, onClose, 
               />
               <span>
                 <strong>{displayGroupName(group, t)}</strong>
-                <small>{t("row.moveDestinationHelp")}</small>
               </span>
               <span className="choice-check" aria-hidden="true">✓</span>
             </label>

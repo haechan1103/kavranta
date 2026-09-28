@@ -51,8 +51,12 @@ describe("FileEditor", () => {
     await user.clear(screen.getByRole("searchbox"));
     await user.type(screen.getByRole("searchbox"), "MODE");
     expect(screen.getByText("No variables match these filters")).toBeVisible();
-    await user.click(screen.getByRole("button", { name: "Show all variables" }));
+    await user.clear(screen.getByRole("searchbox"));
     expect(screen.getByText("PORT")).toBeVisible();
+    expect(screen.getByText("MODE")).not.toBeVisible();
+    // Toggling the filter card off, then clearing search, restores every row.
+    await user.click(screen.getByRole("button", { name: /Missing values only/ }));
+    expect(screen.getByRole("button", { name: /Missing values only/ })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByText("MODE")).toBeVisible();
   });
 
@@ -64,7 +68,7 @@ describe("FileEditor", () => {
     await user.type(screen.getByLabelText("PORT value"), "fake_draft_only");
     await user.type(screen.getByRole("searchbox"), "MODE");
     expect(screen.getByText("PORT")).not.toBeVisible();
-    await user.click(screen.getByRole("button", { name: "Show all variables" }));
+    await user.clear(screen.getByRole("searchbox"));
     expect(screen.getByLabelText("PORT value")).toHaveValue("fake_draft_only");
     expect(screen.getByLabelText("PORT value")).toBeVisible();
   });
@@ -196,10 +200,14 @@ describe("FileEditor", () => {
     expect(
       screen.queryByRole("heading", { name: "Database" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Showing 1 of 3 variables")).toBeInTheDocument();
+    // The filter card states its own on/off condition instead of a filtered count.
+    expect(screen.getByRole("button", { name: /Missing values only/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("On")).toBeInTheDocument();
+    expect(screen.queryByText("Off")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Missing values only/ }));
     expect(screen.getByText("DATABASE_URL")).toBeInTheDocument();
+    expect(screen.getByText("Off")).toBeInTheDocument();
   });
 
   it("explains when the selected file has no empty variables", async () => {

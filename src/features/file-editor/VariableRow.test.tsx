@@ -306,15 +306,48 @@ describe("VariableRow", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Move" }));
+    await user.click(screen.getByRole("button", { name: "Move to another group" }));
     expect(screen.getByRole("dialog", { name: "Move GPT_API_KEY" })).toBeInTheDocument();
     await user.click(screen.getByRole("radio", { name: /Database/ }));
     await user.click(screen.getByRole("button", { name: "Move variable" }));
-
     expect(api.moveVariable).toHaveBeenCalledWith("demo", {
       file: "fixture-one",
       key: "GPT_API_KEY",
       targetGroup: "Database",
     });
+  });
+
+  it("exposes move and delete as labelled icon buttons", () => {
+    const { container } = render(
+      <VariableRow
+        projectId="demo"
+        file="fixture-one"
+        variable={{
+          key: "GPT_API_KEY",
+          description: [],
+          valueState: "present",
+          displayValue: null,
+          codexAccess: "protected",
+          linkedCount: 1,
+          linkId: null,
+          linkedFiles: [],
+          duplicate: false,
+          clientExposure: null,
+          hasGuide: false,
+        }}
+        currentGroup="GPT"
+        groups={["GPT", "App"]}
+        sameKeyFiles={["fixture-one"]}
+        onMutate={vi.fn()}
+        onLink={vi.fn()}
+      />,
+    );
+
+    // The text labels became icons, so the accessible name must carry the meaning.
+    expect(screen.getByRole("button", { name: "Move to another group" }).querySelector("svg")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Delete the variable and its description above" }).querySelector("svg"),
+    ).toBeInTheDocument();
+    expect(container.textContent).not.toContain("Move to another group");
   });
 });

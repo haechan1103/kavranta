@@ -1,6 +1,8 @@
 import "./Modal.css";
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from "react";
+
 import { useI18n } from "../i18n";
+import { CloseIcon } from "./icons";
 
 interface Props {
   title: string;
@@ -92,7 +94,9 @@ export function Modal({ title, description, children, onClose, className }: Prop
             <h2 id={titleId}>{title}</h2>
             {description && <p id={descriptionId}>{description}</p>}
           </div>
-          <button className="icon-button" aria-label={t("modal.close")} onClick={onClose}>×</button>
+          <button className="icon-button modal-close-button" aria-label={t("modal.close")} onClick={onClose}>
+            <CloseIcon />
+          </button>
         </header>
         {children}
       </section>

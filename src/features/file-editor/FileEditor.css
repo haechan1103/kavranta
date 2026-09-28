@@ -68,74 +68,116 @@
   gap: 14px;
 }
 
+/* The search field and the empty-value filter are separate cards, not one shared
+   container, so each can be read and clicked on its own. */
 .file-filter-bar {
   display: flex;
-  min-height: 42px;
-  align-items: center;
+  align-items: stretch;
   flex-wrap: wrap;
-  gap: 11px;
+  gap: 10px;
   margin: 0 0 14px;
-  padding: 6px 8px;
-  background: #f3f6f4;
-  border: 1px solid var(--line);
-  border-radius: 10px;
 }
 
 .file-search {
   flex: 1 1 180px;
   min-width: 130px;
-  padding: 8px 10px;
+  min-height: 46px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
-  border-radius: 7px;
+  border-radius: 10px;
   background: var(--panel);
   color: var(--ink);
   font: inherit;
   font-size: calc(10px * var(--font-scale));
+  box-shadow: 0 1px 2px rgba(24, 42, 35, 0.03);
+}
+
+.file-search:focus-visible {
+  border-color: #8fc3ad;
+  box-shadow: 0 0 0 3px rgba(22, 118, 90, 0.12);
 }
 
 .file-filter-toggle {
-  display: inline-flex;
-  min-height: 28px;
+  display: flex;
+  min-width: 216px;
+  min-height: 46px;
   align-items: center;
-  gap: 8px;
-  padding: 0 10px;
+  gap: 10px;
+  padding: 5px 10px;
   color: #4f5d57;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 7px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(24, 42, 35, 0.03);
   cursor: pointer;
-  font-size: calc(9px * var(--font-scale));
+  text-align: left;
+}
+
+.file-filter-toggle-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 8px;
+  color: #6d7a74;
+  background: #f1f4f2;
+}
+
+.file-filter-toggle-icon .ui-svg {
+  width: 17px;
+  height: 17px;
+}
+
+.file-filter-toggle-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.file-filter-toggle-copy strong {
+  font-size: calc(9.5px * var(--font-scale));
   font-weight: 750;
 }
 
-.file-filter-toggle:hover:not(:disabled) {
-  color: var(--green);
-  background: white;
-  border-color: #c9ddd4;
-}
-
-.file-filter-toggle.active {
-  color: #126c51;
-  background: white;
-  border-color: #aad8c6;
-  box-shadow: 0 2px 7px rgba(22, 118, 90, 0.08);
-}
-
-.file-filter-toggle strong {
-  display: grid;
-  min-width: 18px;
-  height: 18px;
-  place-items: center;
-  padding: 0 5px;
-  color: inherit;
-  background: rgba(22, 118, 90, 0.1);
-  border-radius: 9px;
+.file-filter-toggle-copy small {
+  color: var(--muted);
   font-size: calc(8px * var(--font-scale));
 }
 
-.file-filter-result {
+.file-filter-toggle-state {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border-radius: 999px;
   color: var(--muted);
-  font-size: calc(9px * var(--font-scale));
+  background: #f1f4f2;
+  font-size: calc(7.5px * var(--font-scale));
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.file-filter-toggle:hover:not(:disabled) {
+  border-color: #9ec4b3;
+}
+
+/* Active has to be unmistakable: filled surface, tinted icon, green state pill. */
+.file-filter-toggle.active {
+  color: #0f5a44;
+  background: #eef7f2;
+  border-color: #6fbc9c;
+  box-shadow: 0 2px 10px rgba(22, 118, 90, 0.16);
+}
+
+.file-filter-toggle.active .file-filter-toggle-icon {
+  color: #ffffff;
+  background: #16765a;
+}
+
+.file-filter-toggle.active .file-filter-toggle-state {
+  color: #ffffff;
+  background: #16765a;
 }
 
 .file-filter-empty {

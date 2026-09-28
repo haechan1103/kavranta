@@ -428,8 +428,7 @@ export type ExposureKind =
   | "aws-credentials"
   | "mcp-config"
   | "google-services"
-  | "shell-history"
-  | "agent-transcript";
+  | "shell-history";
 
 export type ExposureSeverity = "certain" | "likely" | "possible";
 

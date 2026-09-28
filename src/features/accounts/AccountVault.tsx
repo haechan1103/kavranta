@@ -79,7 +79,6 @@ export function AccountVault({ projectId, projectName, onError, onNotice }: Prop
     <section className="account-vault page-stack">
       <header className="account-vault-heading">
         <div>
-          <p className="eyebrow">LOCAL · OS PROTECTED</p>
           <h2>{t("accounts.title")}</h2>
           <p>{t("accounts.subtitle")}</p>
         </div>

@@ -40,7 +40,6 @@ pub enum ExposureKind {
     McpConfig,
     GoogleServices,
     ShellHistory,
-    AgentTranscript,
 }
 
 impl ExposureKind {
@@ -57,7 +56,6 @@ impl ExposureKind {
             Self::McpConfig => "mcp-config",
             Self::GoogleServices => "google-services",
             Self::ShellHistory => "shell-history",
-            Self::AgentTranscript => "agent-transcript",
         }
     }
 }
