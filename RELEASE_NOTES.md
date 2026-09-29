@@ -1,4 +1,4 @@
-# Kavranta 0.7.16 — Clearer row actions, filters, and a calmer exposure scan
+# Kavranta 0.7.17 — Clearer row actions, filters, and a calmer exposure scan
 
 - Move and delete are now icon buttons with a comfortable target, and the close
   control in every dialog is a real icon with a larger hit area. The labels you
@@ -33,7 +33,7 @@ background network access, sends nothing anywhere, and no value readback.
 
 ---
 
-# Kavranta 0.7.16 — 행 액션과 필터 정리, 노이즈 줄인 노출 스캔
+# Kavranta 0.7.17 — 행 액션과 필터 정리, 노이즈 줄인 노출 스캔
 
 - 이동과 삭제를 아이콘 버튼으로 바꾸고, 모든 대화상자의 닫기 버튼을 더 큰
   아이콘과 넓은 클릭 영역으로 교체했습니다. 스크린리더와 툴팁용 이름은 그대로
