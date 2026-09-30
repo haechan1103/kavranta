@@ -100,12 +100,18 @@ pub(super) fn install_at(
     validate_source(source, broker)?;
     let state = mcp_configuration_state_at(root, broker, app_data)?;
     let owns_existing_bundle = installed_bundle_is_official_at(root);
-    if state == McpConfigurationState::Conflict
-        || (state == McpConfigurationState::OwnedStale && !owns_existing_bundle)
-    {
+    if state == McpConfigurationState::Conflict {
+        // Reachable only when a kavranta entry exists that Kavranta did not author,
+        // which is a real hand-written configuration rather than a duplicate.
         return Err(IntegrationError {
             code: "OPENCODE_CONFIGURATION_CONFLICT",
-            message: "같은 이름의 다른 OpenCode 연결이 있어 덮어쓰지 않았습니다. OpenCode 전역 설정에서 kavranta MCP 항목을 확인해주세요.",
+            message: "Kavranta가 쓰지 않은 kavranta MCP 항목이 있어 덮어쓰지 않았습니다. opencode.json 또는 opencode.jsonc의 kavranta 항목을 확인해주세요.",
+        });
+    }
+    if state == McpConfigurationState::OwnedStale && !owns_existing_bundle {
+        return Err(IntegrationError {
+            code: "OPENCODE_CONFIGURATION_CONFLICT",
+            message: "설치된 OpenCode 구성이 Kavranta 것이어서 연결을 덮어쓰지 않았습니다. 기존 구성을 제거한 뒤 다시 설치해주세요.",
         });
     }
     install_managed_files_at(source, root, broker)?;
@@ -196,13 +202,41 @@ pub(super) fn mcp_configuration_state_at(
     if entries.is_empty() {
         return Ok(McpConfigurationState::Missing);
     }
-    if entries.len() == 1 && mcp_entry_is_current(&entries[0], broker, app_data) {
+    // Ownership is decided from entry content, never from how many entries exist.
+    // `opencode.json` and `opencode.jsonc` are both valid OpenCode config names and
+    // both can carry a kavranta entry, so a second Kavranta entry is stronger
+    // evidence that the entries are ours, not weaker. A count-based check made the
+    // state escalate to Conflict on exactly the configurations it should trust, and
+    // because Conflict refuses to touch either file, repair could never resolve it.
+    if !entries.iter().all(mcp_entry_is_owned) {
+        return Ok(McpConfigurationState::Conflict);
+    }
+    // OpenCode reads one of the two files, so one already-current owned entry means
+    // the host is configured correctly. Repairing the rest is not required, and a
+    // sibling file left behind by an earlier repair must not keep the integration in
+    // a repair loop.
+    if entries
+        .iter()
+        .any(|entry| mcp_entry_is_current(entry, broker, app_data))
+    {
         return Ok(McpConfigurationState::Current);
     }
-    if entries.len() == 1 && entries.iter().all(mcp_entry_is_owned) {
-        return Ok(McpConfigurationState::OwnedStale);
-    }
-    Ok(McpConfigurationState::Conflict)
+    Ok(McpConfigurationState::OwnedStale)
+}
+
+/// Config file names holding a kavranta entry that Kavranta did not author. Test-only:
+/// `IntegrationError::message` is a `&'static str`, so the conflict text cannot embed
+/// file names without changing the error type across every integration.
+#[cfg(test)]
+pub(super) fn foreign_entry_config_names(root: &Path) -> Vec<&'static str> {
+    let Ok(entries) = mcp_entries_with_names(root) else {
+        return Vec::new();
+    };
+    entries
+        .into_iter()
+        .filter(|(_, entry)| !mcp_entry_is_owned(entry))
+        .map(|(name, _)| name)
+        .collect()
 }
 
 pub(super) fn mcp_add_args(broker: &Path, app_data: &Path) -> Vec<OsString> {
@@ -296,9 +330,20 @@ fn installed_files_are_current_at(root: &Path, broker: &Path) -> bool {
         && !guard.contains("__KAVRANTA_BROKER_PATH__")
 }
 
+/// Both valid OpenCode config names, scanned together because either may hold a
+/// kavranta entry.
+const CONFIG_NAMES: [&str; 2] = ["opencode.json", "opencode.jsonc"];
+
 fn mcp_entries(root: &Path) -> Result<Vec<Value>, IntegrationError> {
+    Ok(mcp_entries_with_names(root)?
+        .into_iter()
+        .map(|(_, entry)| entry)
+        .collect())
+}
+
+fn mcp_entries_with_names(root: &Path) -> Result<Vec<(&'static str, Value)>, IntegrationError> {
     let mut entries = Vec::new();
-    for name in ["opencode.json", "opencode.jsonc"] {
+    for name in CONFIG_NAMES {
         let path = root.join(name);
         if !path.exists() {
             continue;
@@ -315,7 +360,7 @@ fn mcp_entries(root: &Path) -> Result<Vec<Value>, IntegrationError> {
                 return Err(invalid_config_error());
             };
             if let Some(entry) = mcp.get(MCP_SERVER_NAME) {
-                entries.push(entry.clone());
+                entries.push((name, entry.clone()));
             }
         }
     }
