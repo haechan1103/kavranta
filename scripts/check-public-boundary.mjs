@@ -31,19 +31,33 @@ const blockedBasenames = new Set([
   "service-account.json",
 ]);
 
-const credentialPatterns = [
-  ["private-key-pem", /-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----/],
-  ["age-secret-key", /AGE-SECRET-KEY-1[0-9A-Z]{20,}/],
-  ["github-token", /\bgh[pousr]_[A-Za-z0-9_]{30,}\b/],
-  ["aws-access-key", /\bAKIA[0-9A-Z]{16}\b/],
-  ["google-api-key", /\bAIza[0-9A-Za-z_-]{30,}\b/],
-  ["openai-api-key", /\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b/],
-  ["anthropic-api-key", /\bsk-ant-[A-Za-z0-9_-]{20,}\b/],
-  ["slack-token", /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/],
-  ["stripe-secret-key", /\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{20,}\b/],
-  ["npm-token", /\bnpm_[A-Za-z0-9]{30,}\b/],
-  ["gitlab-token", /\bglpat-[A-Za-z0-9_-]{20,}\b/],
-];
+// Secret shapes live in one place so the runtime detector and this boundary scan can
+// never drift apart. The catalog is a constrained matcher spec, not a regex, so the Rust
+// side needs no regex engine and the data file cannot carry a backtracking pattern.
+const secretPatternCatalog = JSON.parse(
+  readFileSync("config/secret-patterns.json", "utf8"),
+);
+
+/** Compile one catalog rule into an equivalent RegExp for this scanner. */
+function ruleToRegExp(rule) {
+  const body = rule.segments
+    .map((segment) =>
+      "literal" in segment
+        ? escapeRegExp(segment.literal)
+        : `[${escapeRegExp(secretPatternCatalog.charsets[segment.run])}]{${segment.min},${segment.max}}`,
+    )
+    .join("");
+  return new RegExp(body, "g");
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&");
+}
+
+const credentialPatterns = secretPatternCatalog.rules.map((rule) => [
+  rule.id,
+  ruleToRegExp(rule),
+]);
 
 function classifyPath(normalized) {
   const basename = path.posix.basename(normalized).toLowerCase();
@@ -67,7 +81,10 @@ function classifyPath(normalized) {
 
 function credentialRules(content) {
   return credentialPatterns
-    .filter(([, pattern]) => pattern.test(content))
+    .filter(([, pattern]) => {
+      pattern.lastIndex = 0;
+      return pattern.test(content);
+    })
     .map(([rule]) => rule);
 }
 

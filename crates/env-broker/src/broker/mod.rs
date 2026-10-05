@@ -5,6 +5,7 @@ pub(super) mod guard;
 mod plan;
 mod project_tools;
 mod provider_tools;
+mod secret_advice;
 mod secret_input;
 pub(super) mod tool_schema;
 

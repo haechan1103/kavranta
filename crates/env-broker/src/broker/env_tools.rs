@@ -1,4 +1,5 @@
 use super::super::*;
+use super::secret_advice;
 
 impl Broker {
     pub(super) fn read_allowed(&self, args: ValueArgs) -> Result<Value, EnvError> {
@@ -121,7 +122,10 @@ impl Broker {
                 file: args.file.clone(),
                 name: args.name.clone(),
             }),
-            format!("{} 그룹을 만듭니다.", args.name),
+            secret_advice::secret_warning(
+                &format!("{} 그룹을 만듭니다.", args.name),
+                &[("그룹명", args.name.as_str())],
+            ),
             vec![args.file],
             Vec::new(),
             "structural-write",
@@ -179,9 +183,14 @@ impl Broker {
             PlannedOperation::UpdateDescription(SaveDescriptionRequest {
                 file: args.file.clone(),
                 key: args.key.clone(),
-                lines: args.lines,
+                lines: args.lines.clone(),
             }),
-            format!("{} 변수 설명을 변경합니다.", args.key),
+            secret_advice::secret_warning(
+                &format!("{} 변수 설명을 변경합니다.", args.key),
+                &std::iter::once(("변수명", args.key.as_str()))
+                    .chain(args.lines.iter().map(|line| ("설명", line.as_str())))
+                    .collect::<Vec<_>>(),
+            ),
             vec![args.file],
             vec![args.key],
             "structural-write",

@@ -1,5 +1,6 @@
 use super::super::*;
 use super::project_tools::load_registry_data;
+use super::secret_advice;
 use env_core::DeploymentTarget;
 
 impl Broker {
@@ -69,7 +70,10 @@ impl Broker {
         let summary = if removing {
             format!("{}의 가이드를 제거합니다.", args.key)
         } else {
-            format!("{}의 가이드를 저장합니다.", args.key)
+            secret_advice::secret_warning(
+                &format!("{}의 가이드를 저장합니다.", args.key),
+                &[("가이드", args.markdown.as_deref().unwrap_or_default())],
+            )
         };
         self.store_plan(
             &service,

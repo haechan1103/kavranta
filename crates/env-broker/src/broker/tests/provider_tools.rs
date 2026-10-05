@@ -744,6 +744,109 @@ fn a_recorded_destination_is_reused_but_the_push_is_still_separate() {
     }
 }
 
+/// A pasted value in descriptive metadata is the realistic leak: it needs no adversary,
+/// and it would be stored in the manifest, rendered, and eligible for a commit.
+///
+/// The advice must reach the user in the one string they already read before approving a
+/// mutation, and it must never turn the write into a failure.
+#[test]
+fn a_pasted_value_warns_in_the_plan_summary_and_still_applies() {
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+    let pasted = format!("sk-proj-{}", "f4ke".repeat(6));
+
+    let plan = broker
+        .call_tool(
+            "plan_set_variable_guide",
+            json!({
+                "projectPath": project.root(),
+                "key": "GPT_API_KEY",
+                "markdown": format!("Paste this into the console: {pasted}")
+            }),
+        )
+        .expect("a value-shaped guide must still be plannable");
+    let summary = plan["summary"].as_str().expect("summary");
+    assert!(
+        summary.contains("openai-api-key"),
+        "the user must see which rule matched, got: {summary}"
+    );
+    // The plan must not quote the pasted span back to the caller.
+    assert!(!summary.contains(&pasted), "summary echoed the value");
+
+    broker
+        .call_tool(
+            "apply_plan",
+            json!({ "planId": plan["planId"].as_str().expect("plan id") }),
+        )
+        .expect("apply must not be blocked by advice");
+    let guide = std::fs::read_to_string(service.root().join(".env-manager/guides/GPT_API_KEY.md"))
+        .expect("guide written");
+    assert!(
+        guide.contains(&pasted),
+        "the user owns the text and it was saved"
+    );
+}
+
+/// Ordinary Korean and English descriptions must not produce a warning, or the advice
+/// becomes noise the user learns to ignore.
+#[test]
+fn ordinary_descriptions_produce_no_advice() {
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+
+    let plan = broker
+        .call_tool(
+            "plan_set_variable_guide",
+            json!({
+                "projectPath": project.root(),
+                "key": "GPT_API_KEY",
+                "markdown": "OpenAI 콘솔의 API Keys 화면에서 발급합니다."
+            }),
+        )
+        .expect("plan");
+    assert!(
+        !plan["summary"].as_str().expect("summary").contains("⚠"),
+        "clean text must not warn: {}",
+        plan["summary"]
+    );
+}
+
+/// A value pasted into a group name or a description is the same accident in the other
+/// write paths, so the advice covers them too.
+#[test]
+fn value_shaped_group_names_and_descriptions_also_warn() {
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+    let pasted = format!("AKIA{}", "F4KE".repeat(4));
+
+    let group = broker
+        .call_tool(
+            "plan_create_group",
+            json!({ "projectPath": project.root(), "file": ".env", "name": format!("prod-{pasted}") }),
+        )
+        .expect("a value-shaped group name must still be plannable");
+    assert!(
+        group["summary"]
+            .as_str()
+            .expect("summary")
+            .contains("aws-access-key"),
+        "group name advice missing: {}",
+        group["summary"]
+    );
+}
+
 /// A destination field the provider does not support is refused when recorded, so a typo
 /// fails here instead of at push time.
 #[test]
