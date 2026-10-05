@@ -217,7 +217,7 @@ pub fn tool_definitions() -> Value {
             json!({
                 "type": "object", "properties": {
                     "projectPath": { "type": "string" },
-                    "deep": { "type": "boolean", "default": false, "description": "Also check known home, shell-history, global MCP config, and agent session transcript paths." }
+                    "deep": { "type": "boolean", "default": false, "description": "Also check known home, shell-history, and global MCP config paths." }
                 }, "required": ["projectPath"], "additionalProperties": false
             })
         ),
@@ -232,6 +232,27 @@ pub fn tool_definitions() -> Value {
                     "markdown": { "type": "string", "maxLength": 65536 }
                 },
                 "required": ["projectPath", "key"],
+                "additionalProperties": false
+            })
+        ),
+        tool(
+            "plan_record_deployment_target",
+            "Plan recording where this registered project deploys, so a later provider push can reuse the destination without the user restating it. Stores destination metadata only (provider, label, repository, environment, worker, EAS project and environments, AWS profile/region/path prefix) and never a value. Recording a destination does not push anything; it only supplies the where, never the whether. Replaces any existing target for the same provider.",
+            json!({
+                "type": "object",
+                "properties": {
+                    "projectPath": { "type": "string" },
+                    "provider": { "type": "string", "description": "Official provider id such as github-actions, cloudflare-workers, expo-eas, aws-secrets-manager, or aws-ssm-parameter-store." },
+                    "label": { "type": "string", "description": "Short user-facing name for this target, such as staging or production." },
+                    "repository": { "type": "string", "description": "GitHub repository in owner/name form. Required for github-actions." },
+                    "environment": { "type": "string", "description": "GitHub Actions environment name. github-actions only." },
+                    "worker": { "type": "string", "description": "Cloudflare Worker name. cloudflare-workers only." },
+                    "easProject": { "type": "string", "description": "Expo EAS project id. expo-eas only." },
+                    "easEnvironments": { "type": "array", "items": { "type": "string" }, "description": "Expo EAS environments. expo-eas only." },
+                    "awsProfile": { "type": "string", "description": "AWS profile name. AWS providers only." },
+                    "awsRegion": { "type": "string", "description": "AWS Region. AWS providers only." },
+                    "awsPathPrefix": { "type": "string", "description": "Secret or parameter path prefix. AWS providers only." }
+                }, "required": ["projectPath", "provider"],
                 "additionalProperties": false
             })
         ),

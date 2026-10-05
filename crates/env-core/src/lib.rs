@@ -40,14 +40,14 @@ pub use guide::{
     read_guide_attachment, remove_guide, write_guide,
 };
 pub use manifest::{
-    AllowedExposureFinding, ClassificationSource, CodexAccess, ExposureConfig, LinkGroup,
-    LinkMember, MANAGED_DIR_NAME, MANIFEST_FILE_NAME, Manifest, ManifestStore, VariablePolicy,
-    validate_display_name,
+    AllowedExposureFinding, ClassificationSource, CodexAccess, DeploymentConfig, DeploymentTarget,
+    ExposureConfig, LinkGroup, LinkMember, MANAGED_DIR_NAME, MANIFEST_FILE_NAME, Manifest,
+    ManifestStore, VariablePolicy, validate_display_name,
 };
 pub use migration::{MigrationPlan, MigrationPreview, MigrationSuggestion};
 pub use model::{
-    ClassificationReviewProjection, ClassificationReviewReason, FileProjection, GroupProjection,
-    OccurrenceProjection, ProjectProjection, RedactedValueState,
+    ClassificationReviewProjection, ClassificationReviewReason, DeploymentTargetProjection,
+    FileProjection, GroupProjection, OccurrenceProjection, ProjectProjection, RedactedValueState,
 };
 pub use parser::{AssignmentRef, Document, NewlineStyle, Node, Span};
 pub use policy::{

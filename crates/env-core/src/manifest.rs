@@ -55,6 +55,65 @@ pub struct ScanConfig {
     pub ignored_directories: Vec<String>,
 }
 
+/// Where this project deploys. Structure and policy only: no field here can hold a
+/// value. A recorded target supplies *where*, never *whether*; see ADR-0037.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeploymentConfig {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub targets: Vec<DeploymentTarget>,
+}
+
+/// One recorded deployment destination. Destination fields are all optional at the type
+/// level and are validated against the provider catalog's capabilities when recorded, so
+/// an unsupported field is rejected instead of silently accepted.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeploymentTarget {
+    pub provider: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repository: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub environment: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub worker: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub eas_project: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub eas_environments: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aws_profile: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aws_region: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aws_path_prefix: Option<String>,
+}
+
+impl DeploymentTarget {
+    /// Value-free description used by the agent projection and by plan summaries.
+    pub fn describe(&self) -> String {
+        let place = [
+            self.repository.as_deref(),
+            self.environment.as_deref(),
+            self.worker.as_deref(),
+            self.eas_project.as_deref(),
+            self.aws_region.as_deref(),
+        ]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
+        .join(" · ");
+        match self.label.as_deref().filter(|label| !label.is_empty()) {
+            Some(label) if place.is_empty() => format!("{} ({label})", self.provider),
+            Some(label) => format!("{} · {place} ({label})", self.provider),
+            None if place.is_empty() => self.provider.clone(),
+            None => format!("{} · {place}", self.provider),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AllowedExposureFinding {
@@ -77,6 +136,8 @@ pub struct Manifest {
     pub version: u32,
     #[serde(default)]
     pub scan: ScanConfig,
+    #[serde(default, skip_serializing_if = "DeploymentConfig::is_empty")]
+    pub deployment: DeploymentConfig,
     #[serde(default)]
     pub exposure: ExposureConfig,
     #[serde(default)]
@@ -98,12 +159,30 @@ impl Default for Manifest {
         Self {
             version: 1,
             scan: ScanConfig::default(),
+            deployment: DeploymentConfig::default(),
             exposure: ExposureConfig::default(),
             variables: BTreeMap::new(),
             links: Vec::new(),
             guides: BTreeMap::new(),
             file_labels: BTreeMap::new(),
         }
+    }
+}
+
+impl DeploymentConfig {
+    pub fn is_empty(&self) -> bool {
+        self.targets.is_empty()
+    }
+
+    /// The single target for `provider` when it is unambiguous. More than one match means
+    /// the caller must choose rather than let the app pick.
+    pub fn only_for(&self, provider: &str) -> Option<&DeploymentTarget> {
+        let mut matching = self
+            .targets
+            .iter()
+            .filter(|target| target.provider == provider);
+        let first = matching.next()?;
+        matching.next().is_none().then_some(first)
     }
 }
 

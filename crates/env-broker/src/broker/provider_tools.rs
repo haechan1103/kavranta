@@ -1,5 +1,6 @@
 use super::super::*;
 use super::project_tools::load_registry_data;
+use env_core::DeploymentTarget;
 
 impl Broker {
     pub(super) fn list_deployment_providers(
@@ -18,6 +19,39 @@ impl Broker {
             "OK",
         );
         serde_json::to_value(providers).map_err(EnvError::serialization)
+    }
+
+    /// Record where this project deploys so a later push can reuse it without the user
+    /// restating the destination. Stores destination metadata only. Validation against the
+    /// provider catalog lives in `env-provider`; `env-core` stays catalog-independent.
+    pub(super) fn plan_record_deployment_target(
+        &self,
+        args: PlanRecordDeploymentTargetArgs,
+    ) -> Result<Value, EnvError> {
+        let service = self.open_registered(&args.project_path)?;
+        let target = DeploymentTarget {
+            provider: args.provider,
+            label: args.label,
+            repository: args.repository,
+            environment: args.environment,
+            worker: args.worker,
+            eas_project: args.eas_project,
+            eas_environments: args.eas_environments,
+            aws_profile: args.aws_profile,
+            aws_region: args.aws_region,
+            aws_path_prefix: args.aws_path_prefix,
+        };
+        env_provider::provider_push::validate_recorded_target(&target)?;
+        let summary = target.describe();
+        self.store_plan(
+            &service,
+            PlannedOperation::RecordDeploymentTarget { target },
+            format!("이 프로젝트의 배포 대상을 기록합니다: {summary}"),
+            Vec::new(),
+            Vec::new(),
+            "deployment-target-record",
+            None,
+        )
     }
 
     pub(super) fn plan_set_variable_guide(
@@ -172,29 +206,66 @@ impl Broker {
         if unique.len() != keys.len() {
             return Err(EnvError::invalid("같은 변수를 중복 선택할 수 없습니다."));
         }
-        let destination = if args.provider == "expo-eas" {
-            match args.eas_project.as_deref() {
-                Some(project) => format!("{project} [{}]", args.eas_environments.join(", ")),
-                None => "대상 미지정".to_owned(),
-            }
-        } else {
-            args.provider.clone()
-        };
+        // A recorded target supplies the destination the caller omitted. It is used only
+        // when exactly one target exists for the requested provider, so an ambiguous
+        // project still forces the caller to name one. The recorded destination is filled
+        // into the plan summary so the user reviews it before apply; recording never
+        // authorizes a push on its own.
+        let recorded = service.recorded_deployment_target(&args.provider)?;
         let request = ProviderPushRequest {
             provider: args.provider.clone(),
             file: args.file.clone(),
             selections: args.selections,
-            repository: args.repository,
-            github_environment: args.github_environment,
-            worker: args.worker,
-            cloudflare_environment: args.cloudflare_environment,
-            eas_project: args.eas_project,
-            eas_environments: args.eas_environments,
-            personal_target: args.personal_target,
-            aws_profile: args.aws_profile,
-            aws_region: args.aws_region,
-            aws_path_prefix: args.aws_path_prefix,
-            aws_kms_key_id: args.aws_kms_key_id,
+            repository: args
+                .repository
+                .clone()
+                .or_else(|| recorded.as_ref().and_then(|t| t.repository.clone())),
+            github_environment: args
+                .github_environment
+                .clone()
+                .or_else(|| recorded.as_ref().and_then(|t| t.environment.clone())),
+            worker: args
+                .worker
+                .clone()
+                .or_else(|| recorded.as_ref().and_then(|t| t.worker.clone())),
+            cloudflare_environment: args.cloudflare_environment.clone(),
+            eas_project: args
+                .eas_project
+                .clone()
+                .or_else(|| recorded.as_ref().and_then(|t| t.eas_project.clone())),
+            eas_environments: if args.eas_environments.is_empty() {
+                recorded
+                    .as_ref()
+                    .map(|t| t.eas_environments.clone())
+                    .unwrap_or_default()
+            } else {
+                args.eas_environments.clone()
+            },
+            personal_target: args.personal_target.clone(),
+            aws_profile: args
+                .aws_profile
+                .clone()
+                .or_else(|| recorded.as_ref().and_then(|t| t.aws_profile.clone())),
+            aws_region: args
+                .aws_region
+                .clone()
+                .or_else(|| recorded.as_ref().and_then(|t| t.aws_region.clone())),
+            aws_path_prefix: args
+                .aws_path_prefix
+                .clone()
+                .or_else(|| recorded.as_ref().and_then(|t| t.aws_path_prefix.clone())),
+            aws_kms_key_id: args.aws_kms_key_id.clone(),
+        };
+        let destination = if request.provider == "expo-eas" {
+            match request.eas_project.as_deref() {
+                Some(project) => format!("{project} [{}]", request.eas_environments.join(", ")),
+                None => "대상 미지정".to_owned(),
+            }
+        } else {
+            recorded.as_ref().map_or_else(
+                || request.provider.clone(),
+                env_core::DeploymentTarget::describe,
+            )
         };
         self.store_plan(
             &service,

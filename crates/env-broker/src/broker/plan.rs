@@ -169,6 +169,9 @@ impl Broker {
                         serde_json::to_value(result).map_err(EnvError::serialization)
                     })
             }
+            PlannedOperation::RecordDeploymentTarget { target } => {
+                serialize_result(service.record_deployment_target(target))
+            }
             PlannedOperation::SetVariableGuide { key, markdown } => match markdown {
                 Some(text) if !text.trim().is_empty() => {
                     serialize_result(service.save_variable_guide(&key, &text))
