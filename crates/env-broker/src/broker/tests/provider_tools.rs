@@ -769,13 +769,18 @@ fn a_pasted_value_warns_in_the_plan_summary_and_still_applies() {
             }),
         )
         .expect("a value-shaped guide must still be plannable");
-    let summary = plan["summary"].as_str().expect("summary");
-    assert!(
-        summary.contains("openai-api-key"),
-        "the user must see which rule matched, got: {summary}"
-    );
-    // The plan must not quote the pasted span back to the caller.
-    assert!(!summary.contains(&pasted), "summary echoed the value");
+    // The summary may hold text the user pasted, so it is never interpolated into a failure
+    // message: a failing assertion would print it to CI logs.
+    let warned = plan["summary"]
+        .as_str()
+        .expect("summary")
+        .contains("openai-api-key");
+    assert!(warned, "the summary must name the rule that matched");
+    let echoed = plan["summary"]
+        .as_str()
+        .expect("summary")
+        .contains(pasted.as_str());
+    assert!(!echoed, "the summary must not echo the pasted value");
 
     broker
         .call_tool(
@@ -812,11 +817,8 @@ fn ordinary_descriptions_produce_no_advice() {
             }),
         )
         .expect("plan");
-    assert!(
-        !plan["summary"].as_str().expect("summary").contains("⚠"),
-        "clean text must not warn: {}",
-        plan["summary"]
-    );
+    let warned = plan["summary"].as_str().expect("summary").contains("⚠");
+    assert!(!warned, "ordinary Korean must not produce advice");
 }
 
 /// A value pasted into a group name or a description is the same accident in the other
@@ -837,14 +839,11 @@ fn value_shaped_group_names_and_descriptions_also_warn() {
             json!({ "projectPath": project.root(), "file": ".env", "name": format!("prod-{pasted}") }),
         )
         .expect("a value-shaped group name must still be plannable");
-    assert!(
-        group["summary"]
-            .as_str()
-            .expect("summary")
-            .contains("aws-access-key"),
-        "group name advice missing: {}",
-        group["summary"]
-    );
+    let warned = group["summary"]
+        .as_str()
+        .expect("summary")
+        .contains("aws-access-key");
+    assert!(warned, "a value-shaped group name must be advised");
 }
 
 /// A destination field the provider does not support is refused when recorded, so a typo
