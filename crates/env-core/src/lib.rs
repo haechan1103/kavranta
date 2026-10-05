@@ -13,6 +13,7 @@ mod parser;
 mod policy;
 mod provider_push;
 mod secret_input;
+pub mod secrets;
 mod service;
 mod team_import;
 mod transaction;
@@ -59,6 +60,7 @@ pub use secret_input::{
     SECRET_INPUT_SOCKET_FILE, SecretInputEntry, SecretInputOutcome, SecretInputRequest,
     SecretInputResponse, SecretInputResult, secret_input_socket_path,
 };
+pub use secrets::{SecretFinding, check_scannable, detect, redact, warning};
 pub use service::{
     AddVariableRequest, CreateEnvFileRequest, CreateGroupRequest, DeleteVariableRequest,
     LinkRequest, MoveVariableRequest, MutationSummary, OpaqueValueCopyRequest,
