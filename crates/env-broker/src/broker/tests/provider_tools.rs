@@ -615,3 +615,204 @@ fn runtime_target_listing_omits_destination_recipient_and_remote_path() {
     assert!(!serialized.contains("age1"));
     assert!(!serialized.contains("server-mobile-ok-dev"));
 }
+
+/// ADR-0037: a recorded destination reaches the host through `inspect_project`, which the
+/// workflow already calls before any mutation, so it can name the target instead of
+/// guessing. It must never carry a value.
+#[test]
+fn recorded_deployment_target_is_reported_and_value_free() {
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+
+    // An unconfigured project reports nothing, so a host has nothing to infer from and no
+    // reason to offer a provider the project does not use.
+    let before = broker
+        .call_tool("inspect_project", json!({ "projectPath": project.root() }))
+        .expect("inspect before");
+    assert!(
+        before.get("deploymentTargets").is_none(),
+        "an unconfigured project must not report a deployment section"
+    );
+
+    let plan = broker
+        .call_tool(
+            "plan_record_deployment_target",
+            json!({
+                "projectPath": project.root(),
+                "provider": "github-actions",
+                "label": "staging",
+                "repository": "haechan1103/app",
+                "environment": "staging"
+            }),
+        )
+        .expect("plan record");
+    assert!(
+        plan["summary"]
+            .as_str()
+            .expect("summary")
+            .contains("haechan1103/app"),
+        "the plan names the destination so the user reviews it before it is stored"
+    );
+    broker
+        .call_tool(
+            "apply_plan",
+            json!({ "planId": plan["planId"].as_str().expect("plan id") }),
+        )
+        .expect("apply record");
+
+    let after = broker
+        .call_tool("inspect_project", json!({ "projectPath": project.root() }))
+        .expect("inspect after");
+    let targets = after["deploymentTargets"]
+        .as_array()
+        .expect("deployment targets");
+    assert_eq!(targets.len(), 1);
+    assert_eq!(targets[0]["provider"], "github-actions");
+    assert_eq!(targets[0]["label"], "staging");
+    assert_eq!(targets[0]["repository"], "haechan1103/app");
+    assert_eq!(targets[0]["environment"], "staging");
+
+    let serialized = serde_json::to_string(&after).expect("serialized projection");
+    assert!(
+        !serialized.contains(CANARY),
+        "a recorded target must never carry a value"
+    );
+}
+
+/// Recording supplies the where, never the whether. A push still needs its own plan and
+/// its own apply, and the reused destination must be visible in that plan for review.
+#[test]
+fn a_recorded_destination_is_reused_but_the_push_is_still_separate() {
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+
+    let record = broker
+        .call_tool(
+            "plan_record_deployment_target",
+            json!({
+                "projectPath": project.root(),
+                "provider": "github-actions",
+                "repository": "haechan1103/app",
+                "environment": "staging"
+            }),
+        )
+        .expect("plan record");
+    let record_id = record["planId"].as_str().expect("plan id").to_owned();
+    broker
+        .call_tool("apply_plan", json!({ "planId": record_id }))
+        .expect("apply record");
+
+    // Applying the record must not have produced a push.
+    let audit = std::fs::read_to_string(app_data.path().join("agent-activity").join("audit.jsonl"))
+        .unwrap_or_default();
+    assert!(
+        !audit.contains("opaque-provider-push"),
+        "recording a destination must not push anything by itself"
+    );
+
+    // A later push that omits its destination must resolve to the recorded one.
+    match broker.call_tool(
+        "plan_provider_push",
+        json!({
+            "projectPath": project.root(),
+            "file": ".env",
+            "provider": "github-actions",
+            "selections": [{ "key": "GPT_API_KEY", "kind": "secret" }]
+        }),
+    ) {
+        Ok(plan) => assert!(
+            plan["summary"]
+                .as_str()
+                .expect("summary")
+                .contains("haechan1103/app"),
+            "the reused destination must be named in the push plan the user reviews"
+        ),
+        // Refusing because the provider is unavailable on this machine is fine. Reading as
+        // an unspecified destination is not, because that is the silent-partial-job bug.
+        Err(error) => assert!(
+            !error.to_string().contains("대상 미지정"),
+            "a recorded destination must never read as unspecified: {error}"
+        ),
+    }
+}
+
+/// A destination field the provider does not support is refused when recorded, so a typo
+/// fails here instead of at push time.
+#[test]
+fn recording_refuses_an_unsupported_or_malformed_destination() {
+    let (project, service) = registered_project();
+    let app_data = tempfile::tempdir().expect("app data");
+    let broker = Broker::with_registered_roots_and_app_data(
+        vec![service.root().to_path_buf()],
+        app_data.path().to_path_buf(),
+    );
+
+    let cases = [
+        (
+            "cloudflare worker with a repository",
+            json!({
+                "projectPath": project.root(),
+                "provider": "cloudflare-workers",
+                "worker": "api",
+                "repository": "haechan1103/app"
+            }),
+        ),
+        (
+            "github without a repository",
+            json!({
+                "projectPath": project.root(),
+                "provider": "github-actions"
+            }),
+        ),
+        (
+            "github with a malformed repository slug",
+            json!({
+                "projectPath": project.root(),
+                "provider": "github-actions",
+                "repository": "not a valid slug!"
+            }),
+        ),
+        (
+            "an unknown provider",
+            json!({
+                "projectPath": project.root(),
+                "provider": "some-local-fake-provider"
+            }),
+        ),
+        (
+            "aws region on a github target",
+            json!({
+                "projectPath": project.root(),
+                "provider": "github-actions",
+                "repository": "haechan1103/app",
+                "awsRegion": "ap-northeast-2"
+            }),
+        ),
+    ];
+
+    for (case, arguments) in cases {
+        assert!(
+            broker
+                .call_tool("plan_record_deployment_target", arguments)
+                .is_err(),
+            "must refuse: {case}"
+        );
+    }
+
+    // A refused recording leaves nothing behind.
+    let inspect = broker
+        .call_tool("inspect_project", json!({ "projectPath": project.root() }))
+        .expect("inspect");
+    assert!(
+        inspect.get("deploymentTargets").is_none(),
+        "a refused recording must not persist a target"
+    );
+}

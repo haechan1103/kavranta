@@ -1,6 +1,6 @@
 {
   "name": "kavranta",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Safely inspect, plan, and manage registered project env files through a redacted local broker shared by AI coding agents.",
   "author": {
     "name": "haechan1103",
@@ -54,7 +54,7 @@
     ],
     "defaultPrompt": [
       "Inspect this project's env structure without reading values.",
-      "이 프로젝트의 환경변수 구조를 값 없이 점검해줘."
+      "\uc774 \ud504\ub85c\uc81d\ud2b8\uc758 \ud658\uacbd\ubcc0\uc218 \uad6c\uc870\ub97c \uac12 \uc5c6\uc774 \uc810\uac80\ud574\uc918."
     ],
     "brandColor": "#16765A"
   },

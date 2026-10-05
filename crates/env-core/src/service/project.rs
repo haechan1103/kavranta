@@ -152,6 +152,19 @@ impl ProjectService {
             classification_review,
             access_review_count,
             client_exposure_count,
+            deployment_targets: manifest
+                .deployment
+                .targets
+                .iter()
+                .map(|target| DeploymentTargetProjection {
+                    provider: target.provider.clone(),
+                    label: target.label.clone(),
+                    repository: target.repository.clone(),
+                    environment: target.environment.clone(),
+                    worker: target.worker.clone(),
+                    summary: target.describe(),
+                })
+                .collect(),
         })
     }
 

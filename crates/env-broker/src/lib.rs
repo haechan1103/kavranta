@@ -87,6 +87,9 @@ enum PlannedOperation {
         key: String,
         markdown: Option<String>,
     },
+    RecordDeploymentTarget {
+        target: env_core::DeploymentTarget,
+    },
 }
 
 #[derive(Debug, Serialize)]
@@ -316,6 +319,23 @@ struct PlanSetVariableGuideArgs {
     key: String,
     #[serde(default)]
     markdown: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PlanRecordDeploymentTargetArgs {
+    project_path: String,
+    provider: String,
+    label: Option<String>,
+    repository: Option<String>,
+    environment: Option<String>,
+    worker: Option<String>,
+    eas_project: Option<String>,
+    #[serde(default)]
+    eas_environments: Vec<String>,
+    aws_profile: Option<String>,
+    aws_region: Option<String>,
+    aws_path_prefix: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

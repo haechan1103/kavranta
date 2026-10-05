@@ -75,4 +75,25 @@ pub struct ProjectProjection {
     pub classification_review: Vec<ClassificationReviewProjection>,
     pub access_review_count: usize,
     pub client_exposure_count: usize,
+    /// Recorded deployment targets. Omitted when none exist so an unconfigured project
+    /// reports nothing at all, and a host has nothing to infer from. See ADR-0037.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub deployment_targets: Vec<DeploymentTargetProjection>,
+}
+
+/// Value-free summary of one recorded deployment target.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeploymentTargetProjection {
+    pub provider: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repository: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub environment: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub worker: Option<String>,
+    /// Single value-free line, so a host can name the target without re-deriving it.
+    pub summary: String,
 }

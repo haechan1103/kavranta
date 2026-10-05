@@ -382,6 +382,16 @@ export interface TeamImportSummary {
   affectedFiles: string[];
 }
 
+/** Value-free summary of one recorded deployment destination. */
+export interface DeploymentTargetProjection {
+  provider: string;
+  label?: string;
+  repository?: string;
+  environment?: string;
+  worker?: string;
+  summary: string;
+}
+
 export interface ProjectProjection {
   projectId: string;
   name: string;
@@ -392,6 +402,9 @@ export interface ProjectProjection {
   classificationReview: ClassificationReviewProjection[];
   accessReviewCount: number;
   clientExposureCount: number;
+  /** Recorded deployment destinations. Absent when none are recorded, so a host has
+   * nothing to infer a provider from. See ADR-0037. */
+  deploymentTargets?: DeploymentTargetProjection[];
 }
 
 export interface AgentActivityEvent {

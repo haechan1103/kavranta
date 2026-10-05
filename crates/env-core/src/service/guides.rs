@@ -1,4 +1,5 @@
 use super::*;
+use crate::DeploymentTarget;
 use crate::guide;
 
 impl ProjectService {
@@ -21,6 +22,52 @@ impl ProjectService {
         Ok(MutationSummary {
             affected_files: Vec::new(),
             keys: vec![key.to_owned()],
+        })
+    }
+
+    /// Record where this project deploys. Stores destination metadata only, replacing any
+    /// existing target for the same provider so a corrected destination does not
+    /// accumulate. Caller-side validation against the provider catalog happens before this,
+    /// in `env-provider`, so `env-core` stays independent of provider catalogs.
+    /// The recorded destination for one provider, when it is unambiguous.
+    ///
+    /// `Ok(None)` means nothing is recorded. `Err` means more than one target exists for
+    /// that provider, so the caller must choose instead of the app picking one. Provider
+    /// knowledge stays out of `env-core`: this only reads recorded configuration.
+    pub fn recorded_deployment_target(
+        &self,
+        provider: &str,
+    ) -> EnvResult<Option<DeploymentTarget>> {
+        let manifest = ManifestStore::for_root(&self.root).load()?;
+        let mut matching = manifest
+            .deployment
+            .targets
+            .iter()
+            .filter(|target| target.provider == provider);
+        let Some(first) = matching.next() else {
+            return Ok(None);
+        };
+        if matching.next().is_some() {
+            return Err(crate::EnvError::invalid(
+                "이 프로젝트에 같은 provider의 배포 대상이 여러 개라 어느 대상인지 지정해주세요.",
+            ));
+        }
+        Ok(Some(first.clone()))
+    }
+
+    pub fn record_deployment_target(&self, target: DeploymentTarget) -> EnvResult<MutationSummary> {
+        let store = ManifestStore::for_root(&self.root);
+        let mut manifest = store.load()?;
+        let provider = target.provider.clone();
+        manifest
+            .deployment
+            .targets
+            .retain(|existing| existing.provider != provider);
+        manifest.deployment.targets.push(target);
+        store.save(&manifest)?;
+        Ok(MutationSummary {
+            affected_files: Vec::new(),
+            keys: Vec::new(),
         })
     }
 

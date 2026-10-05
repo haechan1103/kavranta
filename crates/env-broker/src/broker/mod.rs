@@ -102,6 +102,9 @@ impl Broker {
             "list_deployment_providers" => self.list_deployment_providers(parse(arguments)?),
             "scan_exposure" => self.scan_exposure(parse(arguments)?),
             "request_value_input" => self.request_value_input(parse(arguments)?),
+            "plan_record_deployment_target" => {
+                self.plan_record_deployment_target(parse(arguments)?)
+            }
             "plan_set_variable_guide" => self.plan_set_variable_guide(parse(arguments)?),
             "list_action_packs" => self.list_action_packs(parse(arguments)?),
             "list_runtime_targets" => self.list_runtime_targets(parse(arguments)?),

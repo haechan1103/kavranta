@@ -179,6 +179,13 @@ variable.
 
 ## Push to a deployment provider
 
+- `inspect_project` reports `deploymentTargets` when a destination is recorded for the
+  project. Name that recorded destination when a local write should also reach it. Do not
+  infer a provider from context: "this project uses CI" is not a destination, and when no
+  target is reported, do not mention provider tooling at all.
+- Call `plan_record_deployment_target` when the user states a destination and it is not
+  recorded yet. It stores destination metadata only and never pushes; a later push plan
+  is still required.
 - Call `list_deployment_providers` first. Work only with an `available` official or
   locally installed provider returned by the Broker.
 - Require a concrete source file, variable names, provider, and destination. Ask one
@@ -186,7 +193,8 @@ variable.
   or Personal Pack target is missing or ambiguous.
 - Call `plan_provider_push` with semantic fields only, verify its redacted paths,
   names, destination, and impact, then call `apply_plan` immediately when it matches
-  the current request.
+  the current request. A destination recorded for the provider may be omitted from the
+  request; confirm the plan summary names the same destination you intend.
 - Keep every selection `secret` unless the user explicitly requests a GitHub
   configuration Variable or an Expo EAS visibility. Cloudflare, AWS, and Personal
   Packs accept secret entries only.

@@ -12,10 +12,11 @@ use crate::discovery::to_manifest_path;
 use crate::manifest::MANIFEST_FILE_NAME;
 use crate::{
     ClassificationReviewProjection, ClassificationReviewReason, ClassificationSource, CodexAccess,
-    DiscoveryOptions, Document, EnvError, EnvResult, FileProjection, FileRevision, GroupProjection,
-    LinkGroup, LinkMember, Manifest, ManifestStore, Node, OccurrenceProjection, PlannedFileChange,
-    ProjectProjection, ProviderValue, RedactedValueState, TransactionPlan, VariablePolicy,
-    default_access, detect_client_exposure, discover_env_files, suggest_access,
+    DeploymentTargetProjection, DiscoveryOptions, Document, EnvError, EnvResult, FileProjection,
+    FileRevision, GroupProjection, LinkGroup, LinkMember, Manifest, ManifestStore, Node,
+    OccurrenceProjection, PlannedFileChange, ProjectProjection, ProviderValue, RedactedValueState,
+    TransactionPlan, VariablePolicy, default_access, detect_client_exposure, discover_env_files,
+    suggest_access,
 };
 
 mod access;

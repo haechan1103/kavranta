@@ -27,3 +27,4 @@ pub use model::{
     ProviderComparisonState, ProviderEntryKind, ProviderPushRequest, ProviderPushResult,
     ProviderSelection,
 };
+pub use validation::validate_recorded_target;
