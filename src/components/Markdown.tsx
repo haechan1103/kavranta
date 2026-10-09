@@ -2,6 +2,7 @@ import "./Markdown.css";
 import { useEffect, useState, type ReactNode } from "react";
 
 import * as api from "../lib/api";
+import { useI18n } from "../i18n";
 
 interface Props {
   source: string;
@@ -260,16 +261,30 @@ function GuideImage({
 }
 
 function ExternalLink({ url, label }: { url: string; label: string }) {
+  const { t } = useI18n();
+  const [failed, setFailed] = useState(false);
   return (
-    <a
-      href={url}
-      rel="noreferrer"
-      onClick={(event) => {
-        event.preventDefault();
-        void api.openExternal(url);
-      }}
-    >
-      {label}
-    </a>
+    <span className="md-external">
+      <a
+        href={url}
+        rel="noreferrer"
+        onClick={(event) => {
+          // The href stays so the link is still a link: keyboard users can copy it, and a
+          // middle-click still does whatever the platform does. The click itself is handled
+          // here so the webview never navigates away from the app.
+          event.preventDefault();
+          setFailed(false);
+          // A swallowed rejection is what made a broken link look like a dead one.
+          api.openExternal(url).catch(() => setFailed(true));
+        }}
+      >
+        {label}
+      </a>
+      {failed && (
+        <small className="md-external-failed" role="status">
+          {t("guide.linkFailed")}
+        </small>
+      )}
+    </span>
   );
 }

@@ -48,6 +48,19 @@
   color: #2f7fd0;
 }
 
+/* Shown only when the desktop opener reported a failure. Without it a link that fails to
+   open gives the user nothing to act on. */
+.markdown .md-external {
+  display: inline;
+}
+
+.markdown .md-external-failed {
+  display: block;
+  margin-top: 3px;
+  color: #b3452f;
+  font-size: calc(8.5px * var(--font-scale));
+}
+
 .markdown .md-figure {
   margin: 0 0 12px;
 }

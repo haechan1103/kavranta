@@ -617,6 +617,7 @@ export const ko: Record<TranslationKey, string> = {
   "guide.subtitle": "이 값의 발급·입력 방법",
   "guide.missing": "아직 가이드가 없습니다.",
   "guide.refresh": "새로고침",
+  "guide.linkFailed": "링크를 열지 못했습니다. 주소를 복사해 브라우저에 붙여넣어 주세요.",
   "guide.prevStep": "이전",
   "guide.nextStep": "다음",
   "guide.stepOf": "{current} / {total}",
