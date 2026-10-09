@@ -20,11 +20,11 @@ rust-version = "1.94.1"
 
 [workspace.dependencies]
 age = "0.12.1"
-aws-config = "=1.8.1"
-aws-sdk-kms = { version = "=1.93.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
-aws-sdk-secretsmanager = { version = "=1.93.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
-aws-sdk-ssm = { version = "=1.99.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
-aws-sdk-sts = { version = "=1.91.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-config = "=1.12.0"
+aws-sdk-kms = { version = "=1.123.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-secretsmanager = { version = "=1.120.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-ssm = { version = "=1.128.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-sts = { version = "=1.119.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
 arboard = "3.6"
 blake3 = "1.8"
 directories = "6.0"
