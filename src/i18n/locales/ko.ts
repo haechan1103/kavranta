@@ -646,6 +646,7 @@ export const ko: Record<TranslationKey, string> = {
   "integration.detailCursor": "로컬 플러그인과 fail-closed Guard 구성이 완료됐습니다. Cursor를 Reload한 뒤 Customize에서 Kavranta가 활성화됐는지 확인해주세요.",
   "integration.detailOpenCode": "전역 Skill, MCP broker, fail-closed 플러그인 구성이 완료됐습니다. OpenCode를 재시작한 뒤 새 세션에서 Kavranta를 사용해주세요.",
   "integration.detailMigration": "기존 Env Manager 연결이 남아 있습니다. Kavranta 연결을 먼저 검증한 뒤 확인된 기존 연결만 정리하려면 업데이트를 실행하세요.",
+  "integration.detailBrokerMissing": "설정에 기록된 broker 실행 파일을 찾을 수 없습니다. Guard가 실행되지 않아 파일 접근 도구가 차단되거나 보호 없이 실행될 수 있습니다. 연결 복구를 실행해 주세요.",
   "integration.detailRepair": "플러그인은 있지만 broker 또는 감사 기록 설정이 현재 앱과 맞지 않습니다. 연결 복구를 실행해주세요.",
   "integration.detailGuarded": "공통 Skill, MCP broker, 직접 env 접근 Guard가 연결되어 있습니다.",
   "integration.detailCopilotCli": "VS Code는 감지했지만 Copilot CLI가 필요합니다. CLI 설치 후 여기서 한 번에 연결할 수 있습니다.",

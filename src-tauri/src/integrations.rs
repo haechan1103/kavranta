@@ -16,9 +16,10 @@ use catalog::{catalog_source, materialize_catalog};
 use command::{detect_cursor, detect_vscode, integration_executable, run_agent_command};
 use cursor::install_cursor_plugin;
 use installation::{
-    cached_bundle_is_official, connection_configuration_is_current, current_bundle_is_cached,
-    installed_version, legacy_bundle_is_official, marker_version,
-    official_legacy_codex_marketplace_aliases, persist_marker,
+    broker_path_is_missing, cached_bundle_is_official, configured_broker_path,
+    connection_configuration_is_current, current_bundle_is_cached, installed_version,
+    legacy_bundle_is_official, marker_version, official_legacy_codex_marketplace_aliases,
+    persist_marker,
 };
 use marketplace::{
     cleanup_legacy_connections, install_or_update, marketplace_add_args,
@@ -190,6 +191,10 @@ fn status(
         broker.is_some_and(|broker| connection_configuration_is_current(app, id, broker));
     let needs_repair =
         integration_requires_repair(installed, update_available, configuration_current);
+    // Reported separately from `needs_repair`: repair may be needed for a version reason
+    // while the boundary itself is currently fine, and the user needs to know which.
+    let broker_path_missing =
+        configured_broker_path(id).is_some_and(|path| broker_path_is_missing(&path));
     let activation_unverified = matches!(
         id,
         AgentIntegrationId::Cursor | AgentIntegrationId::OpenCode
@@ -202,6 +207,7 @@ fn status(
         id,
         installed,
         needs_repair,
+        broker_path_missing,
         cli_detected,
         vscode_detected,
         cursor_detected,
@@ -218,6 +224,7 @@ fn status(
         current_version: agent_bundle_version(),
         update_available,
         needs_repair,
+        broker_path_missing,
         activation_unverified,
         protection,
         detail,
@@ -246,16 +253,31 @@ fn integration_detail(
     id: AgentIntegrationId,
     installed: bool,
     needs_repair: bool,
+    broker_path_missing: bool,
     cli_detected: bool,
     vscode_detected: bool,
     cursor_detected: bool,
 ) -> (&'static str, String) {
-    match (id, installed, needs_repair, cli_detected, vscode_detected, cursor_detected) {
-        (_, true, true, _, _, _) => (
+    match (
+        id,
+        installed,
+        needs_repair,
+        broker_path_missing,
+        cli_detected,
+        vscode_detected,
+        cursor_detected,
+    ) {
+        // Named first because this is the case a user cannot diagnose from the UI today:
+        // the boundary is not merely stale, it cannot run, and every guarded call fails.
+        (_, true, _, true, _, _, _) => (
+            "inactive",
+            "설정에 기록된 broker 실행 파일을 찾을 수 없습니다. Guard가 실행되지 않아 파일 접근 도구가 차단되거나 보호 없이 실행될 수 있습니다. 연결 복구를 실행해 주세요.".to_owned(),
+        ),
+        (_, true, true, _, _, _, _) => (
             "inactive",
             "플러그인은 있지만 broker 실행 경로나 감사 기록 설정이 현재 앱과 맞지 않아 복구가 필요합니다.".to_owned(),
         ),
-        (AgentIntegrationId::Codex, true, false, _, _, _) => (
+        (AgentIntegrationId::Codex, true, false, _, _, _, _) => (
             "broker",
             "Redacted broker가 연결되어 있습니다. 직접 파일 차단 수준은 Codex 권한 프로필에 따라 달라집니다.".to_owned(),
         ),
@@ -266,23 +288,24 @@ fn integration_detail(
             _,
             _,
             _,
+            _,
         ) => (
             "guarded",
             "공통 Skill, MCP broker, 직접 env 접근 Guard가 연결되어 있습니다.".to_owned(),
         ),
-        (AgentIntegrationId::Cursor, true, false, _, _, _) => (
+        (AgentIntegrationId::Cursor, true, false, _, _, _, _) => (
             "guarded",
             "공통 Skill, MCP broker, Cursor fail-closed env 접근 Guard가 연결되어 있습니다.".to_owned(),
         ),
-        (AgentIntegrationId::OpenCode, true, false, _, _, _) => (
+        (AgentIntegrationId::OpenCode, true, false, _, _, _, _) => (
             "guarded",
             "공통 Skill, MCP broker, OpenCode fail-closed env 접근 Guard가 구성되어 있습니다.".to_owned(),
         ),
-        (AgentIntegrationId::GithubCopilot, false, false, false, true, _) => (
+        (AgentIntegrationId::GithubCopilot, false, false, false, false, true, _) => (
             "inactive",
             "VS Code는 감지했지만 Copilot CLI가 필요합니다. CLI 설치 후 여기서 한 번에 연결할 수 있습니다.".to_owned(),
         ),
-        (_, false, false, true, _, _) | (AgentIntegrationId::Cursor, false, false, _, _, true) => (
+        (_, false, _, false, true, _, _) | (AgentIntegrationId::Cursor, false, _, false, _, _, true) => (
             "inactive",
             "도구를 감지했습니다. Kavranta 연동을 설치할 수 있습니다.".to_owned(),
         ),

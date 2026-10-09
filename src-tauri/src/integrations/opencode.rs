@@ -56,6 +56,23 @@ pub(super) fn installed_bundle_at(root: &Path) -> Option<(String, PathBuf)> {
     Some((version, managed_root))
 }
 
+/// The broker path recorded in OpenCode's global config, when one can be read.
+///
+/// Used to tell the user that the recorded broker no longer resolves. A missing broker
+/// makes the fail-closed Guard reject every guarded call, so the symptom is an app that
+/// blocks everything, which is indistinguishable from a broken app without this signal.
+pub(super) fn installed_mcp_broker() -> Option<PathBuf> {
+    let root = config_root()?;
+    mcp_entries(&root).ok()?.into_iter().find_map(|entry| {
+        entry
+            .get("command")
+            .and_then(Value::as_array)
+            .and_then(|command| command.first())
+            .and_then(Value::as_str)
+            .map(PathBuf::from)
+    })
+}
+
 pub(super) fn installed_bundle_is_official_at(root: &Path) -> bool {
     read_json5(&root.join(MANIFEST_PATH)).is_ok_and(|manifest| {
         manifest.get("name").and_then(Value::as_str) == Some(PLUGIN_NAME)

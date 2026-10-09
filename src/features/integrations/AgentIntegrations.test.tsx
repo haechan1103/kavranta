@@ -18,6 +18,7 @@ const integrations: AgentIntegrationStatus[] = [
     currentVersion: "1.0.0",
     updateAvailable: false,
     needsRepair: false,
+    brokerPathMissing: false,
     activationUnverified: false,
     protection: "broker",
     detail: "The redacted broker is connected.",
@@ -34,6 +35,7 @@ const integrations: AgentIntegrationStatus[] = [
     currentVersion: "1.0.0",
     updateAvailable: false,
     needsRepair: false,
+    brokerPathMissing: false,
     activationUnverified: false,
     protection: "inactive",
     detail: "The integration can be installed.",
@@ -50,6 +52,7 @@ const integrations: AgentIntegrationStatus[] = [
     currentVersion: "1.0.0",
     updateAvailable: false,
     needsRepair: false,
+    brokerPathMissing: false,
     activationUnverified: false,
     protection: "inactive",
     detail: "Install the tool to connect it.",
@@ -66,6 +69,7 @@ const integrations: AgentIntegrationStatus[] = [
     currentVersion: "1.0.0",
     updateAvailable: false,
     needsRepair: false,
+    brokerPathMissing: false,
     activationUnverified: false,
     protection: "inactive",
     detail: "The integration can be installed.",
@@ -82,6 +86,7 @@ const integrations: AgentIntegrationStatus[] = [
     currentVersion: "1.0.0",
     updateAvailable: false,
     needsRepair: false,
+    brokerPathMissing: false,
     activationUnverified: false,
     protection: "inactive",
     detail: "The integration can be installed.",
@@ -218,5 +223,33 @@ describe("AgentIntegrations", () => {
 
     expect(await screen.findByText(/legacy Env Manager connection remains/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Update" })).toBeEnabled();
+  });
+});
+
+describe("broker path diagnostics", () => {
+  it("names a broker that cannot run instead of showing the generic repair reason", async () => {
+    const item: AgentIntegrationStatus = {
+      id: "codex",
+      name: "Codex",
+      detected: true,
+      installed: true,
+      installedVersion: "2.7.0",
+      legacyVersion: false,
+      currentVersion: "2.7.0",
+      updateAvailable: false,
+      needsRepair: true,
+      brokerPathMissing: true,
+      activationUnverified: false,
+      protection: "inactive",
+      detail: "unused by the view",
+      canInstall: true,
+      actionBlocker: null,
+    };
+    vi.mocked(api.listAgentIntegrations).mockResolvedValue([item]);
+    renderIntegrations();
+
+    // The specific reason must appear, and the generic repair text must not.
+    expect(await screen.findByText(/broker 실행 파일을 찾을 수 없습니다|broker recorded in the configuration cannot be found/i)).toBeInTheDocument();
+    expect(screen.queryByText(/복구가 필요|repair is needed/i)).not.toBeInTheDocument();
   });
 });

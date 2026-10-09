@@ -168,6 +168,9 @@ function integrationDetail(
   t: ReturnType<typeof useI18n>["t"],
 ) {
   if (item.migrationPending) return t("integration.detailMigration");
+  // Named before the generic repair reason: this one means the boundary cannot run, so
+  // guarded file tools fail closed, which otherwise looks like the app is broken.
+  if (item.brokerPathMissing) return t("integration.detailBrokerMissing");
   if (item.needsRepair) return t("integration.detailRepair");
   if (item.installed && item.id === "codex") return t("integration.detailCodex");
   if (item.installed && item.id === "cursor") return t("integration.detailCursor");

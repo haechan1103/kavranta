@@ -37,6 +37,10 @@ pub struct AgentIntegrationStatus {
     pub current_version: &'static str,
     pub update_available: bool,
     pub needs_repair: bool,
+    /// The broker path recorded in the installed configuration no longer resolves to a
+    /// runnable file. The fail-closed Guard then rejects guarded calls, so this is the
+    /// difference between "refresh some paths" and "file tools are being blocked".
+    pub broker_path_missing: bool,
     pub activation_unverified: bool,
     pub protection: &'static str,
     pub detail: String,

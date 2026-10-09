@@ -233,6 +233,9 @@ export interface AgentIntegrationStatus {
   currentVersion: string;
   updateAvailable: boolean;
   needsRepair: boolean;
+  /** The recorded broker path no longer resolves, so the Guard cannot run and guarded
+   * calls fail closed. Distinct from needsRepair, which can be a version mismatch. */
+  brokerPathMissing: boolean;
   activationUnverified: boolean;
   protection: AgentProtection;
   detail: string;
