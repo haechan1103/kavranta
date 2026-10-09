@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import * as api from "../lib/api";
@@ -6,7 +7,7 @@ import { Markdown } from "./Markdown";
 
 vi.mock("../lib/api", async () => {
   const actual = await vi.importActual<typeof import("../lib/api")>("../lib/api");
-  return { ...actual, readGuideAttachment: vi.fn() };
+  return { ...actual, readGuideAttachment: vi.fn(), openExternal: vi.fn() };
 });
 
 describe("Markdown", () => {
@@ -77,5 +78,27 @@ describe("Markdown", () => {
     expect(await screen.findByText("Gone")).toBeInTheDocument();
     expect(screen.getByText("Out")).toBeInTheDocument();
     expect(screen.queryByRole("img")).toBeNull();
+  });
+});
+
+describe("external links", () => {
+  it("opens a link through the desktop opener instead of navigating the webview", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.openExternal).mockResolvedValue();
+
+    render(<Markdown source="See https://example.com/docs for details" />);
+    await user.click(screen.getByRole("link", { name: "https://example.com/docs" }));
+
+    expect(api.openExternal).toHaveBeenCalledWith("https://example.com/docs");
+  });
+
+  it("tells the user when the opener fails instead of failing silently", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.openExternal).mockRejectedValue(new Error("opener exited with status 1"));
+
+    render(<Markdown source="See https://example.com/docs for details" />);
+    await user.click(screen.getByRole("link", { name: "https://example.com/docs" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(/Could not open the link/i);
   });
 });

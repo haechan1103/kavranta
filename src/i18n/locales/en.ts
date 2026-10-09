@@ -615,6 +615,7 @@ export const en = {
   "guide.subtitle": "How to get and enter this value",
   "guide.missing": "No guide yet.",
   "guide.refresh": "Refresh",
+  "guide.linkFailed": "Could not open the link. Copy the address into your browser instead.",
   "guide.prevStep": "Previous",
   "guide.nextStep": "Next",
   "guide.stepOf": "{current} / {total}",
