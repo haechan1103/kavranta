@@ -644,6 +644,7 @@ export const en = {
   "integration.detailCursor": "The local plugin and fail-closed guards are configured. Reload Cursor, then confirm Kavranta is active in Customize.",
   "integration.detailOpenCode": "The global Skill, MCP broker, and fail-closed plugin are configured. Restart OpenCode before using Kavranta in a new session.",
   "integration.detailMigration": "A legacy Env Manager connection remains. Update to verify Kavranta first, then remove only the verified legacy connection.",
+  "integration.detailBrokerMissing": "The broker recorded in the configuration cannot be found. The Guard cannot run, so guarded file tools are blocked or run unprotected. Run repair.",
   "integration.detailRepair": "The plugin exists, but its broker or audit-log configuration does not match this app. Repair the connection to restore it.",
   "integration.detailGuarded": "The shared Skill, MCP broker, and direct env access guard are connected.",
   "integration.detailCopilotCli": "VS Code was detected, but the Copilot CLI is required. Install the CLI to connect it here.",

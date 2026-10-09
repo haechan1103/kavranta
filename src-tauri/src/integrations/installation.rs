@@ -22,6 +22,48 @@ pub(super) fn current_bundle_is_cached(id: AgentIntegrationId) -> bool {
         == Some(agent_bundle_version())
 }
 
+/// The broker path recorded in the installed configuration, when it can be read.
+///
+/// This exists to make a failing repair diagnosable. When the recorded path stops
+/// resolving, the fail-closed Guard rejects every guarded call, so the user sees an
+/// application that blocks file tools with no stated reason.
+pub(super) fn configured_broker_path(id: AgentIntegrationId) -> Option<PathBuf> {
+    if id == AgentIntegrationId::OpenCode {
+        return opencode::installed_mcp_broker();
+    }
+    let (_, root) = current_cached_bundle(id)?;
+    let mcp_name = if id == AgentIntegrationId::Cursor {
+        "mcp.json"
+    } else {
+        ".mcp.json"
+    };
+    let mcp = read_plugin_json(&root.join(mcp_name)).ok()?;
+    mcp["mcpServers"][MCP_SERVER_NAME]["command"]
+        .as_str()
+        .map(PathBuf::from)
+}
+
+/// Whether a recorded broker path no longer points at a runnable file.
+///
+/// Only path metadata is inspected; the file is never executed from here.
+pub(super) fn broker_path_is_missing(path: &Path) -> bool {
+    let Ok(metadata) = fs::metadata(path) else {
+        return true;
+    };
+    if !metadata.is_file() {
+        return true;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        metadata.permissions().mode() & 0o111 == 0
+    }
+    #[cfg(not(unix))]
+    {
+        false
+    }
+}
+
 pub(super) fn connection_configuration_is_current(
     app: &AppHandle,
     id: AgentIntegrationId,
