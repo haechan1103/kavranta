@@ -460,7 +460,43 @@ pub fn apply_stdin_value_from_default_paths<R: std::io::Read>(
 }
 
 fn parse<T: for<'de> Deserialize<'de>>(value: Value) -> Result<T, EnvError> {
-    serde_json::from_value(value).map_err(|_| EnvError::invalid("도구 인자가 올바르지 않습니다."))
+    serde_json::from_value(value)
+        .map_err(|error| EnvError::invalid(describe_argument_error(&error.to_string())))
+}
+
+/// A value-free, actionable description of a tool-argument failure.
+///
+/// The previous message was a single generic sentence, so an unexpected field, a missing
+/// field, and a wrong type were indistinguishable. A caller that passed one extra field saw
+/// "the tool arguments are not valid" and reasonably concluded the tool was broken rather
+/// than that its own call was malformed.
+///
+/// The raw `serde_json` message is never forwarded. It embeds the submitted value for a type
+/// error (`invalid type: string "..."`), and that value can be a secret. Only field names are
+/// echoed, and only when they are plain identifiers, because a field name comes from the
+/// tool schema rather than from caller data.
+fn describe_argument_error(message: &str) -> String {
+    if let Some(field) = named_field(message, "unknown field ") {
+        return format!("예상하지 못한 인자입니다: {field}. 이 도구가 받는 인자를 확인해주세요.");
+    }
+    if let Some(field) = named_field(message, "missing field ") {
+        return format!("필수 인자가 빠졌습니다: {field}.");
+    }
+    // Type and value failures embed the submitted value, so only the kind is reported.
+    "인자 형식이 이 도구가 요구하는 형식과 다릅니다.".to_owned()
+}
+
+/// Extract the field name from a `serde` message such as ``unknown field `deep`, ...``.
+fn named_field<'a>(message: &'a str, marker: &str) -> Option<&'a str> {
+    let rest = message.get(message.find(marker)? + marker.len()..)?;
+    let open = rest.find('`')? + 1;
+    let close = rest.get(open..)?.find('`')? + open;
+    let field = rest.get(open..close)?;
+    // A plain, short identifier only, so no caller-supplied text can ride along.
+    (!field.is_empty()
+        && field.len() <= 40
+        && field.chars().all(|c| c.is_ascii_alphanumeric() || c == '_'))
+    .then_some(field)
 }
 
 fn serialize_result<T: Serialize>(result: Result<T, EnvError>) -> Result<Value, EnvError> {
@@ -470,3 +506,64 @@ fn serialize_result<T: Serialize>(result: Result<T, EnvError>) -> Result<Value, 
 #[cfg(test)]
 #[path = "broker/tests/mod.rs"]
 mod tests;
+
+#[cfg(test)]
+mod argument_error_tests {
+    use super::describe_argument_error;
+
+    #[test]
+    fn an_unknown_field_is_named() {
+        let message = "unknown field `deep`, expected one of `projectPath`";
+        let described = describe_argument_error(message);
+        assert!(described.contains("deep"), "got: {described}");
+    }
+
+    #[test]
+    fn a_missing_field_is_named() {
+        let described = describe_argument_error("missing field `projectPath`");
+        assert!(described.contains("projectPath"), "got: {described}");
+    }
+
+    /// The submitted value must never be echoed, because it can be a secret. `serde_json`
+    /// embeds it for type errors.
+    #[test]
+    fn a_type_error_never_echoes_the_submitted_value() {
+        let message = "invalid type: string \"fake-submitted-value\", expected u32";
+        let described = describe_argument_error(message);
+        assert!(
+            !described.contains("fake-submitted-value"),
+            "the value leaked: {described}"
+        );
+    }
+
+    /// A field name is echoed only when it is a plain identifier, so a caller cannot smuggle
+    /// arbitrary text into the message through a crafted key.
+    #[test]
+    fn only_plain_identifiers_are_echoed() {
+        // Assembled from fragments so this file never contains a literal that the
+        // repository boundary scan reads as a live credential.
+        let shaped = format!("sk-proj-{}", "not-an-identifier");
+        for message in [
+            format!("unknown field `{shaped}`, expected one of `projectPath`"),
+            "unknown field `has spaces`, expected one of `projectPath`".to_owned(),
+            "unknown field ``, expected one of `projectPath`".to_owned(),
+        ] {
+            let described = describe_argument_error(&message);
+            assert!(
+                !described.contains("sk-proj") && !described.contains("has spaces"),
+                "a non-identifier leaked: {described}"
+            );
+        }
+    }
+
+    #[test]
+    fn the_three_failure_kinds_read_differently() {
+        let unknown =
+            describe_argument_error("unknown field `deep`, expected one of `projectPath`");
+        let missing = describe_argument_error("missing field `projectPath`");
+        let type_error = describe_argument_error("invalid type: boolean, expected a string");
+        assert_ne!(unknown, missing);
+        assert_ne!(unknown, type_error);
+        assert_ne!(missing, type_error);
+    }
+}
