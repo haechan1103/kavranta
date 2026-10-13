@@ -29,19 +29,25 @@ pub struct SubmitSecretInputRequest {
     entries: Vec<SubmitSecretInputEntry>,
 }
 
+/// Write the submitted values and report the per-name outcome to the caller.
+///
+/// The outcome is returned rather than swallowed. It used to be sent only to the broker,
+/// and the command returned `Ok(())` unconditionally, so the dialog closed as if every
+/// entry had been written even when an entry was skipped for an empty value or failed. A
+/// user who left one field blank had no way to learn that the value was never stored.
 #[tauri::command]
 pub fn submit_secret_input(
     request: SubmitSecretInputRequest,
     state: State<'_, SecretInputState>,
-) -> CommandResult<()> {
+) -> CommandResult<Vec<SecretInputResult>> {
     let service = ProjectService::open(&request.project_root)?;
     let results = request
         .entries
         .into_iter()
         .map(|entry| write_entry(&service, entry))
-        .collect();
-    state.resolve(&request.request_id, results);
-    Ok(())
+        .collect::<Vec<_>>();
+    state.resolve(&request.request_id, results.clone());
+    Ok(results)
 }
 
 #[tauri::command]

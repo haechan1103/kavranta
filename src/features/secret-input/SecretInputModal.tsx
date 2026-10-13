@@ -5,7 +5,12 @@ import { Modal } from "../../components/Modal";
 import { HelpIcon } from "../../components/icons";
 import { displayGroupName, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
-import type { CodexAccess, ProjectProjection, SecretInputRequest } from "../../lib/types";
+import type {
+  CodexAccess,
+  ProjectProjection,
+  SecretInputRequest,
+  SecretInputResult,
+} from "../../lib/types";
 import { VariableGuideModal } from "../file-editor/VariableGuideModal";
 
 interface Props {
@@ -37,6 +42,9 @@ export function SecretInputModal({ request, projectId, projection, onClose, onEr
   );
   const [busy, setBusy] = useState(false);
   const [guideKey, setGuideKey] = useState<string | null>(null);
+  // Per-name outcomes of the last submit. Shown instead of closing silently, because an
+  // entry with an empty value is skipped and used to look identical to a saved one.
+  const [report, setReport] = useState<SecretInputResult[] | null>(null);
 
   const guideKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -77,7 +85,7 @@ export function SecretInputModal({ request, projectId, projection, onClose, onEr
   const submit = async () => {
     setBusy(true);
     try {
-      await api.submitSecretInput(
+      const results = await api.submitSecretInput(
         request.requestId,
         request.projectRoot,
         rows.map((row) => ({
@@ -88,13 +96,22 @@ export function SecretInputModal({ request, projectId, projection, onClose, onEr
           value: row.value,
         })),
       );
-      onClose();
+      // Close only when everything landed. Otherwise keep the dialog open and say what did
+      // not, so the user can fix it instead of believing it saved.
+      if (results.every((result) => result.outcome === "added" || result.outcome === "updated")) {
+        onClose();
+        return;
+      }
+      setReport(results);
     } catch (error) {
       onError(error instanceof Error ? error.message : t("error.secretInput"));
     } finally {
       setBusy(false);
     }
   };
+
+  const savedCount = report?.filter((r) => r.outcome === "added" || r.outcome === "updated").length ?? 0;
+  const problems = report?.filter((r) => r.outcome !== "added" && r.outcome !== "updated") ?? [];
 
   const cancel = async () => {
     try {
@@ -109,6 +126,15 @@ export function SecretInputModal({ request, projectId, projection, onClose, onEr
 
   return (
     <Modal title={t("secretInput.title")} description={t("secretInput.body")} onClose={() => void cancel()} className="secret-input-modal">
+      {/* One form around the rows and the actions. The value inputs must be descendants of
+          the form for Enter to submit it; wrapping only the buttons left Enter doing
+          nothing, so typed values were silently discarded when the dialog was dismissed. */}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!busy) void submit();
+        }}
+      >
       <div className="secret-input-rows">
         {ordered.map(({ row, index }) => {
           const header = row.group !== lastGroup ? displayGroupName(row.group || "기타", t) : null;
@@ -166,14 +192,32 @@ export function SecretInputModal({ request, projectId, projection, onClose, onEr
           );
         })}
       </div>
+      {report && (
+        <div className="secret-input-report" role="status">
+          <p className="secret-input-report-summary">
+            {t("secretInput.reportSummary", { saved: savedCount, missing: problems.length })}
+          </p>
+          <ul className="secret-input-report-list">
+            {problems.map((problem) => (
+              <li key={problem.name}>
+                <strong>{problem.name}</strong>{" "}
+                {problem.outcome === "skipped"
+                  ? t("secretInput.reportSkipped")
+                  : t("secretInput.reportFailed")}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="modal-actions secret-input-actions">
-        <button className="quiet-button" onClick={() => void cancel()} disabled={busy}>
+        <button type="button" className="quiet-button" onClick={() => void cancel()} disabled={busy}>
           {t("secretInput.cancel")}
         </button>
-        <button className="primary-button" onClick={() => void submit()} disabled={busy}>
+        <button type="submit" className="primary-button" disabled={busy}>
           {t("secretInput.submit")}
         </button>
       </div>
+      </form>
       {guideKey && projectId && (
         <VariableGuideModal
           projectId={projectId}

@@ -40,8 +40,10 @@ export function SecretInputController({ projectId, projection, refreshProject, o
         },
         () => {
           if (!cancelled) {
+            // Report the failure but keep the requested project. Clearing it fell back to
+            // whichever project happened to be open, which showed one project's structure
+            // beside another project's variable names.
             onError(t("error.secretInputProject"));
-            setResolvedProjectId(null);
           }
         },
       );
