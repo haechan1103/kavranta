@@ -34,7 +34,10 @@ const request: SecretInputRequest = {
 
 describe("SecretInputModal", () => {
   it("submits typed values to the backend and closes", async () => {
-    vi.mocked(api.submitSecretInput).mockResolvedValue();
+    vi.mocked(api.submitSecretInput).mockResolvedValue([
+      { name: "GEMINI_API_KEY", outcome: "added" },
+      { name: "OPENROUTER_API_KEY", outcome: "added" },
+    ]);
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(
@@ -59,6 +62,55 @@ describe("SecretInputModal", () => {
       ]),
     );
     expect(onClose).toHaveBeenCalled();
+  });
+
+  /// Enter in a value field used to write nothing: the inputs were outside the form, so the
+  /// dialog could be dismissed with the typed values never submitted.
+  it("saves when the user presses Enter in a value field", async () => {
+    vi.mocked(api.submitSecretInput).mockResolvedValue([
+      { name: "GEMINI_API_KEY", outcome: "added" },
+      { name: "OPENROUTER_API_KEY", outcome: "skipped" },
+    ]);
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(
+      <SecretInputModal request={request} projectId="project-1" projection={projection} onClose={onClose} onError={vi.fn()} />,
+    );
+
+    const rowFor = (name: string) =>
+      screen.getByText(name).closest(".secret-input-row") as HTMLElement;
+    await user.type(within(rowFor("GEMINI_API_KEY")).getByLabelText("Value"), "fake_gemini_key{Enter}");
+
+    expect(api.submitSecretInput).toHaveBeenCalledWith(
+      "req-1",
+      "/synthetic/project",
+      expect.arrayContaining([
+        expect.objectContaining({ name: "GEMINI_API_KEY", value: "fake_gemini_key" }),
+      ]),
+    );
+  });
+
+  /// An entry with an empty value is skipped rather than written. That used to be invisible:
+  /// the dialog closed as if everything saved.
+  it("keeps the dialog open and names what did not save", async () => {
+    vi.mocked(api.submitSecretInput).mockResolvedValue([
+      { name: "GEMINI_API_KEY", outcome: "added" },
+      { name: "OPENROUTER_API_KEY", outcome: "skipped" },
+    ]);
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    render(
+      <SecretInputModal request={request} projectId="project-1" projection={projection} onClose={onClose} onError={vi.fn()} />,
+    );
+
+    const rowFor = (name: string) =>
+      screen.getByText(name).closest(".secret-input-row") as HTMLElement;
+    await user.type(within(rowFor("GEMINI_API_KEY")).getByLabelText("Value"), "fake_gemini_key");
+    await user.click(screen.getByRole("button", { name: "Save values" }));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(await screen.findByRole("status")).toHaveTextContent(/OPENROUTER_API_KEY/);
+    expect(screen.getByRole("status")).toHaveTextContent(/empty/i);
   });
 
   it("cancels the request when the user dismisses it", async () => {
