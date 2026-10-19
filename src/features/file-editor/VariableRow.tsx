@@ -150,7 +150,12 @@ export function VariableRow({
       className={`variable-row${selected ? " selected" : ""}${checked ? " checked" : ""}${variable.duplicate ? " has-error" : ""}${rowState}`}
       data-variable-key={variable.key}
       onClick={(event) => {
-        if (event.target === event.currentTarget) onSelect();
+        // Clicking anywhere on the row opens its details, except on a control:
+        // typing a value, copying, or changing access never opens the panel.
+        const target = event.target as HTMLElement;
+        if (target.closest("input, textarea, select, button:not(.key-button), .value-editor")) return;
+        if (target.closest(".key-button")) return;
+        onOpenDetails();
       }}
     >
       <span className="row-check">

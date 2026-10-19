@@ -243,7 +243,7 @@ describe("FileEditor", () => {
     expect(screen.getByRole("complementary", { name: "Details for PORT" })).toBeInTheDocument();
   });
 
-  it("opens the narrow-window drawer only from the variable name, never from editing a value", async () => {
+  it("opens the narrow-window drawer from the row, never from editing a value", async () => {
     const user = userEvent.setup();
     const matchMedia = vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
     Object.defineProperty(window, "matchMedia", { configurable: true, value: matchMedia });
@@ -253,7 +253,7 @@ describe("FileEditor", () => {
       await user.type(screen.getByLabelText("PORT value"), "fake_port");
       expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
 
-      await user.click(screen.getByRole("button", { name: "PORT" }));
+      await user.click(screen.getByText("PORT").closest("article")!);
       expect(screen.getByRole("complementary", { name: "Details for PORT" })).toBeInTheDocument();
     } finally {
       Reflect.deleteProperty(window, "matchMedia");
