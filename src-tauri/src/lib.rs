@@ -4,7 +4,7 @@ mod runtime;
 
 use commands::{
     add_variable, apply_gitignore_guard, apply_migration, apply_team_import,
-    build_diagnostics_report, cancel_secret_input, compare_provider_values,
+    build_diagnostics_report, cancel_secret_input, compare_project_values, compare_provider_values,
     connect_folder_team_channel, copy_account_field, copy_key, copy_value, create_account,
     create_github_environment, create_group, create_link, delete_account, delete_variable,
     detach_link_member, detect_cloudflare_target, detect_eas_target, detect_github_repository,
@@ -15,13 +15,13 @@ use commands::{
     list_github_environments, list_github_repositories, list_projects, list_provider_push_receipts,
     list_runtime_targets, list_team_channels, move_variable, open_external, plan_migration,
     plan_team_channel_import, plan_team_import, protect_variables, publish_team_channel,
-    push_to_provider, read_guide_attachment, read_value, read_variable_guide, register_project,
-    remap_team_import_file, remove_action_pack, remove_personal_provider_pack, remove_project,
-    remove_runtime_target, remove_team_channel, remove_variable_guide, rename_env_file_label,
-    rename_env_file_on_disk, rename_group, rename_project, reveal_team_import_conflict,
-    run_redaction_self_check, save_description, save_runtime_target, save_value,
-    save_variable_guide, scan_exposure, scan_project, set_account_project_access, set_codex_access,
-    set_last_selected_project, submit_secret_input, update_account,
+    push_to_provider, read_guide_attachment, read_redacted_source, read_value, read_variable_guide,
+    register_project, remap_team_import_file, remove_action_pack, remove_personal_provider_pack,
+    remove_project, remove_runtime_target, remove_team_channel, remove_variable_guide,
+    rename_env_file_label, rename_env_file_on_disk, rename_group, rename_project,
+    reveal_team_import_conflict, run_redaction_self_check, save_description, save_runtime_target,
+    save_value, save_variable_guide, scan_exposure, scan_project, set_account_project_access,
+    set_codex_access, set_last_selected_project, submit_secret_input, update_account,
 };
 use runtime::{AppRuntime, CredentialRuntime, SecretInputState};
 use tauri::Manager;
@@ -104,6 +104,8 @@ pub fn run() {
             apply_team_import,
             discard_team_import,
             scan_project,
+            compare_project_values,
+            read_redacted_source,
             apply_gitignore_guard,
             save_value,
             save_description,

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 type SidebarNavIconName =
   | "overview"
+  | "compare"
   | "activity"
   | "accounts"
   | "actions"
@@ -39,6 +40,13 @@ const iconPaths: Record<SidebarNavIconName, ReactNode> = {
       <rect x="13.5" y="3.5" width="7" height="4.5" rx="1.5" />
       <rect x="13.5" y="10.5" width="7" height="10" rx="1.5" />
       <rect x="3.5" y="13" width="7" height="7.5" rx="1.5" />
+    </>
+  ),
+  compare: (
+    <>
+      <rect x="3.5" y="4" width="7" height="16" rx="1.5" />
+      <rect x="13.5" y="4" width="7" height="16" rx="1.5" />
+      <path d="M6 9h2M6 13h2M16 9h2M16 13h2" />
     </>
   ),
   activity: (

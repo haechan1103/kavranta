@@ -12,6 +12,7 @@ import type {
   ProjectProjection,
 } from "../../lib/types";
 import { SaveBar } from "./SaveBar";
+import { SourceView } from "./SourceView";
 import { usePendingChanges } from "./usePendingChanges";
 import { VariableInspector } from "./VariableInspector";
 import { VariableRow } from "./VariableRow";
@@ -66,6 +67,7 @@ export function FileEditor({
   // request opens, so editing a value never pops a panel over the table.
   const narrow = useNarrowLayout();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mode, setMode] = useState<"table" | "source">("table");
   const [saving, setSaving] = useState(false);
   const [saveGeneration, setSaveGeneration] = useState(0);
   const [externalChange, setExternalChange] = useState<ExternalChange | null>(null);
@@ -240,7 +242,7 @@ export function FileEditor({
         return;
       }
       const target = event.target as HTMLElement | null;
-      if (target?.closest("input, textarea, select")) return;
+      if (mode === "source" || target?.closest("input, textarea, select")) return;
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         if (visibleKeys.length === 0) return;
         event.preventDefault();
@@ -264,7 +266,7 @@ export function FileEditor({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [narrow, save, selectedKey, visibleKeys]);
+  }, [mode, narrow, save, selectedKey, visibleKeys]);
 
   if (!file) {
     return (
@@ -295,6 +297,16 @@ export function FileEditor({
     if (narrow) setDrawerOpen(true);
   };
 
+  const showInTable = (key: string) => {
+    setMode("table");
+    openDetails(key);
+    requestAnimationFrame(() => {
+      const button = editorRef.current?.querySelector<HTMLElement>(`[data-variable-key="${CSS.escape(key)}"] .key-button`);
+      button?.scrollIntoView({ block: "center" });
+      button?.focus({ preventScroll: true });
+    });
+  };
+
   const toggleDetails = () => {
     if (narrow) setDrawerOpen((open) => !open);
     else setInspectorOpen((open) => writeInspectorPreference(!open));
@@ -319,6 +331,18 @@ export function FileEditor({
             <p>{t("file.summary", { variables: variables.length, groups: file.groups.length })}</p>
           </div>
           <div className="header-actions">
+            <div className="view-switch" role="group" aria-label={t("file.viewMode")}>
+              {(["table", "source"] as const).map((value) => (
+                <button
+                  key={value}
+                  className={mode === value ? "active" : undefined}
+                  aria-pressed={mode === value}
+                  onClick={() => setMode(value)}
+                >
+                  {t(value === "table" ? "file.viewTable" : "file.viewSource")}
+                </button>
+              ))}
+            </div>
             <button
               className="quiet-button"
               aria-pressed={detailsVisible}
@@ -355,7 +379,19 @@ export function FileEditor({
           </div>
         )}
 
-        {variables.length > 0 && (
+        {mode === "source" && (
+          <SourceView
+            projectId={projectId}
+            filePath={file.path}
+            revision={file}
+            draftKeys={new Set(pending.drafts.keys())}
+            removalKeys={pending.removals}
+            onOpenKey={showInTable}
+            onError={onError}
+          />
+        )}
+
+        {mode === "table" && variables.length > 0 && (
           visibleChecked.length > 0 ? (
             <div className="bulk-bar" role="toolbar" aria-label={t("file.bulkLabel")}>
               <strong>{t("file.bulkSelected", { count: visibleChecked.length })}</strong>
@@ -397,14 +433,14 @@ export function FileEditor({
           )
         )}
 
-        {filtering && visibleCount === 0 && (
+        {mode === "table" && filtering && visibleCount === 0 && (
           <div className="file-filter-empty">
             <strong>{t(search.trim() ? "file.noSearchResults" : filter === "empty" ? "file.noEmptyVariables" : "file.noFilterResults")}</strong>
             <span>{t(search.trim() ? "file.noSearchResultsBody" : filter === "empty" ? "file.noEmptyVariablesBody" : "file.noFilterResultsBody")}</span>
           </div>
         )}
 
-        <div className="variables-table" hidden={filtering && visibleCount === 0}>
+        <div className="variables-table" hidden={mode === "source" || (filtering && visibleCount === 0)}>
           <div className="variables-table-head">
             <span className="row-check">
               <input
@@ -488,7 +524,7 @@ export function FileEditor({
           })}
         </div>
 
-        <p className="file-keyboard-hint">{t("file.keyboardHint")}</p>
+        {mode === "table" && <p className="file-keyboard-hint">{t("file.keyboardHint")}</p>}
 
         <SaveBar
           changes={pending.changes}

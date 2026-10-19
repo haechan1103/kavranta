@@ -519,3 +519,26 @@ export interface SecretInputResult {
   name: string;
   outcome: SecretInputOutcome;
 }
+
+/** One cell per compared file. Equal `group` numbers in a row mean equal values; never stored. */
+export type ValueComparisonCell =
+  | { state: "missing" }
+  | { state: "empty" }
+  | { state: "duplicate" }
+  | { state: "unreadable" }
+  | { state: "present"; group: number };
+
+export interface ValueComparison {
+  files: string[];
+  rows: { key: string; cells: ValueComparisonCell[] }[];
+}
+
+/** A file line with every value withheld by the backend. */
+export type RedactedSourceLine = { line: number } & (
+  | { kind: "blank" }
+  | { kind: "comment"; text: string }
+  | { kind: "withheld-comment"; key: string | null }
+  | { kind: "group"; name: string }
+  | { kind: "assignment"; key: string; valueState: ValueState }
+  | { kind: "unparsed" }
+);

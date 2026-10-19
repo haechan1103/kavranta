@@ -4,7 +4,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use env_core::{
     AddVariableRequest, CodexAccess, CreateGroupRequest, DeleteVariableRequest, EnvError,
     GitignoreUpdateSummary, LinkRequest, MoveVariableRequest, MutationSummary, ProjectProjection,
-    RenameEnvFileSummary, RenameGroupRequest, SaveDescriptionRequest, SaveValueRequest,
+    RedactedSourceLine, RenameEnvFileSummary, RenameGroupRequest, SaveDescriptionRequest,
+    SaveValueRequest, ValueComparison,
 };
 use env_credentials::{
     AccountProjection, AccountSecretField, CreateAccountInput, CredentialError, UpdateAccountInput,

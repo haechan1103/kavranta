@@ -1,0 +1,230 @@
+.compare-page {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+  padding: var(--space-8) clamp(20px, 3vw, 40px) 64px;
+}
+
+.compare-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+
+.compare-intro h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
+}
+
+.compare-intro p {
+  max-width: 680px;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.compare-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.compare-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-right: auto;
+}
+
+.compare-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.compare-pill.different {
+  color: var(--amber);
+  background: var(--amber-pale);
+}
+
+.compare-pill.partial {
+  color: var(--red);
+  background: var(--red-pale);
+}
+
+.compare-pill.same {
+  color: var(--green-strong);
+  background: var(--green-pale);
+}
+
+.compare-search {
+  width: min(260px, 100%);
+  height: 32px;
+  padding: 0 10px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.compare-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.compare-scroll {
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.compare-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 12px;
+  color: var(--muted);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.compare-table tbody th,
+.compare-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.compare-table tbody tr:last-child th,
+.compare-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.compare-table tbody th {
+  min-width: 220px;
+  font-weight: 400;
+}
+
+.compare-file {
+  font-family: var(--font-mono);
+}
+
+.compare-key {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.compare-status {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+}
+
+.compare-status.same {
+  color: var(--green-strong);
+}
+
+.compare-status.different {
+  color: var(--amber);
+}
+
+.compare-status.partial {
+  color: var(--red);
+}
+
+.compare-cell {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+button.compare-cell {
+  cursor: pointer;
+}
+
+button.compare-cell:hover {
+  filter: brightness(0.94);
+}
+
+.compare-cell.same {
+  color: var(--green-strong);
+  background: var(--green-pale);
+}
+
+.compare-cell.group-0 {
+  color: var(--ink);
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+
+.compare-cell.group-1 {
+  color: var(--amber);
+  background: var(--amber-pale);
+}
+
+.compare-cell.group-2,
+.compare-cell.group-3 {
+  color: var(--violet);
+  background: var(--violet-pale);
+}
+
+.compare-cell.empty,
+.compare-cell.missing {
+  color: var(--red);
+  background: transparent;
+  border: 1px dashed var(--red-line);
+}
+
+.compare-cell.duplicate,
+.compare-cell.unreadable {
+  color: var(--muted);
+  background: var(--surface-muted);
+}
+
+.compare-empty {
+  margin: 0;
+  padding: 24px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.compare-footnote {
+  margin: 12px 0 0;
+  color: var(--faint);
+  font-size: var(--text-xs);
+}

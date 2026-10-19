@@ -275,6 +275,30 @@ pub fn copy_key(request: KeyRequest, runtime: State<'_, AppRuntime>) -> CommandR
     })
 }
 
+/// Presence and equality only; never exposed to the agent broker (ADR-0043).
+#[tauri::command]
+pub fn compare_project_values(
+    request: ProjectRequest,
+    runtime: State<'_, AppRuntime>,
+) -> CommandResult<ValueComparison> {
+    runtime
+        .service(&request.project_id)?
+        .compare_values()
+        .map_err(Into::into)
+}
+
+/// The file's lines with every value withheld (ADR-0044).
+#[tauri::command]
+pub fn read_redacted_source(
+    request: MigrationPreviewRequest,
+    runtime: State<'_, AppRuntime>,
+) -> CommandResult<Vec<RedactedSourceLine>> {
+    runtime
+        .service(&request.project_id)?
+        .redacted_source(&request.file)
+        .map_err(Into::into)
+}
+
 #[tauri::command]
 pub fn plan_migration(
     request: MigrationPreviewRequest,

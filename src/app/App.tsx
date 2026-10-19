@@ -7,6 +7,7 @@ import { CloseIcon } from "../components/icons";
 import { RenameModal } from "../components/RenameModal";
 import { ActionPackModal } from "../features/action-pack/ActionPackModal";
 import { CommandPalette, type PaletteItem } from "../features/command-palette/CommandPalette";
+import { CompareView } from "../features/compare/CompareView";
 import { FileEditor } from "../features/file-editor/FileEditor";
 import { ExportEnvModal } from "../features/export/ExportEnvModal";
 import { ImportEnvModal } from "../features/export/ImportEnvModal";
@@ -30,6 +31,7 @@ type View =
   | { kind: "integrations" }
   | { kind: "activity" }
   | { kind: "exposure" }
+  | { kind: "compare" }
   | { kind: "accounts" };
 
 export function App() {
@@ -102,6 +104,7 @@ export function App() {
     if (!manager.selectedProject) return null;
     if (view.kind === "activity") return t("sidebar.activity");
     if (view.kind === "exposure") return t("sidebar.exposure");
+    if (view.kind === "compare") return t("sidebar.compare");
     if (view.kind === "accounts") return t("sidebar.accounts");
     return t("sidebar.overview");
   };
@@ -139,6 +142,7 @@ export function App() {
     }
     const views: { id: View["kind"]; label: string }[] = [
       { id: "overview", label: t("sidebar.overview") },
+      { id: "compare", label: t("sidebar.compare") },
       { id: "activity", label: t("sidebar.activity") },
       { id: "exposure", label: t("sidebar.exposure") },
       { id: "accounts", label: t("sidebar.accounts") },
@@ -417,6 +421,14 @@ export function App() {
                   onError={manager.showError}
                   onNotice={manager.showNotice}
                   onPendingChange={setPendingEdits}
+                />
+              )}
+              {view.kind === "compare" && (
+                <CompareView
+                  projectId={manager.selectedProject.id}
+                  revision={manager.projection}
+                  onOpenVariable={(path, key) => navigate({ kind: "file", path, query: key })}
+                  onError={manager.showError}
                 />
               )}
               {view.kind === "activity" && (

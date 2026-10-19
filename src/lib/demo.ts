@@ -2,6 +2,9 @@ import type {
   AgentIntegrationStatus,
   ProjectProjection,
   ProjectSummary,
+  RedactedSourceLine,
+  ValueComparison,
+  ValueComparisonCell,
 } from "./types";
 
 export const demoAgentIntegrations: AgentIntegrationStatus[] = [
@@ -277,3 +280,46 @@ function demoVariable(
     hasGuide: false,
   };
 }
+
+export const demoComparison: ValueComparison = (() => {
+  const files = demoProjection.files.map((file) => file.path);
+  const keys = [
+    ...new Set(demoProjection.files.flatMap((file) => file.groups.flatMap((group) => group.variables.map((variable) => variable.key)))),
+  ].sort();
+  return {
+    files,
+    rows: keys.map((key, keyIndex) => {
+      const seen: number[] = [];
+      return {
+        key,
+        cells: demoProjection.files.map((file, fileIndex): ValueComparisonCell => {
+          const variable = file.groups.flatMap((group) => group.variables).find((entry) => entry.key === key);
+          if (!variable) return { state: "missing" };
+          if (variable.valueState === "empty") return { state: "empty" };
+          // Every third name holds a different value in each file; the rest match.
+          const token = keyIndex % 3 === 0 ? fileIndex : -1;
+          if (!seen.includes(token)) seen.push(token);
+          return { state: "present", group: seen.indexOf(token) };
+        }),
+      };
+    }),
+  };
+})();
+
+export function demoRedactedSource(path: string): RedactedSourceLine[] {
+  const file = demoProjection.files.find((entry) => entry.path === path);
+  const lines: RedactedSourceLine[] = [];
+  const push = (line: DistributiveOmit<RedactedSourceLine, "line">) => lines.push({ ...line, line: lines.length + 1 } as RedactedSourceLine);
+  for (const group of file?.groups ?? []) {
+    if (lines.length > 0) push({ kind: "blank" });
+    push({ kind: "group", name: group.name });
+    for (const variable of group.variables) {
+      for (const text of variable.description) push({ kind: "comment", text: ` ${text}` });
+      push({ kind: "assignment", key: variable.key, valueState: variable.valueState });
+    }
+  }
+  if (path === ".env.local") push({ kind: "withheld-comment", key: "OLD_API_KEY" });
+  return lines;
+}
+
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;

@@ -15,7 +15,7 @@ import { SidebarNavIcon } from "./SidebarNavIcon";
 import { ProjectSwitcherModal } from "./ProjectSwitcherModal";
 
 interface View {
-  kind: "overview" | "file" | "integrations" | "activity" | "accounts" | "exposure";
+  kind: "overview" | "file" | "integrations" | "activity" | "accounts" | "exposure" | "compare";
   path?: string;
 }
 
@@ -27,7 +27,7 @@ interface Props {
   view: View;
   onSelectProject: (projectId: string) => void;
   onSelectView: (
-    view: { kind: "overview" } | { kind: "file"; path: string } | { kind: "integrations" } | { kind: "activity" } | { kind: "exposure" } | { kind: "accounts" },
+    view: { kind: "overview" } | { kind: "file"; path: string } | { kind: "integrations" } | { kind: "activity" } | { kind: "exposure" } | { kind: "compare" } | { kind: "accounts" },
   ) => void;
   onRegister: () => void;
   onRenameFileLabel: (projectId: string, path: string, name: string) => void;
@@ -40,6 +40,7 @@ interface Props {
 
 const sidebarViews = [
   { kind: "overview", icon: "overview", label: "sidebar.overview" },
+  { kind: "compare", icon: "compare", label: "sidebar.compare" },
   { kind: "activity", icon: "activity", label: "sidebar.activity" },
   { kind: "exposure", icon: "exposure", label: "sidebar.exposure" },
   { kind: "accounts", icon: "accounts", label: "sidebar.accounts" },

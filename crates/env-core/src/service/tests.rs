@@ -1,3 +1,5 @@
+#[path = "tests/comparison.rs"]
+mod comparison;
 #[path = "tests/diagnostics.rs"]
 mod diagnostics;
 #[path = "tests/exposure.rs"]
@@ -14,5 +16,7 @@ mod project;
 mod redaction_proof;
 #[path = "tests/search.rs"]
 mod search;
+#[path = "tests/source_view.rs"]
+mod source_view;
 #[path = "tests/structure.rs"]
 mod structure;
