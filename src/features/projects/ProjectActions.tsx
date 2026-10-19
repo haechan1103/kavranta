@@ -46,20 +46,20 @@ export function ProjectActions({
         setOpen(false);
       }
     };
-    const closeOnMove = () => setOpen(false);
+    // Follow the trigger when the sidebar scrolls or the window resizes.
+    const follow = () => setAnchor(anchorFor(triggerRef.current));
     document.addEventListener("pointerdown", closeOutside);
-    window.addEventListener("resize", closeOnMove);
-    document.addEventListener("scroll", closeOnMove, true);
+    window.addEventListener("resize", follow);
+    document.addEventListener("scroll", follow, true);
     return () => {
       document.removeEventListener("pointerdown", closeOutside);
-      window.removeEventListener("resize", closeOnMove);
-      document.removeEventListener("scroll", closeOnMove, true);
+      window.removeEventListener("resize", follow);
+      document.removeEventListener("scroll", follow, true);
     };
   }, [open]);
 
   const toggle = () => {
-    const rect = triggerRef.current?.getBoundingClientRect();
-    if (rect) setAnchor({ left: rect.right + 10, bottom: window.innerHeight - rect.bottom - 7 });
+    setAnchor(anchorFor(triggerRef.current));
     setOpen((current) => !current);
   };
 
@@ -140,4 +140,9 @@ export function ProjectActions({
       </div>
     </div>
   );
+}
+
+function anchorFor(trigger: HTMLElement | null) {
+  const rect = trigger?.getBoundingClientRect();
+  return rect ? { left: rect.right + 10, bottom: window.innerHeight - rect.bottom - 7 } : null;
 }
