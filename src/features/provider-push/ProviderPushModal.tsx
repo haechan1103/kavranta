@@ -14,6 +14,7 @@ import type {
 import { ProviderSelector } from "./ProviderSelector";
 import { ProviderTargetForm } from "./ProviderTargetForm";
 import { ProviderPushResults } from "./ProviderPushResults";
+import { ProviderPushReview } from "./ProviderPushReview";
 import {
   ProviderVariableSelection,
   type ProviderSelection,
@@ -43,6 +44,7 @@ export function ProviderPushModal({ projectId, projection, onClose, onError, onN
   const [removingPack, setRemovingPack] = useState(false);
   const [selection, setSelection] = useState<ProviderSelection>({});
   const [busy, setBusy] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [comparison, setComparison] = useState<ProviderCompareResult | null>(null);
   const [receipts, setReceipts] = useState<ProviderPushReceipt[]>([]);
@@ -225,6 +227,18 @@ export function ProviderPushModal({ projectId, projection, onClose, onError, onN
   const awsReady = !isAwsProvider || (awsAccess !== null && !loadingAwsAccess);
   const easReady = provider !== "expo-eas" || (!loadingEasTarget && easTarget !== null && easAccess !== null);
   const valid = available && selected.length > 0 && targetValid && githubEnvironmentReady && cloudflareReady && awsReady && easReady;
+  const destination = (() => {
+    if (provider === "github-actions") {
+      const environment = githubEnvironment !== "__new__" ? githubEnvironment.trim() : "";
+      return `${repository.trim()} · ${environment ? `Environment ${environment}` : t("push.repositoryWide")}`;
+    }
+    if (provider === "cloudflare-workers") {
+      return `${worker.trim()} · ${cloudflareEnvironment.trim() || t("push.cloudflareDefaultEnvironment")}`;
+    }
+    if (provider === "expo-eas") return `${easProject.trim()} · ${easEnvironments.join(", ")}`;
+    if (isAwsProvider) return [awsProfile.trim(), awsRegion.trim(), awsPathPrefix.trim()].filter(Boolean).join(" · ");
+    return currentProvider?.source === "personal" ? personalTarget.trim() : "";
+  })();
 
   const installPack = async () => {
     setInstallingPack(true);
@@ -321,83 +335,106 @@ export function ProviderPushModal({ projectId, projection, onClose, onError, onN
 
   return (
     <Modal className="provider-push-modal" title={t("push.title")} description={t("push.description")} onClose={onClose}>
-      <ProviderSelector
-        providers={providers}
-        selected={provider}
-        loading={loadingProviders}
-        runtimeTargets={runtimeTargets}
-        installingPack={installingPack}
-        onSelect={setProvider}
-        onInstallPack={() => void installPack()}
-      />
+      {reviewing && (
+        <ProviderPushReview
+          provider={provider}
+          providerName={currentProvider?.name ?? provider}
+          destination={destination}
+          file={file}
+          selections={selected}
+          isAwsProvider={isAwsProvider}
+        />
+      )}
+      <div className="push-edit-step" hidden={reviewing}>
+        <ProviderSelector
+          providers={providers}
+          selected={provider}
+          loading={loadingProviders}
+          runtimeTargets={runtimeTargets}
+          installingPack={installingPack}
+          onSelect={setProvider}
+          onInstallPack={() => void installPack()}
+        />
 
-      <ProviderTargetForm
-        provider={provider}
-        isAwsProvider={isAwsProvider}
-        isRemoteRuntime={isRemoteRuntime}
-        source={{ projection, file, setFile }}
-        github={{
-          repository, setRepository, githubEnvironment, setGithubEnvironment,
-          githubRepositories, githubEnvironments, newGithubEnvironment,
-          setNewGithubEnvironment, loadingRepositories, loadingEnvironments,
-          creatingEnvironment, detectingRepository, githubTargetError, targetValid,
-          createEnvironment,
-        }}
-        cloudflare={{
-          worker, setWorker, cloudflareEnvironment, setCloudflareEnvironment,
-          cloudflareEnvironments, cloudflareConfigPath, loadingCloudflareTarget,
-          cloudflareAccess, loadingCloudflareAccess, cloudflareAccessError,
-        }}
-        eas={{
-          easTarget, easProject, easEnvironments, setEasEnvironments,
-          loadingEasTarget, easAccess, easAccessError,
-        }}
-        aws={{
-          awsProfile, setAwsProfile, awsRegion, setAwsRegion, awsPathPrefix,
-          setAwsPathPrefix, awsKmsKeyId, setAwsKmsKeyId, awsAccess,
-          loadingAwsAccess, awsAccessError,
-        }}
-        runtime={{
-          runtimeTargets, runtimeTargetId, setRuntimeTargetId, editingRuntimeTarget,
-          setEditingRuntimeTarget, runtimeDisplayName, setRuntimeDisplayName,
-          runtimeRemoteId, setRuntimeRemoteId, runtimeDestination, setRuntimeDestination,
-          runtimeRecipient, setRuntimeRecipient, savingRuntimeTarget,
-          resetRuntimeTargetDraft, saveRuntimeTarget, removeRuntimeTarget,
-          clearComparison: () => setComparison(null),
-        }}
-        personal={{
-          currentProvider, personalTarget, setPersonalTarget, removingPack, busy, removePack,
-        }}
-      />
+        <ProviderTargetForm
+          provider={provider}
+          isAwsProvider={isAwsProvider}
+          isRemoteRuntime={isRemoteRuntime}
+          source={{ projection, file, setFile }}
+          github={{
+            repository, setRepository, githubEnvironment, setGithubEnvironment,
+            githubRepositories, githubEnvironments, newGithubEnvironment,
+            setNewGithubEnvironment, loadingRepositories, loadingEnvironments,
+            creatingEnvironment, detectingRepository, githubTargetError, targetValid,
+            createEnvironment,
+          }}
+          cloudflare={{
+            worker, setWorker, cloudflareEnvironment, setCloudflareEnvironment,
+            cloudflareEnvironments, cloudflareConfigPath, loadingCloudflareTarget,
+            cloudflareAccess, loadingCloudflareAccess, cloudflareAccessError,
+          }}
+          eas={{
+            easTarget, easProject, easEnvironments, setEasEnvironments,
+            loadingEasTarget, easAccess, easAccessError,
+          }}
+          aws={{
+            awsProfile, setAwsProfile, awsRegion, setAwsRegion, awsPathPrefix,
+            setAwsPathPrefix, awsKmsKeyId, setAwsKmsKeyId, awsAccess,
+            loadingAwsAccess, awsAccessError,
+          }}
+          runtime={{
+            runtimeTargets, runtimeTargetId, setRuntimeTargetId, editingRuntimeTarget,
+            setEditingRuntimeTarget, runtimeDisplayName, setRuntimeDisplayName,
+            runtimeRemoteId, setRuntimeRemoteId, runtimeDestination, setRuntimeDestination,
+            runtimeRecipient, setRuntimeRecipient, savingRuntimeTarget,
+            resetRuntimeTargetDraft, saveRuntimeTarget, removeRuntimeTarget,
+            clearComparison: () => setComparison(null),
+          }}
+          personal={{
+            currentProvider, personalTarget, setPersonalTarget, removingPack, busy, removePack,
+          }}
+        />
 
-      <ProviderVariableSelection
-        provider={provider}
-        variables={variables}
-        selection={selection}
-        ready={uiReady}
-        isAwsProvider={isAwsProvider}
-        isRemoteRuntime={isRemoteRuntime}
-        onChange={setSelection}
-      />
+        <ProviderVariableSelection
+          provider={provider}
+          variables={variables}
+          selection={selection}
+          ready={uiReady}
+          isAwsProvider={isAwsProvider}
+          isRemoteRuntime={isRemoteRuntime}
+          onChange={setSelection}
+        />
 
-      <ProviderPushResults
-        provider={provider}
-        selection={selection}
-        isRemoteRuntime={isRemoteRuntime}
-        latestReceipt={latestReceipt}
-        comparison={comparison}
-      />
+        <ProviderPushResults
+          provider={provider}
+          selection={selection}
+          isRemoteRuntime={isRemoteRuntime}
+          latestReceipt={latestReceipt}
+          comparison={comparison}
+        />
+      </div>
       <div className="modal-actions">
-        <button className="quiet-button" onClick={onClose}>{t("common.cancel")}</button>
-        {isComparisonProvider && (
-          <button className="quiet-button" disabled={!valid || busy || comparing} onClick={() => void compare()}>
-            {comparing ? t("compare.checking") : t("compare.action", { count: selected.length })}
-          </button>
-        )}
-        {!isRemoteRuntime && (
-          <button className="primary-button" disabled={!valid || busy} onClick={() => void submit()}>
-            {busy ? t("push.pushing") : t("push.action", { count: selected.length })}
-          </button>
+        {reviewing ? (
+          <>
+            <button className="quiet-button" disabled={busy} onClick={() => setReviewing(false)}>{t("push.reviewBack")}</button>
+            <button className="primary-button" disabled={!valid || busy} onClick={() => void submit()}>
+              {busy ? t("push.pushing") : t("push.action", { count: selected.length })}
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="quiet-button" onClick={onClose}>{t("common.cancel")}</button>
+            {isComparisonProvider && (
+              <button className="quiet-button" disabled={!valid || busy || comparing} onClick={() => void compare()}>
+                {comparing ? t("compare.checking") : t("compare.action", { count: selected.length })}
+              </button>
+            )}
+            {!isRemoteRuntime && (
+              <button className="primary-button" disabled={!valid} onClick={() => setReviewing(true)}>
+                {t("push.review", { count: selected.length })}
+              </button>
+            )}
+          </>
         )}
       </div>
     </Modal>

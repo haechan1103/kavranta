@@ -122,6 +122,7 @@ describe("ProviderPushModal", () => {
     const firstCheckbox = checkboxes.at(0);
     expect(firstCheckbox).toBeDefined();
     await user.click(firstCheckbox!);
+    await user.click(screen.getByRole("button", { name: "Review 1" }));
     await user.click(screen.getByRole("button", { name: "Push 1" }));
 
     expect(api.pushToProvider).toHaveBeenCalledWith(
@@ -135,6 +136,38 @@ describe("ProviderPushModal", () => {
     const request = vi.mocked(api.pushToProvider).mock.calls[0]?.[1];
     expect(JSON.stringify(request)).not.toContain("fake_preview_value");
     expect(onNotice).toHaveBeenCalledWith("Pushed 1 variables.");
+  });
+
+  it("reviews destination, source and names before anything is pushed", async () => {
+    const user = userEvent.setup();
+    render(
+      <ProviderPushModal
+        projectId="demo-project"
+        projection={demoProjection}
+        onClose={vi.fn()}
+        onError={vi.fn()}
+        onNotice={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getAllByText("CLI ready")).toHaveLength(4));
+    await user.type(screen.getByLabelText("GitHub repository"), "owner/repository");
+    const checkboxes = screen.getAllByRole("checkbox").filter((item) => !item.hasAttribute("disabled"));
+    await user.click(checkboxes[0]!);
+    await user.click(screen.getByRole("button", { name: "Review 1" }));
+
+    const review = screen.getByRole("region", { name: "Review before pushing" });
+    expect(review).toHaveTextContent("owner/repository · Whole repository");
+    expect(review).toHaveTextContent(".env.local");
+    expect(review).toHaveTextContent("GPT_API_KEY");
+    expect(review).toHaveTextContent("GitHub Actions keeps no previous value");
+    expect(review).not.toHaveTextContent("fake_preview_value");
+    expect(api.pushToProvider).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.queryByRole("region", { name: "Review before pushing" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("GitHub repository")).toHaveValue("owner/repository");
+    expect(api.pushToProvider).not.toHaveBeenCalled();
   });
 
   it("lets a GitHub kind be chosen before selecting the variable", async () => {
@@ -156,6 +189,7 @@ describe("ProviderPushModal", () => {
     const checkboxes = screen.getAllByRole("checkbox").filter((item) => !item.hasAttribute("disabled"));
     await user.click(checkboxes[0]!);
     await user.type(screen.getByLabelText("GitHub repository"), "owner/repository");
+    await user.click(screen.getByRole("button", { name: "Review 1" }));
     await user.click(screen.getByRole("button", { name: "Push 1" }));
 
     expect(api.pushToProvider).toHaveBeenLastCalledWith(
@@ -256,7 +290,7 @@ describe("ProviderPushModal", () => {
     expect(await screen.findByText(/Wrangler is not signed in/)).toBeInTheDocument();
     const checkboxes = screen.getAllByRole("checkbox").filter((item) => !item.hasAttribute("disabled"));
     await user.click(checkboxes[0]!);
-    expect(screen.getByRole("button", { name: "Push 1" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Review 1" })).toBeDisabled();
   });
 
   it("preflights AWS and sends only names with profile, Region, prefix, and KMS metadata", async () => {
@@ -282,6 +316,7 @@ describe("ProviderPushModal", () => {
     await waitFor(() => expect(screen.getByText("AWS account verified")).toBeInTheDocument());
     const checkboxes = screen.getAllByRole("checkbox").filter((item) => !item.hasAttribute("disabled"));
     await user.click(checkboxes[0]!);
+    await user.click(screen.getByRole("button", { name: "Review 1" }));
     await user.click(screen.getByRole("button", { name: "Push 1" }));
 
     expect(api.pushToProvider).toHaveBeenLastCalledWith(
@@ -356,7 +391,7 @@ describe("ProviderPushModal", () => {
     }));
     expect(JSON.stringify(request)).not.toContain("/srv/");
     expect(JSON.stringify(request)).not.toContain("fake_preview_value");
-    expect(screen.queryByRole("button", { name: /Push 1/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Review 1|Push 1/ })).not.toBeInTheDocument();
   });
 
   it("removes a locally installed Personal Provider Pack without touching env values", async () => {

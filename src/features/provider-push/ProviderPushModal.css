@@ -163,3 +163,124 @@
   background: var(--panel);
   border-top: 1px solid var(--line-soft);
 }
+
+.push-review {
+  display: grid;
+  gap: 14px;
+  padding: 18px 20px 4px;
+}
+
+.push-review-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.push-review-summary > div {
+  min-width: 0;
+  padding: 12px 14px;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.push-review-summary dt {
+  color: var(--muted);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+}
+
+.push-review-summary dd {
+  display: grid;
+  gap: 3px;
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.push-review-summary code {
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.push-review-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.push-review-list header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-sm);
+}
+
+.push-review-list header small {
+  color: var(--muted);
+  font-size: var(--text-2xs);
+}
+
+.push-review-list ul {
+  max-height: 240px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.push-review-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.push-review-list li:last-child {
+  border-bottom: 0;
+}
+
+.push-review-list code {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.push-review-kind {
+  flex: none;
+  padding: 2px 7px;
+  color: var(--green-strong);
+  background: var(--green-pale);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+}
+
+.push-review-kind.visible {
+  color: var(--amber);
+  background: var(--amber-pale);
+}
+
+.push-review-warning {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  color: var(--amber);
+  background: var(--amber-pale);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
