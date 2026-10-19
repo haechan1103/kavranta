@@ -6,7 +6,7 @@ import { CommandPalette, rank, type PaletteItem } from "./CommandPalette";
 
 function items(): PaletteItem[] {
   return [
-    { id: "var:a", group: "variables", label: "GPT_API_KEY", detail: ".env.local", run: vi.fn() },
+    { id: "var:a", group: "variables", label: "GPT_API_KEY", detail: ".env.local", run: vi.fn(), copy: vi.fn() },
     { id: "var:b", group: "variables", label: "DATABASE_URL", detail: ".env.local", run: vi.fn() },
     { id: "file:a", group: "files", label: ".env.local", run: vi.fn() },
     { id: "view:activity", group: "views", label: "AI activity", run: vi.fn() },
@@ -55,5 +55,20 @@ describe("CommandPalette", () => {
   it("states that values are never searched", () => {
     render(<CommandPalette items={items()} onClose={vi.fn()} />);
     expect(screen.getByText("Names only, never values")).toBeInTheDocument();
+  });
+
+  it("copies the highlighted variable's value with Cmd+Enter instead of opening it", async () => {
+    const user = userEvent.setup();
+    const all = items();
+    const onClose = vi.fn();
+    render(<CommandPalette items={all} onClose={onClose} />);
+
+    await user.type(screen.getByRole("combobox"), "gpt");
+    expect(screen.getByText("copy value")).toBeInTheDocument();
+    await user.keyboard("{Meta>}{Enter}{/Meta}");
+
+    expect(all[0]?.copy).toHaveBeenCalledOnce();
+    expect(all[0]?.run).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
   });
 });

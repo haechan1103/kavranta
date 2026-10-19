@@ -11,6 +11,8 @@ export interface PaletteItem {
   label: string;
   detail?: string;
   run: () => void;
+  /** Copies the variable's value in Rust. The palette itself never sees the value. */
+  copy?: () => void;
 }
 
 interface Props {
@@ -66,6 +68,12 @@ export function CommandPalette({ items, onClose }: Props) {
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setActive((index) => Math.max(0, index - 1));
+    } else if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      const item = ordered[active];
+      if (!item?.copy) return;
+      onClose();
+      item.copy();
     } else if (event.key === "Enter") {
       event.preventDefault();
       choose(ordered[active]);
@@ -128,6 +136,7 @@ export function CommandPalette({ items, onClose }: Props) {
         <div className="palette-footer" aria-hidden="true">
           <span><kbd>↑↓</kbd> {t("palette.move")}</span>
           <span><kbd>↵</kbd> {t("palette.choose")}</span>
+          {activeItem?.copy && <span><kbd>⌘↵</kbd> {t("palette.copyValue")}</span>}
           <span><kbd>esc</kbd> {t("palette.close")}</span>
         </div>
       </div>

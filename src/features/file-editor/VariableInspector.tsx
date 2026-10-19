@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 
 import { useConfirm } from "../../components/ConfirmDialog";
 import { CloseIcon } from "../../components/icons";
+import { Markdown } from "../../components/Markdown";
 import { displayGroupName, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type { AgentActivityEvent, OccurrenceProjection } from "../../lib/types";
 import { categoryKey } from "../activity/AgentActivity";
 import { agentDisplayName } from "../integrations/AgentBrandMark";
 import { MoveVariableModal } from "./MoveVariableModal";
-import { VariableGuideModal } from "./VariableGuideModal";
+import { splitGuideSteps, VariableGuideModal } from "./VariableGuideModal";
 
 interface Props {
   projectId: string;
@@ -50,6 +51,7 @@ export function VariableInspector({
   const [moving, setMoving] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const recent = useRecentActivity(projectId, variable.key);
+  const guideSteps = useGuideSteps(projectId, variable.key, variable.hasGuide);
 
   useEffect(() => {
     setDescription(variable.description.join("\n"));
@@ -169,8 +171,15 @@ export function VariableInspector({
       {variable.hasGuide && (
         <section className="inspector-section">
           <h4>{t("inspector.guide")}</h4>
+          {guideSteps && guideSteps[0] && (
+            <div className="inspector-guide">
+              <Markdown source={guideSteps[0]} projectId={projectId} guideKey={variable.key} />
+            </div>
+          )}
           <button type="button" className="quiet-button compact" onClick={() => setShowGuide(true)}>
-            {t("guide.open", { key: variable.key })}
+            {guideSteps && guideSteps.length > 1
+              ? t("inspector.guideAllSteps", { count: guideSteps.length })
+              : t("guide.open", { key: variable.key })}
           </button>
         </section>
       )}
@@ -252,6 +261,26 @@ function accessHelpKey(access: OccurrenceProjection["codexAccess"]) {
   if (access === "protected") return "inspector.accessProtected" as const;
   if (access === "read-write") return "inspector.accessReadWrite" as const;
   return "inspector.accessUnclassified" as const;
+}
+
+/** The guide's steps for an inline preview. `null` while loading or when there is none. */
+function useGuideSteps(projectId: string, key: string, enabled: boolean) {
+  const [steps, setSteps] = useState<string[] | null>(null);
+  useEffect(() => {
+    let active = true;
+    setSteps(null);
+    if (!enabled) return;
+    void api
+      .readVariableGuide(projectId, key)
+      .then((guide) => {
+        if (active) setSteps(guide ? splitGuideSteps(guide) : null);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [projectId, key, enabled]);
+  return steps;
 }
 
 /** Up to three recent AI events that name this variable. `null` while loading. */

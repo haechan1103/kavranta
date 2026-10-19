@@ -33,6 +33,8 @@ interface Props {
   onRenameFileLabel: (projectId: string, path: string, name: string) => void;
   onRenameFileOnDisk: (projectId: string, path: string, newName: string) => void;
   onExportDiagnostics: (destinationLabel: string) => void;
+  /** Staged changes in the open file, shown beside it so they are not forgotten. */
+  pendingEdits?: { path: string; count: number };
   projectActions?: ReactNode;
 }
 
@@ -55,6 +57,7 @@ export function ProjectSidebar({
   onRenameFileLabel,
   onRenameFileOnDisk,
   onExportDiagnostics,
+  pendingEdits,
   projectActions,
 }: Props) {
   const { locale, setLocale, t } = useI18n();
@@ -112,6 +115,11 @@ export function ProjectSidebar({
                     <span className="truncate">{file.displayName}</span>
                     {file.displayName !== file.path && <small className="truncate">{file.path}</small>}
                   </span>
+                  {pendingEdits && pendingEdits.path === file.path && pendingEdits.count > 0 && (
+                    <span className="sidebar-pending" aria-label={t("sidebar.pendingEdits", { count: pendingEdits.count })}>
+                      {pendingEdits.count}
+                    </span>
+                  )}
                   {file.warnings.length > 0 && (
                     <b aria-label={t("sidebar.fileWarnings", { count: file.warnings.length })}>!</b>
                   )}

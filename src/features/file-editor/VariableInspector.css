@@ -168,6 +168,15 @@
   border-top: 1px solid var(--line-soft);
 }
 
+.inspector-guide {
+  width: 100%;
+  max-height: 260px;
+  overflow: auto;
+  padding: 10px 12px;
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+}
+
 .inspector-empty {
   justify-content: center;
   min-height: 220px;

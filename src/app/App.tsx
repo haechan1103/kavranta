@@ -125,6 +125,14 @@ export function App() {
             label: variable.key,
             detail: file.path,
             run: () => navigate({ kind: "file", path: file.path, query: variable.key }),
+            copy: variable.valueState === "present" && manager.selectedProject
+              ? () => {
+                const projectId = manager.selectedProject!.id;
+                void api.copyValue(projectId, file.path, variable.key)
+                  .then(() => manager.showNotice(t("palette.copied", { key: variable.key, seconds: 45 })))
+                  .catch(() => manager.showError(t("common.copyFailed")));
+              }
+              : undefined,
           });
         }
       }
@@ -194,6 +202,7 @@ export function App() {
         view={view}
         onSelectProject={selectProject}
         onSelectView={navigate}
+        pendingEdits={view.kind === "file" ? { path: view.path, count: pendingEdits } : undefined}
         onRegister={() => void manager.register()}
         onExportDiagnostics={(dialogTitle) => void exportDiagnostics(dialogTitle)}
         onRenameFileLabel={(projectId, path, name) => void manager.renameEnvFileLabel(projectId, path, name)}
