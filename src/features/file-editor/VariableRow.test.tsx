@@ -350,4 +350,56 @@ describe("VariableRow", () => {
     ).toBeInTheDocument();
     expect(container.textContent).not.toContain("Move to another group");
   });
+
+  it("asks in an app dialog before detaching, and does nothing on Cancel", async () => {
+    const user = userEvent.setup();
+    const onMutate = vi.fn(async (operation: () => Promise<unknown>) => { await operation(); });
+    vi.mocked(api.detachLink).mockClear();
+    render(
+      <VariableRow
+        projectId="fixture-project"
+        file=".env.local"
+        variable={variable}
+        currentGroup="GPT"
+        groups={["GPT"]}
+        sameKeyFiles={variable.linkedFiles}
+        onMutate={onMutate}
+        onLink={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Detach this file" }));
+    expect(screen.getByRole("dialog", { name: "Detach this file?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(api.detachLink).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Detach this file" }));
+    await user.click(screen.getByRole("button", { name: "Detach" }));
+    expect(api.detachLink).toHaveBeenCalledWith("fixture-project", "gpt-link", ".env.local");
+  });
+
+  it("sends an AI access upgrade only after the dialog confirms it", async () => {
+    const user = userEvent.setup();
+    const onMutate = vi.fn(async (operation: () => Promise<unknown>) => { await operation(); });
+    vi.mocked(api.setCodexAccess).mockClear();
+    render(
+      <VariableRow
+        projectId="fixture-project"
+        file=".env.local"
+        variable={variable}
+        currentGroup="GPT"
+        groups={["GPT"]}
+        sameKeyFiles={variable.linkedFiles}
+        onMutate={onMutate}
+        onLink={vi.fn()}
+      />,
+    );
+
+    await user.selectOptions(screen.getByRole("combobox", { name: /GPT_API_KEY/ }), "read-write");
+    expect(screen.getByRole("dialog", { name: "Let AI tools read GPT_API_KEY?" })).toBeInTheDocument();
+    expect(api.setCodexAccess).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Allow AI access" }));
+
+    expect(api.setCodexAccess).toHaveBeenCalledWith("fixture-project", "GPT_API_KEY", "read-write", true);
+  });
 });

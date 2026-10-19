@@ -235,9 +235,36 @@
 }
 
 .toast-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-right: 8px;
   color: #8a302d;
   background: var(--red-pale);
   border-color: #efc6c4;
+}
+
+.toast-dismiss {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  place-items: center;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.toast-dismiss:hover {
+  background: rgba(138, 48, 45, 0.1);
+}
+
+.toast-dismiss .ui-svg {
+  width: 14px;
+  height: 14px;
 }
 
 @media (max-width: 1050px) {

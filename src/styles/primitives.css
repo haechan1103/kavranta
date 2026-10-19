@@ -22,6 +22,7 @@
 .primary-button,
 .secondary-button,
 .quiet-button,
+.danger-button,
 .danger-quiet-button {
   min-height: 34px;
   padding: 0 14px;
@@ -43,6 +44,17 @@
   background: #0e674d;
   border-color: #0e674d;
   box-shadow: 0 7px 16px rgba(22, 118, 90, 0.2);
+}
+
+.danger-button {
+  color: white;
+  background: var(--red);
+  border: 1px solid var(--red);
+}
+
+.danger-button:hover {
+  background: #9e3430;
+  border-color: #9e3430;
 }
 
 .primary-button:disabled {

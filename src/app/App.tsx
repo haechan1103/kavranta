@@ -1,6 +1,8 @@
 import "./App.css";
 import { useEffect, useState } from "react";
 
+import { useConfirm } from "../components/ConfirmDialog";
+import { CloseIcon } from "../components/icons";
 import { RenameModal } from "../components/RenameModal";
 import { ActionPackModal } from "../features/action-pack/ActionPackModal";
 import { FileEditor } from "../features/file-editor/FileEditor";
@@ -30,6 +32,7 @@ type View =
 
 export function App() {
   const { locale, t } = useI18n();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const manager = useEnvManager();
   const [view, setView] = useState<View>({ kind: "overview" });
   const [exporting, setExporting] = useState(false);
@@ -50,14 +53,13 @@ export function App() {
     setChannelImporting(null);
   }, [manager.selectedProjectId]);
 
+  // Notices fade on their own. An error stays until the user dismisses it, so a
+  // failure is never missed because it vanished while they looked elsewhere.
   useEffect(() => {
-    if (!manager.error && !manager.notice) return;
-    const timeout = window.setTimeout(() => {
-      manager.clearError();
-      manager.clearNotice();
-    }, 5000);
+    if (manager.error || !manager.notice) return;
+    const timeout = window.setTimeout(manager.clearNotice, 5000);
     return () => window.clearTimeout(timeout);
-  }, [manager.error, manager.notice, manager.clearError, manager.clearNotice]);
+  }, [manager.error, manager.notice, manager.clearNotice]);
 
   const refresh = async () => {
     if (!manager.selectedProjectId) return;
@@ -111,9 +113,15 @@ export function App() {
             onRunAction={() => setRunningAction(true)}
             onRefresh={() => void refresh()}
             onRemove={() => {
-              if (window.confirm(t("app.removeConfirm"))) {
-                void manager.remove(manager.selectedProject!.id);
-              }
+              const projectId = manager.selectedProject!.id;
+              void confirm({
+                title: t("app.removeConfirmTitle"),
+                body: t("app.removeConfirm"),
+                confirmLabel: t("common.remove"),
+                tone: "danger",
+              }).then((confirmed) => {
+                if (confirmed) void manager.remove(projectId);
+              });
             }}
           />
         ) : undefined}
@@ -320,20 +328,33 @@ export function App() {
         )}
       </main>
 
+      {confirmDialog}
       <SecretInputController
         projectId={manager.selectedProject?.id ?? null}
         projection={manager.projection}
         refreshProject={manager.refreshProject}
         onError={manager.showError}
       />
-      {(manager.error || manager.notice) && (
-        <div
-          className={`toast ${manager.error ? "toast-error" : "toast-success"}`}
-          role="status"
-        >
-          {manager.error ?? manager.notice}
+      {manager.error ? (
+        <div className="toast toast-error" role="alert">
+          <span>{manager.error}</span>
+          <button
+            type="button"
+            className="toast-dismiss"
+            aria-label={t("modal.close")}
+            onClick={() => {
+              manager.clearError();
+              manager.clearNotice();
+            }}
+          >
+            <CloseIcon />
+          </button>
         </div>
-      )}
+      ) : manager.notice ? (
+        <div className="toast toast-success" role="status">
+          {manager.notice}
+        </div>
+      ) : null}
       {exporting && manager.selectedProject && (
         <ExportEnvModal projectId={manager.selectedProject.id} projection={manager.projection!} onClose={() => setExporting(false)} onError={manager.showError} onNotice={manager.showNotice} />
       )}

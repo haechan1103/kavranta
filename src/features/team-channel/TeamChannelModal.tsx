@@ -1,6 +1,7 @@
 import "./TeamChannelModal.css";
 import { useCallback, useEffect, useState } from "react";
 
+import { useConfirm } from "../../components/ConfirmDialog";
 import { Modal } from "../../components/Modal";
 import { localizeError, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
@@ -30,6 +31,7 @@ export function TeamChannelModal({
   onImport,
 }: Props) {
   const { locale, t } = useI18n();
+  const { confirm, dialog } = useConfirm();
   const [channels, setChannels] = useState<TeamChannel[]>([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
@@ -65,7 +67,13 @@ export function TeamChannelModal({
   };
 
   const remove = async (channel: TeamChannel) => {
-    if (!window.confirm(t("teamChannel.removeConfirm", { name: channel.name }))) return;
+    const confirmed = await confirm({
+      title: t("teamChannel.removeConfirmTitle", { name: channel.name }),
+      body: t("teamChannel.removeConfirm"),
+      confirmLabel: t("teamChannel.disconnect"),
+      tone: "danger",
+    });
+    if (!confirmed) return;
     try {
       await api.removeTeamChannel(projectId, channel.id);
       setChannels((current) => current.filter((item) => item.id !== channel.id));
@@ -76,6 +84,7 @@ export function TeamChannelModal({
   };
 
   return (
+    <>
     <Modal
       className="team-channel-modal"
       title={t("teamChannel.title")}
@@ -153,5 +162,7 @@ export function TeamChannelModal({
         <button className="primary-button" onClick={onClose}>{t("common.close")}</button>
       </div>
     </Modal>
+    {dialog}
+    </>
   );
 }

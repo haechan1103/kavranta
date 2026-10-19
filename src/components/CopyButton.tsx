@@ -7,12 +7,14 @@ interface Props {
   className: string;
   label: string;
   title?: string;
+  /** Extra copy for a successful copy, such as when the clipboard will be cleared. */
+  copiedHint?: string;
   onCopy: () => Promise<void>;
 }
 
 type CopyFeedback = "copied" | "failed" | null;
 
-export function CopyButton({ className, label, title = label, onCopy }: Props) {
+export function CopyButton({ className, label, title = label, copiedHint, onCopy }: Props) {
   const { t } = useI18n();
   const [feedback, setFeedback] = useState<CopyFeedback>(null);
   const [pending, setPending] = useState(false);
@@ -45,12 +47,12 @@ export function CopyButton({ className, label, title = label, onCopy }: Props) {
     inFlight.current = false;
     setPending(false);
     setFeedback(result);
-    timeout.current = window.setTimeout(() => setFeedback(null), 2000);
+    timeout.current = window.setTimeout(() => setFeedback(null), copiedHint ? 3000 : 2000);
   };
 
   const message =
     feedback === "copied"
-      ? t("common.copied")
+      ? copiedHint ? `${t("common.copied")} · ${copiedHint}` : t("common.copied")
       : feedback === "failed"
         ? t("common.copyFailed")
         : "";

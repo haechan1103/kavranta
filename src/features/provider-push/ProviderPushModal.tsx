@@ -320,7 +320,7 @@ export function ProviderPushModal({ projectId, projection, onClose, onError, onN
   };
 
   return (
-    <Modal title={t("push.title")} description={t("push.description")} onClose={onClose}>
+    <Modal className="provider-push-modal" title={t("push.title")} description={t("push.description")} onClose={onClose}>
       <ProviderSelector
         providers={providers}
         selected={provider}

@@ -150,3 +150,16 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* The push button must stay reachable however long the variable list grows. */
+.provider-push-modal {
+  width: min(640px, 100%);
+}
+
+.provider-push-modal > .modal-actions {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
+  background: white;
+  border-top: 1px solid var(--line-soft);
+}

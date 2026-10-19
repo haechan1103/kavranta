@@ -1,6 +1,7 @@
 import "./VariableRow.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { useConfirm } from "../../components/ConfirmDialog";
 import { CopyButton } from "../../components/CopyButton";
 import { EyeIcon, EyeOffIcon, HelpIcon, MoveIcon, TrashIcon } from "../../components/icons";
 import { displayGroupName, useI18n } from "../../i18n";
@@ -8,6 +9,9 @@ import * as api from "../../lib/api";
 import type { CodexAccess, OccurrenceProjection } from "../../lib/types";
 import { MoveVariableModal } from "./MoveVariableModal";
 import { VariableGuideModal } from "./VariableGuideModal";
+
+/** Mirrors the delay in `copy_value` (src-tauri/src/commands/env_files.rs). */
+const CLIPBOARD_CLEAR_SECONDS = 45;
 
 interface Props {
   hidden?: boolean;
@@ -33,6 +37,7 @@ export function VariableRow({
   onLink,
 }: Props) {
   const { t } = useI18n();
+  const { confirm, dialog } = useConfirm();
   const [draft, setDraft] = useState("");
   const [dirty, setDirty] = useState(false);
   const [revealed, setRevealed] = useState<string | null>(null);
@@ -84,9 +89,11 @@ export function VariableRow({
     const downgrade = access === "read-write" && variable.codexAccess !== "read-write";
     if (
       downgrade &&
-      !window.confirm(
-        t("row.accessConfirm", { key: variable.key }),
-      )
+      !(await confirm({
+        title: t("row.accessConfirmTitle", { key: variable.key }),
+        body: t("row.accessConfirm"),
+        confirmLabel: t("row.allowAccess"),
+      }))
     ) {
       return;
     }
@@ -214,6 +221,7 @@ export function VariableRow({
             <CopyButton
               className="icon-button"
               label={t("row.copyValue")}
+              copiedHint={t("row.clipboardClears", { seconds: CLIPBOARD_CLEAR_SECONDS })}
               onCopy={() => api.copyValue(projectId, file, variable.key)}
             />
           )}
@@ -266,16 +274,18 @@ export function VariableRow({
             title={t("row.deleteTitle")}
             aria-label={t("row.deleteTitle")}
             onClick={() => {
-              if (
-                window.confirm(
-                  t("row.deleteConfirm", { file, key: variable.key }),
-                )
-              ) {
+              void confirm({
+                title: t("row.deleteConfirmTitle", { key: variable.key }),
+                body: t("row.deleteConfirm", { file }),
+                confirmLabel: t("common.delete"),
+                tone: "danger",
+              }).then((confirmed) => {
+                if (!confirmed) return;
                 void onMutate(
                   () => api.deleteVariable(projectId, { file, key: variable.key }),
                   t("row.deleted", { key: variable.key }),
                 );
-              }
+              });
             }}
           >
             <TrashIcon />
@@ -304,12 +314,18 @@ export function VariableRow({
           <button
             className="quiet-button compact relationship-action"
             onClick={() => {
-              if (window.confirm(t("row.detachConfirm"))) {
+              const linkId = variable.linkId!;
+              void confirm({
+                title: t("row.detachConfirmTitle"),
+                body: t("row.detachConfirm"),
+                confirmLabel: t("row.detachShort"),
+              }).then((confirmed) => {
+                if (!confirmed) return;
                 void onMutate(
-                  () => api.detachLink(projectId, variable.linkId!, file),
+                  () => api.detachLink(projectId, linkId, file),
                   t("row.detached", { file }),
                 );
-              }
+              });
             }}
           >
             {t("row.detach")}
@@ -386,6 +402,7 @@ export function VariableRow({
           onError={() => undefined}
         />
       )}
+      {dialog}
     </article>
   );
 }
