@@ -22,13 +22,13 @@ test("shows a compact copy confirmation without moving or revealing the row", as
   const before = await row.boundingBox();
   await valueButton.click();
   const feedback = row.getByRole("status");
-  await expect(feedback).toHaveText("복사 완료");
+  await expect(feedback).toHaveText("복사 완료 · 45초 뒤 클립보드에서 지워짐");
   await expect(row.locator("input[type=password]")).toHaveValue("");
   expect(await row.boundingBox()).toEqual(before);
 
   const feedbackBox = await feedback.boundingBox();
   const groupBox = await page
-    .locator(".group-card")
+    .locator(".group-block")
     .filter({ has: row })
     .boundingBox();
   expect(feedbackBox).not.toBeNull();

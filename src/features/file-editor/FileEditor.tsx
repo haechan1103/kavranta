@@ -1,17 +1,19 @@
 import "./FileEditor.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useConfirm } from "../../components/ConfirmDialog";
 import { Modal } from "../../components/Modal";
 import { RenameModal } from "../../components/RenameModal";
-import { CheckIcon, EmptyValueIcon } from "../../components/icons";
 import { displayGroupName, localizeError, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type {
   FileProjection,
-  GroupProjection,
   OccurrenceProjection,
   ProjectProjection,
 } from "../../lib/types";
+import { SaveBar } from "./SaveBar";
+import { usePendingChanges } from "./usePendingChanges";
+import { VariableInspector } from "./VariableInspector";
 import { VariableRow } from "./VariableRow";
 
 interface Props {
@@ -23,7 +25,18 @@ interface Props {
   onRefresh: () => Promise<void>;
   onError: (message: string) => void;
   onNotice: (message: string) => void;
+  /** Reports how many staged changes would be lost by leaving this file. */
+  onPendingChange?: (count: number) => void;
 }
+
+type Filter = "all" | "empty" | "pending" | "protected";
+
+interface ExternalChange {
+  added: string[];
+  removed: string[];
+}
+
+const inspectorStorageKey = "kavranta.inspector-open";
 
 export function FileEditor({
   projectId,
@@ -34,17 +47,32 @@ export function FileEditor({
   onRefresh,
   onError,
   onNotice,
+  onPendingChange,
 }: Props) {
   const { locale, t } = useI18n();
+  const { confirm, dialog } = useConfirm();
   const file = projection.files.find((item) => item.path === filePath);
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState<string | null>(null);
   const [addingGroup, setAddingGroup] = useState(false);
   const [linking, setLinking] = useState<OccurrenceProjection | null>(null);
   const [renamingGroup, setRenamingGroup] = useState<string | null>(null);
-  const [showEmptyOnly, setShowEmptyOnly] = useState(initialEmptyOnly);
+  const [filter, setFilter] = useState<Filter>(initialEmptyOnly ? "empty" : "all");
   const [search, setSearch] = useState(initialSearch);
-  const [activeGroupIndex, setActiveGroupIndex] = useState(0);
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
+  const [checked, setChecked] = useState<ReadonlySet<string>>(() => new Set());
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [inspectorOpen, setInspectorOpen] = useState(readInspectorPreference);
+  const [saving, setSaving] = useState(false);
+  const [saveGeneration, setSaveGeneration] = useState(0);
+  const [externalChange, setExternalChange] = useState<ExternalChange | null>(null);
+  const expectingRefresh = useRef(false);
   const editorRef = useRef<HTMLElement>(null);
+
+  const variables = useMemo(
+    () => file?.groups.flatMap((group) => group.variables) ?? [],
+    [file],
+  );
+  const pending = usePendingChanges(filePath, variables);
 
   const occurrenceFilesByKey = useMemo(() => {
     const filesByKey = new Map<string, Set<string>>();
@@ -60,71 +88,178 @@ export function FileEditor({
     return filesByKey;
   }, [projection.files]);
 
-  const sameKeyFiles = useMemo(() => {
+  const sameKeyFilesFor = useCallback(
+    (key: string) => [...(occurrenceFilesByKey.get(key) ?? [filePath])],
+    [occurrenceFilesByKey, filePath],
+  );
+
+  const linkCandidates = useMemo(() => {
     if (!linking) return [];
     const candidatePaths = new Set(occurrenceFilesByKey.get(linking.key) ?? []);
-    return projection.files.filter((candidate) =>
-      candidatePaths.has(candidate.path),
-    );
+    return projection.files.filter((candidate) => candidatePaths.has(candidate.path));
   }, [linking, occurrenceFilesByKey, projection.files]);
 
-  const variableCount = file ? countVariables(file) : 0;
-  const emptyVariableCount = file ? countEmptyVariables(file) : 0;
-  const visibleGroups = useMemo(() => {
-    if (!file) return [];
+  useEffect(() => {
+    onPendingChange?.(pending.count);
+  }, [onPendingChange, pending.count]);
+
+  useEffect(() => () => onPendingChange?.(0), [onPendingChange]);
+
+  // A refresh this editor did not cause is an external change. Keep the drafts and say so.
+  const structure = useMemo(() => variables.map((variable) => variable.key), [variables]);
+  const previousStructure = useRef(structure);
+  useEffect(() => {
+    const before = previousStructure.current;
+    previousStructure.current = structure;
+    if (before === structure) return;
+    if (expectingRefresh.current) {
+      expectingRefresh.current = false;
+      return;
+    }
+    if (pending.count === 0) return;
+    const added = structure.filter((key) => !before.includes(key));
+    const removed = before.filter((key) => !structure.includes(key));
+    setExternalChange({ added, removed });
+  }, [structure, pending.count]);
+
+  const counts = useMemo(() => ({
+    all: variables.length,
+    empty: variables.filter((variable) => variable.valueState === "empty").length,
+    pending: pending.count,
+    protected: variables.filter((variable) => variable.codexAccess === "protected").length,
+  }), [variables, pending.count]);
+
+  const matches = useCallback((variable: OccurrenceProjection, groupName: string) => {
     const query = search.trim().toLocaleLowerCase();
-    if (!showEmptyOnly && !query) return file.groups;
-    return file.groups
-      .map((group) => ({
-        ...group,
-        variables: group.variables.filter((variable) =>
-          (!showEmptyOnly || variable.valueState === "empty") &&
-          (!query || [variable.key, group.name, ...variable.description]
-            .some((text) => text.toLocaleLowerCase().includes(query))),
-        ),
-      }))
-      .filter((group) => group.variables.length > 0);
-  }, [file, showEmptyOnly, search]);
-  const visibleVariableCount = visibleGroups.reduce(
-    (total, group) => total + group.variables.length,
-    0,
-  );
-  const filtering = showEmptyOnly || Boolean(search.trim());
-  const visibleVariables = new Set(visibleGroups.flatMap((group) => group.variables));
-  const showGroupNavigation = visibleVariableCount >= 10 && visibleGroups.length > 1;
+    const passesFilter =
+      filter === "all" ||
+      (filter === "empty" && variable.valueState === "empty") ||
+      (filter === "pending" && (pending.drafts.has(variable.key) || pending.removals.has(variable.key))) ||
+      (filter === "protected" && variable.codexAccess === "protected");
+    return passesFilter && (!query || [variable.key, groupName, ...variable.description]
+      .some((text) => text.toLocaleLowerCase().includes(query)));
+  }, [filter, search, pending.drafts, pending.removals]);
 
-  useEffect(() => {
-    setActiveGroupIndex(0);
-  }, [filePath, showEmptyOnly, search]);
+  const visibleKeys = useMemo(() => {
+    const keys: string[] = [];
+    for (const group of file?.groups ?? []) {
+      if (collapsed.has(group.name)) continue;
+      for (const variable of group.variables) {
+        if (matches(variable, group.name)) keys.push(variable.key);
+      }
+    }
+    return keys;
+  }, [file, collapsed, matches]);
 
-  useEffect(() => {
-    if (!showGroupNavigation || !editorRef.current) return;
-    const scrollRoot = editorRef.current.closest<HTMLElement>(".content-scroll");
-    const groupElements = [...editorRef.current.querySelectorAll<HTMLElement>("[data-env-group]")]
-      .filter((element) => !element.hidden);
-    if (!scrollRoot || groupElements.length === 0) return;
-    let frame = 0;
-    const updateActiveGroup = () => {
-      window.cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(() => {
-        const rootTop = scrollRoot.getBoundingClientRect().top;
-        const activationLine = rootTop + 86;
-        let current = 0;
-        for (const [index, element] of groupElements.entries()) {
-          if (element.getBoundingClientRect().top <= activationLine) current = index;
-        }
-        setActiveGroupIndex(current);
+  const selected = variables.find((variable) => variable.key === selectedKey) ?? null;
+  const selectedGroup = file?.groups.find((group) => group.variables.some((variable) => variable.key === selectedKey));
+
+  const mutate = useCallback(async (operation: () => Promise<unknown>, success: string) => {
+    try {
+      expectingRefresh.current = true;
+      await operation();
+      await onRefresh();
+      onNotice(success);
+    } catch (cause) {
+      expectingRefresh.current = false;
+      onError(localizeError(cause, locale, "error.mutation"));
+    }
+  }, [locale, onError, onNotice, onRefresh]);
+
+  const save = useCallback(async () => {
+    if (saving || pending.count === 0) return;
+    const savable = pending.changes.filter((change) => !pending.orphaned.includes(change.key));
+    const removals = savable.filter((change) => change.kind === "remove");
+    if (removals.length > 0) {
+      const confirmed = await confirm({
+        title: t("save.removeConfirmTitle", { count: removals.length }),
+        body: removals
+          .map((change) => {
+            const variable = variables.find((candidate) => candidate.key === change.key);
+            return variable && variable.linkedCount > 1
+              ? t("save.removeLinkedLine", { key: change.key, count: variable.linkedCount - 1 })
+              : change.key;
+          })
+          .join(" · "),
+        confirmLabel: t("save.removeConfirmAction", { count: removals.length }),
+        tone: "danger",
       });
+      if (!confirmed) return;
+    }
+
+    setSaving(true);
+    expectingRefresh.current = true;
+    const failed: string[] = [];
+    let saved = 0;
+    for (const change of savable) {
+      try {
+        if (change.kind === "replace") {
+          await api.saveValue(projectId, { file: filePath, key: change.key, newValue: pending.drafts.get(change.key) ?? "" });
+        } else {
+          await api.deleteVariable(projectId, { file: filePath, key: change.key });
+        }
+        pending.revert(change.key);
+        saved += 1;
+      } catch {
+        failed.push(change.key);
+      }
+    }
+    try {
+      await onRefresh();
+    } catch (cause) {
+      onError(localizeError(cause, locale, "error.rescan"));
+    }
+    setSaveGeneration((generation) => generation + 1);
+    setSaving(false);
+    setExternalChange(null);
+    const files = new Set(savable.filter((change) => !failed.includes(change.key)).flatMap((change) => change.files));
+    if (failed.length > 0) {
+      onError(t("save.partialFailure", { saved, keys: failed.join(", ") }));
+    } else {
+      onNotice(t("save.saved", { count: saved, files: files.size }));
+    }
+  }, [confirm, filePath, locale, onError, onNotice, onRefresh, pending, projectId, saving, t, variables]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (document.querySelector("[role='dialog']")) return;
+      const command = event.metaKey || event.ctrlKey;
+      if (command && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        void save();
+        return;
+      }
+      if (command && event.key.toLowerCase() === "i") {
+        event.preventDefault();
+        setInspectorOpen((open) => writeInspectorPreference(!open));
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select")) return;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        if (visibleKeys.length === 0) return;
+        event.preventDefault();
+        const index = selectedKey ? visibleKeys.indexOf(selectedKey) : -1;
+        const next = event.key === "ArrowDown"
+          ? visibleKeys[Math.min(visibleKeys.length - 1, index + 1)]
+          : visibleKeys[Math.max(0, index - 1)];
+        if (!next) return;
+        setSelectedKey(next);
+        editorRef.current
+          ?.querySelector<HTMLElement>(`[data-variable-key="${CSS.escape(next)}"] .key-button`)
+          ?.focus();
+        return;
+      }
+      if (event.key === "Enter" && selectedKey && target?.classList.contains("key-button")) {
+        event.preventDefault();
+        editorRef.current
+          ?.querySelector<HTMLElement>(`[data-variable-key="${CSS.escape(selectedKey)}"] .value-editor input, [data-variable-key="${CSS.escape(selectedKey)}"] .value-editor textarea`)
+          ?.focus();
+      }
     };
-    updateActiveGroup();
-    scrollRoot.addEventListener("scroll", updateActiveGroup, { passive: true });
-    window.addEventListener("resize", updateActiveGroup);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      scrollRoot.removeEventListener("scroll", updateActiveGroup);
-      window.removeEventListener("resize", updateActiveGroup);
-    };
-  }, [filePath, showGroupNavigation, visibleGroups]);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [save, selectedKey, visibleKeys]);
 
   if (!file) {
     return (
@@ -134,142 +269,246 @@ export function FileEditor({
     );
   }
 
-  const mutate = async (operation: () => Promise<unknown>, success: string) => {
-    try {
-      await operation();
-      await onRefresh();
-      onNotice(success);
-    } catch (cause) {
-      onError(localizeError(cause, locale, "error.mutation"));
-    }
+  const filtering = filter !== "all" || Boolean(search.trim());
+  const visibleCount = file.groups.reduce(
+    (total, group) => total + group.variables.filter((variable) => matches(variable, group.name)).length,
+    0,
+  );
+  const groupNames = file.groups.map((item) => item.name);
+  const visibleChecked = [...checked].filter((key) => variables.some((variable) => variable.key === key));
+  const allVisibleChecked = visibleKeys.length > 0 && visibleKeys.every((key) => checked.has(key));
+  const showInspector = inspectorOpen && selected !== null && selectedGroup !== undefined;
+
+  const select = (key: string) => {
+    setSelectedKey(key);
+  };
+
+  const toggleCheck = (key: string, value: boolean) => {
+    setChecked((current) => {
+      const next = new Set(current);
+      if (value) next.add(key);
+      else next.delete(key);
+      return next;
+    });
   };
 
   return (
-    <section className="page-stack" ref={editorRef}>
-      <div className="file-heading">
-        <div>
-          <h2>{file.displayName}</h2>
-          {file.displayName !== file.path && <code className="file-physical-path">{file.path}</code>}
-          <p>{t("file.summary", { variables: variableCount, groups: file.groups.length })}</p>
+    <section className={`file-editor${showInspector ? " with-inspector" : ""}`} ref={editorRef}>
+      <div className="file-editor-main">
+        <div className="file-heading">
+          <div>
+            <h2>{file.displayName}</h2>
+            {file.displayName !== file.path && <code className="file-physical-path">{file.path}</code>}
+            <p>{t("file.summary", { variables: variables.length, groups: file.groups.length })}</p>
+          </div>
+          <div className="header-actions">
+            <button className="quiet-button" onClick={() => setAddingGroup(true)}>{t("file.newGroup")}</button>
+            <button className="primary-button" onClick={() => setAdding(file.groups[0]?.name ?? "기타")}>{t("file.newVariable")}</button>
+          </div>
         </div>
-        <div className="header-actions">
-          <button className="quiet-button" onClick={() => setAddingGroup(true)}>{t("file.newGroup")}</button>
-          <button className="primary-button" onClick={() => setAdding(true)}>{t("file.newVariable")}</button>
-        </div>
-      </div>
 
-      {file.warnings.length > 0 && (
-        <div className="warning-banner">
-          <strong>{t("file.warningTitle")}</strong>
-          <span>{localizedWarnings(file.warnings, locale, t)}</span>
-        </div>
-      )}
-
-      {variableCount > 0 && (
-        <div className="file-filter-bar" role="toolbar" aria-label={t("file.filters")}>
-          <input
-            type="search"
-            className="file-search"
-            aria-label={t("file.search")}
-            placeholder={t("file.search")}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-          <button
-            className={`file-filter-toggle${showEmptyOnly ? " active" : ""}`}
-            aria-pressed={showEmptyOnly}
-            onClick={() => setShowEmptyOnly((current) => !current)}
-          >
-            <span className="file-filter-toggle-icon" aria-hidden="true">
-              {showEmptyOnly ? <CheckIcon /> : <EmptyValueIcon />}
-            </span>
-            <span className="file-filter-toggle-copy">
-              <strong>{t("file.emptyOnly")}</strong>
-              <small>{t("file.emptyCount", { count: emptyVariableCount })}</small>
-            </span>
-            <span className="file-filter-toggle-state" aria-hidden="true">
-              {showEmptyOnly ? t("file.emptyOnlyOn") : t("file.emptyOnlyOff")}
-            </span>
-          </button>
-        </div>
-      )}
-
-      {showGroupNavigation && (
-        <GroupJumpNavigation
-          groups={visibleGroups}
-          activeGroupIndex={activeGroupIndex}
-          onJump={(groupIndex) => {
-            setActiveGroupIndex(groupIndex);
-            editorRef.current
-              ?.querySelector<HTMLElement>(`[data-env-group="${groupIndex}"]`)
-              ?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}
-        />
-      )}
-
-      <div className="groups-stack">
-        {(showEmptyOnly || search.trim()) && visibleGroups.length === 0 && (
-          <div className="file-filter-empty">
-            <strong>{t(search.trim() ? "file.noSearchResults" : "file.noEmptyVariables")}</strong>
-            <span>{t(search.trim() ? "file.noSearchResultsBody" : "file.noEmptyVariablesBody")}</span>
+        {file.warnings.length > 0 && (
+          <div className="warning-banner">
+            <strong>{t("file.warningTitle")}</strong>
+            <span>{localizedWarnings(file.warnings, locale, t)}</span>
           </div>
         )}
-        {file.groups.map((group, groupIndex) => (
-          <section
-            className="group-card"
-            hidden={filtering && !group.variables.some((variable) => visibleVariables.has(variable))}
-            data-env-group={visibleGroups.findIndex((candidate) => candidate === group ||
-              candidate.variables.some((variable) => group.variables.includes(variable)))}
-            key={`${group.name}:${groupIndex}`}
-          >
-            <header className="group-header">
-              <div>
-                <span className="group-fold">⌄</span>
-                <h3>{displayGroupName(group.name, t)}</h3>
-                <span>{group.variables.filter((variable) => visibleVariables.has(variable)).length}</span>
-              </div>
-              {group.name !== "기타" && (
-                <button
-                  className="quiet-button compact"
-                  aria-label={t("file.renameGroupNamed", { name: displayGroupName(group.name, t) })}
-                  onClick={() => setRenamingGroup(group.name)}
-                >
-                  {t("file.renameGroup")}
-                </button>
-              )}
-            </header>
-            <div className="variables-table">
-              {group.variables.length === 0 && (
-                <div className="empty-group-row">{t("file.emptyGroup")}</div>
-              )}
-              {group.variables.map((variable) => (
-                <VariableRow
-                  key={variable.key}
-                  hidden={!visibleVariables.has(variable)}
-                  projectId={projectId}
-                  file={file.path}
-                  variable={variable}
-                  currentGroup={group.name}
-                  groups={file.groups.map((item) => item.name)}
-                  sameKeyFiles={[...(occurrenceFilesByKey.get(variable.key) ?? [file.path])]}
-                  onMutate={mutate}
-                  onLink={() => setLinking(variable)}
-                />
-              ))}
+
+        {externalChange && (
+          <div className="external-change-banner" role="alert">
+            <div>
+              <strong>{t("file.externalTitle")}</strong>
+              <span>
+                {[
+                  externalChange.added.length > 0 ? t("file.externalAdded", { keys: externalChange.added.join(", ") }) : null,
+                  externalChange.removed.length > 0 ? t("file.externalRemoved", { keys: externalChange.removed.join(", ") }) : null,
+                  t("file.externalKept", { count: pending.count }),
+                ].filter(Boolean).join(" ")}
+              </span>
             </div>
-          </section>
-        ))}
+            <button className="quiet-button compact" onClick={() => setExternalChange(null)}>{t("file.externalDismiss")}</button>
+          </div>
+        )}
+
+        {variables.length > 0 && (
+          visibleChecked.length > 0 ? (
+            <div className="bulk-bar" role="toolbar" aria-label={t("file.bulkLabel")}>
+              <strong>{t("file.bulkSelected", { count: visibleChecked.length })}</strong>
+              <button
+                className="bulk-action"
+                onClick={() => {
+                  pending.stageRemoval(visibleChecked);
+                  setChecked(new Set());
+                }}
+              >
+                {t("inspector.stageRemoval")}
+              </button>
+              <button className="bulk-action quiet" onClick={() => setChecked(new Set())}>{t("file.bulkClear")}</button>
+            </div>
+          ) : (
+            <div className="file-filter-bar" role="toolbar" aria-label={t("file.filters")}>
+              <input
+                type="search"
+                className="file-search"
+                aria-label={t("file.search")}
+                placeholder={t("file.search")}
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              <div className="filter-chips" role="group" aria-label={t("file.filters")}>
+                {(["all", "empty", "pending", "protected"] as const).map((value) => (
+                  <button
+                    key={value}
+                    className={`filter-chip${filter === value ? " active" : ""}`}
+                    aria-pressed={filter === value}
+                    onClick={() => setFilter(value)}
+                  >
+                    {t(filterLabelKey(value))}
+                    <small>{counts[value]}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        )}
+
+        {filtering && visibleCount === 0 && (
+          <div className="file-filter-empty">
+            <strong>{t(search.trim() ? "file.noSearchResults" : filter === "empty" ? "file.noEmptyVariables" : "file.noFilterResults")}</strong>
+            <span>{t(search.trim() ? "file.noSearchResultsBody" : filter === "empty" ? "file.noEmptyVariablesBody" : "file.noFilterResultsBody")}</span>
+          </div>
+        )}
+
+        <div className="variables-table" hidden={filtering && visibleCount === 0}>
+          <div className="variables-table-head">
+            <span className="row-check">
+              <input
+                type="checkbox"
+                aria-label={t("file.selectAll")}
+                checked={allVisibleChecked}
+                onChange={(event) => setChecked(event.target.checked ? new Set(visibleKeys) : new Set())}
+              />
+            </span>
+            <span>{t("file.columnKey")}</span>
+            <span>{t("file.columnValue")}</span>
+            <span>{t("file.columnAccess")}</span>
+            <span>{t("file.columnLinks")}</span>
+          </div>
+          {file.groups.map((group, groupIndex) => {
+            const groupVisible = group.variables.filter((variable) => matches(variable, group.name));
+            const isCollapsed = collapsed.has(group.name);
+            const name = displayGroupName(group.name, t);
+            return (
+              <section
+                className="group-block"
+                hidden={filtering && groupVisible.length === 0}
+                key={`${group.name}:${groupIndex}`}
+              >
+                <header className="group-header">
+                  <button
+                    className="group-toggle"
+                    aria-expanded={!isCollapsed}
+                    onClick={() => setCollapsed((current) => {
+                      const next = new Set(current);
+                      if (isCollapsed) next.delete(group.name);
+                      else next.add(group.name);
+                      return next;
+                    })}
+                  >
+                    <svg className="group-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m5 8 5 5 5-5" /></svg>
+                    <h3>{name}</h3>
+                    <span>{filtering ? groupVisible.length : group.variables.length}</span>
+                  </button>
+                  <div className="group-actions">
+                    <button className="group-action" onClick={() => setAdding(group.name)}>
+                      {t("file.addToGroup", { name })}
+                    </button>
+                    {group.name !== "기타" && (
+                      <button
+                        className="group-action"
+                        aria-label={t("file.renameGroupNamed", { name })}
+                        onClick={() => setRenamingGroup(group.name)}
+                      >
+                        {t("file.renameGroup")}
+                      </button>
+                    )}
+                  </div>
+                </header>
+                {group.variables.length === 0 && !isCollapsed && (
+                  <div className="empty-group-row">{t("file.emptyGroup")}</div>
+                )}
+                {group.variables.map((variable) => (
+                  <VariableRow
+                    key={variable.key}
+                    hidden={isCollapsed || !matches(variable, group.name)}
+                    projectId={projectId}
+                    file={file.path}
+                    variable={variable}
+                    sameKeyFiles={sameKeyFilesFor(variable.key)}
+                    draft={pending.drafts.get(variable.key)}
+                    pendingRemoval={pending.removals.has(variable.key)}
+                    selected={selectedKey === variable.key}
+                    checked={checked.has(variable.key)}
+                    saveGeneration={saveGeneration}
+                    onSelect={() => select(variable.key)}
+                    onCheck={(value) => toggleCheck(variable.key, value)}
+                    onDraftChange={(value) => pending.setDraft(variable.key, value)}
+                    onRevert={() => pending.revert(variable.key)}
+                    onMutate={mutate}
+                  />
+                ))}
+              </section>
+            );
+          })}
+        </div>
+
+        <p className="file-keyboard-hint">{t("file.keyboardHint")}</p>
+
+        <SaveBar
+          changes={pending.changes}
+          orphaned={pending.orphaned}
+          saving={saving}
+          onRevert={pending.revert}
+          onRevertAll={pending.revertAll}
+          onSave={() => void save()}
+        />
       </div>
 
-      {adding && (
+      {showInspector && selected && selectedGroup && (
+        <VariableInspector
+          projectId={projectId}
+          file={file.path}
+          variable={selected}
+          sameKeyFiles={sameKeyFilesFor(selected.key)}
+          currentGroup={selectedGroup.name}
+          groups={groupNames}
+          pendingRemoval={pending.removals.has(selected.key)}
+          onStageRemoval={() => pending.stageRemoval([selected.key])}
+          onRestore={() => pending.revert(selected.key)}
+          onLink={() => setLinking(selected)}
+          onMutate={mutate}
+          onClose={() => setInspectorOpen(writeInspectorPreference(false))}
+        />
+      )}
+      {!inspectorOpen && selected && (
+        <button className="inspector-reopen quiet-button compact" onClick={() => setInspectorOpen(writeInspectorPreference(true))}>
+          {t("inspector.open")} <kbd>⌘I</kbd>
+        </button>
+      )}
+
+      {adding !== null && (
         <AddVariableModal
           file={file}
-          onClose={() => setAdding(false)}
+          initialGroup={adding}
+          onClose={() => setAdding(null)}
           onSubmit={(request) => {
             void mutate(
               () => api.addVariable(projectId, { file: file.path, ...request }),
               t("file.variableAdded", { key: request.key }),
-            ).then(() => setAdding(false));
+            ).then(() => {
+              setAdding(null);
+              setSelectedKey(request.key);
+            });
           }}
         />
       )}
@@ -291,7 +530,7 @@ export function FileEditor({
         <LinkModal
           currentFile={file.path}
           variable={linking}
-          candidates={sameKeyFiles}
+          candidates={linkCandidates}
           onClose={() => setLinking(null)}
           onSubmit={(files) => {
             void mutate(
@@ -325,139 +564,33 @@ export function FileEditor({
           }}
         />
       )}
+      {dialog}
     </section>
   );
 }
 
-function GroupJumpNavigation({
-  groups,
-  activeGroupIndex,
-  onJump,
-}: {
-  groups: GroupProjection[];
-  activeGroupIndex: number;
-  onJump: (index: number) => void;
-}) {
-  const { t } = useI18n();
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-
-  const updateOverflow = () => {
-    const track = trackRef.current;
-    if (!track) return;
-    setCanScrollLeft(track.scrollLeft > 2);
-    setCanScrollRight(track.scrollLeft + track.clientWidth < track.scrollWidth - 2);
-  };
-
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    updateOverflow();
-    const resizeObserver = typeof ResizeObserver === "undefined"
-      ? null
-      : new ResizeObserver(updateOverflow);
-    resizeObserver?.observe(track);
-    window.addEventListener("resize", updateOverflow);
-    return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", updateOverflow);
-    };
-  }, [groups]);
-
-  useEffect(() => {
-    if (expanded) return;
-    const track = trackRef.current;
-    const active = track?.querySelector<HTMLElement>(`[data-group-shortcut="${activeGroupIndex}"]`);
-    if (!track || !active) return;
-    const left = active.offsetLeft;
-    const right = left + active.offsetWidth;
-    const visibleLeft = track.scrollLeft;
-    const visibleRight = visibleLeft + track.clientWidth;
-    if (left < visibleLeft || right > visibleRight) {
-      track.scrollTo({
-        left: Math.max(0, left - (track.clientWidth - active.offsetWidth) / 2),
-        behavior: "smooth",
-      });
-    }
-  }, [activeGroupIndex, expanded]);
-
-  const moveTrack = (direction: -1 | 1) => {
-    const track = trackRef.current;
-    if (!track) return;
-    track.scrollBy({ left: direction * Math.max(160, track.clientWidth * 0.7), behavior: "smooth" });
-  };
-
-  return (
-    <nav className={`group-jump-nav${expanded ? " expanded" : ""}`} aria-label={t("file.groupNavigation")}>
-      {!expanded && (
-        <button
-          className="group-jump-arrow"
-          aria-label={t("file.previousGroups")}
-          disabled={!canScrollLeft}
-          onClick={() => moveTrack(-1)}
-        >‹</button>
-      )}
-      <div className={`group-jump-window${!expanded && canScrollLeft ? " can-scroll-left" : ""}${!expanded && canScrollRight ? " can-scroll-right" : ""}`}>
-        <div className="group-jump-track" ref={trackRef} onScroll={updateOverflow}>
-          {groups.map((group, groupIndex) => (
-            <button
-              key={`${group.name}:${groupIndex}`}
-              data-group-shortcut={groupIndex}
-              className={activeGroupIndex === groupIndex ? "active" : undefined}
-              aria-label={`${displayGroupName(group.name, t)} · ${group.variables.length}`}
-              aria-current={activeGroupIndex === groupIndex ? "location" : undefined}
-              onClick={() => onJump(groupIndex)}
-            >
-              {displayGroupName(group.name, t)}
-              <small>{group.variables.length}</small>
-            </button>
-          ))}
-        </div>
-      </div>
-      {!expanded && (
-        <button
-          className="group-jump-arrow"
-          aria-label={t("file.nextGroups")}
-          disabled={!canScrollRight}
-          onClick={() => moveTrack(1)}
-        >›</button>
-      )}
-      <button
-        className="group-jump-all"
-        aria-label={expanded ? t("file.collapseGroups") : t("file.allGroups")}
-        title={expanded ? t("file.collapseGroups") : t("file.allGroups")}
-        aria-expanded={expanded}
-        onClick={() => setExpanded((open) => !open)}
-      >
-        {expanded ? (
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="m5 12 5-5 5 5" />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <rect x="3.5" y="3.5" width="5" height="5" rx="1" />
-            <rect x="11.5" y="3.5" width="5" height="5" rx="1" />
-            <rect x="3.5" y="11.5" width="5" height="5" rx="1" />
-            <rect x="11.5" y="11.5" width="5" height="5" rx="1" />
-          </svg>
-        )}
-      </button>
-    </nav>
-  );
+function filterLabelKey(filter: Filter) {
+  if (filter === "empty") return "file.filterEmpty" as const;
+  if (filter === "pending") return "file.filterPending" as const;
+  if (filter === "protected") return "file.filterProtected" as const;
+  return "file.filterAll" as const;
 }
 
-function countVariables(file: FileProjection) {
-  return file.groups.reduce((total, group) => total + group.variables.length, 0);
+function readInspectorPreference() {
+  try {
+    return window.localStorage.getItem(inspectorStorageKey) !== "closed";
+  } catch {
+    return true;
+  }
 }
 
-function countEmptyVariables(file: FileProjection) {
-  return file.groups.reduce(
-    (total, group) =>
-      total + group.variables.filter((variable) => variable.valueState === "empty").length,
-    0,
-  );
+function writeInspectorPreference(open: boolean) {
+  try {
+    window.localStorage.setItem(inspectorStorageKey, open ? "open" : "closed");
+  } catch {
+    // A preference that cannot be stored still applies for this session.
+  }
+  return open;
 }
 
 function CreateGroupModal({
@@ -510,10 +643,12 @@ function CreateGroupModal({
 
 function AddVariableModal({
   file,
+  initialGroup,
   onClose,
   onSubmit,
 }: {
   file: FileProjection;
+  initialGroup: string;
   onClose: () => void;
   onSubmit: (request: {
     key: string;
@@ -524,7 +659,7 @@ function AddVariableModal({
 }) {
   const { t } = useI18n();
   const [key, setKey] = useState("");
-  const [group, setGroup] = useState(file.groups[0]?.name ?? "기타");
+  const [group, setGroup] = useState(initialGroup);
   const [newGroup, setNewGroup] = useState("");
   const [description, setDescription] = useState("");
   const [value, setValue] = useState("");

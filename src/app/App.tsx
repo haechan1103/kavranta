@@ -1,5 +1,5 @@
 import "./App.css";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useConfirm } from "../components/ConfirmDialog";
 import { CloseIcon } from "../components/icons";
@@ -33,8 +33,10 @@ type View =
 export function App() {
   const { locale, t } = useI18n();
   const { confirm, dialog: confirmDialog } = useConfirm();
+
   const manager = useEnvManager();
   const [view, setView] = useState<View>({ kind: "overview" });
+  const [pendingEdits, setPendingEdits] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [pushing, setPushing] = useState(false);
@@ -43,6 +45,31 @@ export function App() {
   const [channelPublishing, setChannelPublishing] = useState<string | null>(null);
   const [channelImporting, setChannelImporting] = useState<{ channelId: string; packageId: string } | null>(null);
   const [renamingProject, setRenamingProject] = useState(false);
+
+  /** Leaving a file with staged edits asks first (ADR-0042). */
+  const leaveWithPendingEdits = useCallback(async () => {
+    if (pendingEdits === 0) return true;
+    const confirmed = await confirm({
+      title: t("app.discardTitle", { count: pendingEdits }),
+      body: t("app.discardBody"),
+      confirmLabel: t("app.discardAction"),
+      tone: "danger",
+    });
+    if (confirmed) setPendingEdits(0);
+    return confirmed;
+  }, [confirm, pendingEdits, t]);
+
+  const navigate = useCallback((next: View) => {
+    void leaveWithPendingEdits().then((leave) => {
+      if (leave) setView(next);
+    });
+  }, [leaveWithPendingEdits]);
+
+  const selectProject = useCallback((projectId: string) => {
+    void leaveWithPendingEdits().then((leave) => {
+      if (leave) manager.selectProject(projectId);
+    });
+  }, [leaveWithPendingEdits, manager.selectProject]);
 
   useEffect(() => {
     setView({ kind: "overview" });
@@ -90,8 +117,8 @@ export function App() {
         projection={manager.projection}
         projectFailures={manager.projectFailures}
         view={view}
-        onSelectProject={manager.selectProject}
-        onSelectView={setView}
+        onSelectProject={selectProject}
+        onSelectView={navigate}
         onRegister={() => void manager.register()}
         onExportDiagnostics={(dialogTitle) => void exportDiagnostics(dialogTitle)}
         onRenameFileLabel={(projectId, path, name) => void manager.renameEnvFileLabel(projectId, path, name)}
@@ -282,9 +309,9 @@ export function App() {
                 <Overview
                   projection={manager.projection}
                   onOpenFile={(path, key, options) =>
-                    setView({ kind: "file", path, query: key, emptyOnly: options?.emptyOnly })
+                    navigate({ kind: "file", path, query: key, emptyOnly: options?.emptyOnly })
                   }
-                  onOpenIntegrations={() => setView({ kind: "integrations" })}
+                  onOpenIntegrations={() => navigate({ kind: "integrations" })}
                   onApplyGitignoreGuard={manager.applyGitignoreGuard}
                 />
               )}
@@ -299,6 +326,7 @@ export function App() {
                   onRefresh={refresh}
                   onError={manager.showError}
                   onNotice={manager.showNotice}
+                  onPendingChange={setPendingEdits}
                 />
               )}
               {view.kind === "activity" && (

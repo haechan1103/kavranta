@@ -9,12 +9,13 @@ interface Props {
   title?: string;
   /** Extra copy for a successful copy, such as when the clipboard will be cleared. */
   copiedHint?: string;
+  disabled?: boolean;
   onCopy: () => Promise<void>;
 }
 
 type CopyFeedback = "copied" | "failed" | null;
 
-export function CopyButton({ className, label, title = label, copiedHint, onCopy }: Props) {
+export function CopyButton({ className, label, title = label, copiedHint, disabled = false, onCopy }: Props) {
   const { t } = useI18n();
   const [feedback, setFeedback] = useState<CopyFeedback>(null);
   const [pending, setPending] = useState(false);
@@ -64,7 +65,7 @@ export function CopyButton({ className, label, title = label, copiedHint, onCopy
         className={`${className}${feedback === "copied" ? " copied" : ""}`}
         aria-label={label}
         title={feedback === "copied" ? message : title}
-        disabled={pending}
+        disabled={pending || disabled}
         onClick={() => void copy()}
       >
       <span className="copy-icon" aria-hidden="true">
