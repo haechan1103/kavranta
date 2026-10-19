@@ -17,7 +17,7 @@
 .project-actions-chevron {
   margin-left: auto;
   color: var(--sidebar-muted);
-  font-size: calc(16px * var(--font-scale));
+  font-size: var(--text-lg);
   line-height: 1;
 }
 
@@ -57,7 +57,7 @@
   border: 0;
   border-radius: 8px;
   cursor: pointer;
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
   font-weight: 700;
   text-align: left;
 }

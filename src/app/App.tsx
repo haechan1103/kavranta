@@ -162,7 +162,7 @@ export function App() {
               <aside className="registration-details">
                 <header>
                   <span>{t("app.afterRegistration")}</span>
-                  <small>LOCAL ONLY</small>
+                  <small>{t("app.localOnly")}</small>
                 </header>
                 <dl>
                   <div>
@@ -239,7 +239,7 @@ export function App() {
               <aside className="registration-details">
                 <header>
                   <span>{t("app.loadFailedAside")}</span>
-                  <small>LOCAL ONLY</small>
+                  <small>{t("app.localOnly")}</small>
                 </header>
                 <dl>
                   <div>

@@ -93,7 +93,7 @@ export function ProjectSidebar({
             className={view.kind === "overview" ? "nav-item active" : "nav-item"}
             onClick={() => onSelectView({ kind: "overview" })}
           >
-            <SidebarNavIcon name="overview" /> Overview
+            <SidebarNavIcon name="overview" /> {t("sidebar.overview")}
             {projection.issueCount > 0 && <b>{projection.issueCount}</b>}
           </button>
           <button
@@ -115,7 +115,7 @@ export function ProjectSidebar({
             <SidebarNavIcon name="exposure" /> {t("sidebar.exposure")}
           </button>
           {selectedProject && projectActions}
-          <p className="file-label">ENV FILES</p>
+          <p className="file-label">{t("sidebar.envFiles")}</p>
           {projection.files.map((file) => (
             <div className="sidebar-file-row" key={file.path}>
               <button

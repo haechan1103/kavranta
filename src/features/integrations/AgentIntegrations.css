@@ -15,15 +15,15 @@
 .integration-intro h2 {
   margin: 0;
   color: var(--ink);
-  font-size: calc(25px * var(--font-scale));
-  letter-spacing: -0.04em;
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
 }
 
 .integration-intro > div > p:last-child {
   max-width: 690px;
   margin: 11px 0 0;
   color: var(--muted);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
   line-height: 1.75;
 }
 
@@ -65,7 +65,7 @@
   display: block;
   margin-bottom: 3px;
   color: var(--faint);
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -75,8 +75,8 @@
   margin: 0 0 6px;
   overflow: hidden;
   color: var(--ink);
-  font-size: calc(14px * var(--font-scale));
-  letter-spacing: -0.02em;
+  font-size: var(--text-md);
+  letter-spacing: -0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -89,7 +89,7 @@
   color: #69736e;
   background: #f0f2f0;
   border-radius: 999px;
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
   font-weight: 750;
 }
 
@@ -124,7 +124,7 @@
   min-height: 62px;
   margin: 20px 0 16px;
   color: var(--muted);
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
   line-height: 1.65;
 }
 
@@ -151,13 +151,13 @@
 
 .integration-meta dt {
   color: var(--faint);
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
 }
 
 .integration-meta dd {
   margin: 0;
   color: #3f4a46;
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
   font-weight: 700;
   text-align: right;
 }
@@ -171,7 +171,7 @@
   min-height: 28px;
   margin: 9px 1px 0;
   color: var(--red);
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
   line-height: 1.55;
 }
 
@@ -182,7 +182,7 @@
   background: white;
   border: 1px dashed var(--line);
   border-radius: 12px;
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
   text-align: center;
 }
 
@@ -208,18 +208,18 @@
   background: #748078;
   border-radius: 50%;
   font-family: Georgia, serif;
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 
 .integration-footnote p {
   margin: 1px 0 0;
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
   line-height: 1.65;
 }
 
 .integration-footnote code {
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
 }
 
 @media (max-width: 1050px) {

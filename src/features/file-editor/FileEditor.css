@@ -2,7 +2,7 @@
   display: block;
   margin-top: 5px;
   color: var(--faint);
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
 }
 
 .file-support-strip {
@@ -31,13 +31,13 @@
   background: white;
   border: 1px solid #dbe2de;
   border-radius: 5px;
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
 }
 
 .file-support-strip p {
   margin: 0;
-  color: #79827d;
-  font-size: calc(9px * var(--font-scale));
+  color: var(--faint);
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 
@@ -88,7 +88,7 @@
   background: var(--panel);
   color: var(--ink);
   font: inherit;
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
   box-shadow: 0 1px 2px rgba(24, 42, 35, 0.03);
 }
 
@@ -120,7 +120,7 @@
   flex: 0 0 30px;
   place-items: center;
   border-radius: 8px;
-  color: #6d7a74;
+  color: var(--faint);
   background: #f1f4f2;
 }
 
@@ -138,13 +138,13 @@
 }
 
 .file-filter-toggle-copy strong {
-  font-size: calc(9.5px * var(--font-scale));
+  font-size: var(--text-xs);
   font-weight: 750;
 }
 
 .file-filter-toggle-copy small {
   color: var(--muted);
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
 }
 
 .file-filter-toggle-state {
@@ -153,7 +153,7 @@
   border-radius: 999px;
   color: var(--muted);
   background: #f1f4f2;
-  font-size: calc(7.5px * var(--font-scale));
+  font-size: var(--text-2xs);
   font-weight: 700;
   white-space: nowrap;
 }
@@ -196,12 +196,12 @@
 
 .file-filter-empty strong {
   color: #2e3a35;
-  font-size: calc(12px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .file-filter-empty span {
   color: var(--muted);
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
 }
 
 .group-jump-nav {
@@ -278,7 +278,7 @@
   border: 1px solid transparent;
   border-radius: 7px;
   cursor: pointer;
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 
@@ -297,7 +297,7 @@
 
 .group-jump-track > button small {
   color: inherit;
-  font-size: calc(7px * var(--font-scale));
+  font-size: var(--text-2xs);
   opacity: 0.62;
 }
 
@@ -313,7 +313,7 @@
   border: 1px solid var(--line);
   border-radius: 7px;
   cursor: pointer;
-  font-size: calc(16px * var(--font-scale));
+  font-size: var(--text-lg);
   line-height: 1;
 }
 
@@ -415,12 +415,12 @@
 
 .group-header h3 {
   margin: 0;
-  font-size: calc(12px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .group-header div > span:last-child {
   color: var(--faint);
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
 }
 
 .group-fold {
@@ -430,7 +430,7 @@
 .empty-group-row {
   padding: 22px 18px;
   color: var(--faint);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
   text-align: center;
 }
 
@@ -444,7 +444,7 @@
   background: var(--amber-pale);
   border: 1px solid #f0d6ab;
   border-radius: 9px;
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
 }
 
 .link-list {
@@ -472,13 +472,13 @@
 }
 
 .link-list strong {
-  font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: calc(9px * var(--font-scale));
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
 }
 
 .link-list small {
   color: var(--muted);
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
 }
 
 .impact-note {
@@ -490,7 +490,7 @@
   color: #6d511f;
   background: var(--amber-pale);
   border-radius: 8px;
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
 }
 
 @media (max-width: 760px) {

@@ -58,13 +58,13 @@
 }
 
 .project-switcher-copy strong {
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .project-switcher-copy small {
   color: var(--muted);
-  font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: calc(8px * var(--font-scale));
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
 }
 
 .current-project-badge {
@@ -73,7 +73,7 @@
   background: white;
   border: 1px solid #c8e7db;
   border-radius: 999px;
-  font-size: calc(7px * var(--font-scale));
+  font-size: var(--text-2xs);
   font-weight: 750;
 }
 
@@ -83,7 +83,7 @@
   background: #fafbfa;
   border: 1px dashed var(--line);
   border-radius: 10px;
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
   text-align: center;
 }
 
@@ -103,14 +103,14 @@
   padding: 2px 6px;
   border: 1px solid #eccf9a;
   border-radius: 999px;
-  color: #b06f12;
+  color: var(--amber);
   background: #fdf6e7;
-  font-size: calc(7.5px * var(--font-scale));
+  font-size: var(--text-2xs);
   font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;
 }
 
 .project-switcher-option.failed .project-switcher-copy strong {
-  color: #c07a1e;
+  color: var(--amber);
 }

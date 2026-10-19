@@ -12,15 +12,15 @@
 .account-vault-heading h2 {
   margin: 5px 0 6px;
   color: var(--ink);
-  font-size: calc(25px * var(--font-scale));
-  letter-spacing: -0.04em;
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
 }
 
 .account-vault-heading > div > p:last-child {
   max-width: 680px;
   margin: 0;
   color: var(--muted);
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
   line-height: 1.6;
 }
 
@@ -35,13 +35,13 @@
 }
 
 .account-security-note strong {
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .account-security-note p,
 .account-security-note span {
   margin: 0;
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
   line-height: 1.55;
 }
 
@@ -83,7 +83,7 @@
 
 .account-card-title strong {
   color: var(--ink);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .account-status {
@@ -91,7 +91,7 @@
   color: #786e60;
   background: #f5f1e9;
   border-radius: 999px;
-  font-size: calc(7px * var(--font-scale));
+  font-size: var(--text-2xs);
   font-weight: 800;
 }
 
@@ -104,13 +104,13 @@
 .account-card-copy small {
   margin: 0;
   color: var(--muted);
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
 }
 
 .account-card-copy small {
   display: block;
   margin-top: 5px;
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
 }
 
 .account-card-actions {
@@ -136,14 +136,14 @@
 
 .account-empty strong {
   color: var(--ink);
-  font-size: calc(12px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .account-empty p {
   max-width: 520px;
   margin: 0;
   color: var(--muted);
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
   line-height: 1.6;
 }
 
@@ -172,7 +172,7 @@
 .account-editor-security {
   margin: 0;
   color: var(--muted);
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
   line-height: 1.55;
 }
 

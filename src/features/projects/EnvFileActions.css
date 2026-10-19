@@ -21,12 +21,12 @@
   height: 28px;
   padding: 0;
   place-items: center;
-  color: #7f8a84;
+  color: var(--faint);
   background: transparent;
   border: 0;
   border-radius: 5px;
   cursor: pointer;
-  font-size: calc(16px * var(--font-scale));
+  font-size: var(--text-lg);
 }
 
 .env-file-menu-trigger:hover,
@@ -71,13 +71,13 @@
 }
 
 .env-file-action-popover strong {
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .env-file-action-popover small {
   margin-top: 4px;
   color: var(--muted);
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
   font-weight: 500;
   line-height: 1.45;
 }

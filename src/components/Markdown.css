@@ -1,12 +1,12 @@
 .markdown {
   color: var(--ink);
-  font-size: calc(12px * var(--font-scale));
+  font-size: var(--text-sm);
   line-height: 1.7;
 }
 
 .markdown .md-heading {
   margin: 16px 0 8px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .markdown p {
@@ -27,8 +27,8 @@
   padding: 1px 5px;
   border-radius: 5px;
   background: rgba(0, 0, 0, 0.06);
-  font-family: "SF Mono", ui-monospace, Menlo, monospace;
-  font-size: calc(11px * var(--font-scale));
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
 }
 
 .markdown .md-code {
@@ -45,7 +45,7 @@
 }
 
 .markdown a {
-  color: #2f7fd0;
+  color: #1d5fa3;
 }
 
 /* Shown only when the desktop opener reported a failure. Without it a link that fails to
@@ -58,7 +58,7 @@
   display: block;
   margin-top: 3px;
   color: #b3452f;
-  font-size: calc(8.5px * var(--font-scale));
+  font-size: var(--text-2xs);
 }
 
 .markdown .md-figure {
@@ -77,7 +77,7 @@
 .markdown .md-figure figcaption {
   margin-top: 6px;
   color: var(--muted);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .markdown .md-image-missing {
@@ -86,7 +86,7 @@
   border: 1px dashed rgba(0, 0, 0, 0.25);
   border-radius: 8px;
   color: var(--muted);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .markdown .md-image-loading {
