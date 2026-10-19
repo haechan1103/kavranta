@@ -2,6 +2,7 @@ import "./App.css";
 import { useCallback, useEffect, useState } from "react";
 
 import { useConfirm } from "../components/ConfirmDialog";
+import { TopBar } from "./TopBar";
 import { CloseIcon } from "../components/icons";
 import { RenameModal } from "../components/RenameModal";
 import { ActionPackModal } from "../features/action-pack/ActionPackModal";
@@ -93,6 +94,18 @@ export function App() {
     return () => document.removeEventListener("keydown", toggle);
   }, [paletteOpen]);
 
+  const locationLabel = () => {
+    if (view.kind === "file") {
+      return manager.projection?.files.find((file) => file.path === view.path)?.displayName ?? view.path;
+    }
+    if (view.kind === "integrations") return t("sidebar.aiConnections");
+    if (!manager.selectedProject) return null;
+    if (view.kind === "activity") return t("sidebar.activity");
+    if (view.kind === "exposure") return t("sidebar.exposure");
+    if (view.kind === "accounts") return t("sidebar.accounts");
+    return t("sidebar.overview");
+  };
+
   const buildPaletteItems = (): PaletteItem[] => {
     const projection = manager.projection;
     const items: PaletteItem[] = [];
@@ -181,7 +194,6 @@ export function App() {
         view={view}
         onSelectProject={selectProject}
         onSelectView={navigate}
-        onOpenPalette={() => setPaletteOpen(true)}
         onRegister={() => void manager.register()}
         onExportDiagnostics={(dialogTitle) => void exportDiagnostics(dialogTitle)}
         onRenameFileLabel={(projectId, path, name) => void manager.renameEnvFileLabel(projectId, path, name)}
@@ -218,6 +230,12 @@ export function App() {
       />
 
       <main className="main-panel">
+        <TopBar
+          projectName={manager.selectedProject?.name ?? null}
+          location={locationLabel()}
+          onOpenPalette={() => setPaletteOpen(true)}
+          onPush={manager.selectedProject && manager.projection ? () => setPushing(true) : undefined}
+        />
         {view.kind === "integrations" ? (
           <div className="content-scroll">
             <AgentIntegrations

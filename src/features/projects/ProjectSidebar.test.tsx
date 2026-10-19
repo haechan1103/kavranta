@@ -32,7 +32,6 @@ describe("ProjectSidebar", () => {
     render(
       <AgentIntegrationStatusProvider>
         <ProjectSidebar
-        onOpenPalette={vi.fn()}
           projects={[
             { id: "demo", name: "demo", displayPath: "/fake/demo" },
             { id: "second", name: "second", displayPath: "/fake/second" },
@@ -74,7 +73,6 @@ describe("ProjectSidebar", () => {
     render(
       <AgentIntegrationStatusProvider>
         <ProjectSidebar
-        onOpenPalette={vi.fn()}
           projects={[{ id: "demo", name: "demo", displayPath: "/fake/demo" }]}
           selectedProjectId="demo"
           projection={projection}
@@ -103,7 +101,6 @@ describe("ProjectSidebar", () => {
       render(
         <AgentIntegrationStatusProvider>
           <ProjectSidebar
-        onOpenPalette={vi.fn()}
             projects={[{ id: "demo", name: "demo", displayPath: "/fake/demo" }]}
             selectedProjectId="demo"
             projection={projection}
@@ -132,7 +129,6 @@ describe("ProjectSidebar", () => {
     render(
       <AgentIntegrationStatusProvider>
         <ProjectSidebar
-        onOpenPalette={vi.fn()}
           projects={[
             { id: "broken", name: "broken", displayPath: "/fake/broken" },
             { id: "healthy", name: "healthy", displayPath: "/fake/healthy" },
@@ -166,7 +162,6 @@ describe("ProjectSidebar", () => {
     render(
       <AgentIntegrationStatusProvider>
         <ProjectSidebar
-        onOpenPalette={vi.fn()}
           projects={[{ id: "demo", name: "demo", displayPath: "/fake/demo" }]}
           selectedProjectId="demo"
           projection={projection}

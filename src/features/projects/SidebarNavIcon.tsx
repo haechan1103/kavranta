@@ -9,8 +9,7 @@ type SidebarNavIconName =
   | "exposure"
   | "push"
   | "share"
-  | "run"
-  | "search";
+  | "run";
 
 interface Props {
   name: SidebarNavIconName;
@@ -91,12 +90,6 @@ const iconPaths: Record<SidebarNavIconName, ReactNode> = {
   run: (
     <>
       <path d="M8 5.5v13l10-6.5z" />
-    </>
-  ),
-  search: (
-    <>
-      <circle cx="11" cy="11" r="6.5" />
-      <path d="M20 20l-4.2-4.2" />
     </>
   ),
 };

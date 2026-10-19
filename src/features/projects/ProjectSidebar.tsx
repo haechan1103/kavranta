@@ -33,7 +33,6 @@ interface Props {
   onRenameFileLabel: (projectId: string, path: string, name: string) => void;
   onRenameFileOnDisk: (projectId: string, path: string, newName: string) => void;
   onExportDiagnostics: (destinationLabel: string) => void;
-  onOpenPalette: () => void;
   projectActions?: ReactNode;
 }
 
@@ -56,7 +55,6 @@ export function ProjectSidebar({
   onRenameFileLabel,
   onRenameFileOnDisk,
   onExportDiagnostics,
-  onOpenPalette,
   projectActions,
 }: Props) {
   const { locale, setLocale, t } = useI18n();
@@ -95,12 +93,6 @@ export function ProjectSidebar({
           <span className="project-change-icon" aria-hidden="true">↕</span>
         </button>
       </section>
-
-      <button type="button" className="sidebar-search" onClick={onOpenPalette}>
-        <SidebarNavIcon name="search" />
-        <span>{t("palette.open")}</span>
-        <kbd>⌘K</kbd>
-      </button>
 
       {projection && (
         <nav className="file-navigation" aria-label={t("sidebar.projectViews")}>

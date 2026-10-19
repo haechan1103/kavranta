@@ -168,6 +168,18 @@
   border-top: 1px solid var(--line-soft);
 }
 
+.inspector-empty {
+  justify-content: center;
+  min-height: 220px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.inspector-empty p {
+  margin: 0;
+}
+
 /* Below the two-column width the inspector becomes a drawer over the table. */
 @media (max-width: 1180px) {
   .variable-inspector {

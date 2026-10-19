@@ -233,6 +233,32 @@ describe("FileEditor", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Added: SENTRY_DSN.");
     expect(screen.getByLabelText("PORT value")).toHaveValue("fake_port");
   });
+
+  it("keeps the details column in place on wide windows, empty until something is selected", async () => {
+    const user = userEvent.setup();
+    render(<FileEditor {...editorProps({ projection: withVariables([{ name: "App", variables: [variable("PORT")] }]) })} />);
+
+    expect(screen.getByRole("complementary", { name: "Variable details" })).toHaveTextContent("Select a variable");
+    await user.click(screen.getByRole("button", { name: "PORT" }));
+    expect(screen.getByRole("complementary", { name: "Details for PORT" })).toBeInTheDocument();
+  });
+
+  it("opens the narrow-window drawer only from the variable name, never from editing a value", async () => {
+    const user = userEvent.setup();
+    const matchMedia = vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    Object.defineProperty(window, "matchMedia", { configurable: true, value: matchMedia });
+    try {
+      render(<FileEditor {...editorProps({ projection: withVariables([{ name: "App", variables: [variable("PORT")] }]) })} />);
+
+      await user.type(screen.getByLabelText("PORT value"), "fake_port");
+      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "PORT" }));
+      expect(screen.getByRole("complementary", { name: "Details for PORT" })).toBeInTheDocument();
+    } finally {
+      Reflect.deleteProperty(window, "matchMedia");
+    }
+  });
 });
 
 function variable(

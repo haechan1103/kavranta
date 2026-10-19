@@ -326,14 +326,7 @@
   font-size: var(--text-2xs);
 }
 
-.inspector-reopen {
-  position: fixed;
-  z-index: 5;
-  top: 18px;
-  right: 22px;
-}
 
-.inspector-reopen kbd,
 .save-bar kbd {
   margin-left: 6px;
   font-family: var(--font-mono);

@@ -42,6 +42,7 @@ function rowProps(overrides: Partial<RowProps> = {}): RowProps {
     checked: false,
     saveGeneration: 0,
     onSelect: vi.fn(),
+    onOpenDetails: vi.fn(),
     onCheck: vi.fn(),
     onDraftChange: vi.fn(),
     onRevert: vi.fn(),

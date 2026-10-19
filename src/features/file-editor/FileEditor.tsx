@@ -62,6 +62,10 @@ export function FileEditor({
   const [checked, setChecked] = useState<ReadonlySet<string>>(() => new Set());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(readInspectorPreference);
+  // Below the two-column width the details become a drawer that only an explicit
+  // request opens, so editing a value never pops a panel over the table.
+  const narrow = useNarrowLayout();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveGeneration, setSaveGeneration] = useState(0);
   const [externalChange, setExternalChange] = useState<ExternalChange | null>(null);
@@ -231,7 +235,8 @@ export function FileEditor({
       }
       if (command && event.key.toLowerCase() === "i") {
         event.preventDefault();
-        setInspectorOpen((open) => writeInspectorPreference(!open));
+        if (narrow) setDrawerOpen((open) => !open);
+        else setInspectorOpen((open) => writeInspectorPreference(!open));
         return;
       }
       const target = event.target as HTMLElement | null;
@@ -259,7 +264,7 @@ export function FileEditor({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [save, selectedKey, visibleKeys]);
+  }, [narrow, save, selectedKey, visibleKeys]);
 
   if (!file) {
     return (
@@ -277,10 +282,22 @@ export function FileEditor({
   const groupNames = file.groups.map((item) => item.name);
   const visibleChecked = [...checked].filter((key) => variables.some((variable) => variable.key === key));
   const allVisibleChecked = visibleKeys.length > 0 && visibleKeys.every((key) => checked.has(key));
-  const showInspector = inspectorOpen && selected !== null && selectedGroup !== undefined;
+  const showColumn = !narrow && inspectorOpen;
+  const showDrawer = narrow && drawerOpen && selected !== null;
+  const detailsVisible = narrow ? showDrawer : showColumn;
 
   const select = (key: string) => {
     setSelectedKey(key);
+  };
+
+  const openDetails = (key: string) => {
+    setSelectedKey(key);
+    if (narrow) setDrawerOpen(true);
+  };
+
+  const toggleDetails = () => {
+    if (narrow) setDrawerOpen((open) => !open);
+    else setInspectorOpen((open) => writeInspectorPreference(!open));
   };
 
   const toggleCheck = (key: string, value: boolean) => {
@@ -293,7 +310,7 @@ export function FileEditor({
   };
 
   return (
-    <section className={`file-editor${showInspector ? " with-inspector" : ""}`} ref={editorRef}>
+    <section className={`file-editor${showColumn ? " with-inspector" : ""}`} ref={editorRef}>
       <div className="file-editor-main">
         <div className="file-heading">
           <div>
@@ -302,6 +319,14 @@ export function FileEditor({
             <p>{t("file.summary", { variables: variables.length, groups: file.groups.length })}</p>
           </div>
           <div className="header-actions">
+            <button
+              className="quiet-button"
+              aria-pressed={detailsVisible}
+              disabled={narrow && selected === null}
+              onClick={toggleDetails}
+            >
+              {detailsVisible ? t("inspector.hide") : t("inspector.show")}
+            </button>
             <button className="quiet-button" onClick={() => setAddingGroup(true)}>{t("file.newGroup")}</button>
             <button className="primary-button" onClick={() => setAdding(file.groups[0]?.name ?? "기타")}>{t("file.newVariable")}</button>
           </div>
@@ -451,6 +476,7 @@ export function FileEditor({
                     checked={checked.has(variable.key)}
                     saveGeneration={saveGeneration}
                     onSelect={() => select(variable.key)}
+                    onOpenDetails={() => openDetails(variable.key)}
                     onCheck={(value) => toggleCheck(variable.key, value)}
                     onDraftChange={(value) => pending.setDraft(variable.key, value)}
                     onRevert={() => pending.revert(variable.key)}
@@ -474,26 +500,27 @@ export function FileEditor({
         />
       </div>
 
-      {showInspector && selected && selectedGroup && (
-        <VariableInspector
-          projectId={projectId}
-          file={file.path}
-          variable={selected}
-          sameKeyFiles={sameKeyFilesFor(selected.key)}
-          currentGroup={selectedGroup.name}
-          groups={groupNames}
-          pendingRemoval={pending.removals.has(selected.key)}
-          onStageRemoval={() => pending.stageRemoval([selected.key])}
-          onRestore={() => pending.revert(selected.key)}
-          onLink={() => setLinking(selected)}
-          onMutate={mutate}
-          onClose={() => setInspectorOpen(writeInspectorPreference(false))}
-        />
-      )}
-      {!inspectorOpen && selected && (
-        <button className="inspector-reopen quiet-button compact" onClick={() => setInspectorOpen(writeInspectorPreference(true))}>
-          {t("inspector.open")} <kbd>⌘I</kbd>
-        </button>
+      {(showColumn || showDrawer) && (
+        selected && selectedGroup ? (
+          <VariableInspector
+            projectId={projectId}
+            file={file.path}
+            variable={selected}
+            sameKeyFiles={sameKeyFilesFor(selected.key)}
+            currentGroup={selectedGroup.name}
+            groups={groupNames}
+            pendingRemoval={pending.removals.has(selected.key)}
+            onStageRemoval={() => pending.stageRemoval([selected.key])}
+            onRestore={() => pending.revert(selected.key)}
+            onLink={() => setLinking(selected)}
+            onMutate={mutate}
+            onClose={toggleDetails}
+          />
+        ) : (
+          <aside className="variable-inspector inspector-empty" aria-label={t("inspector.emptyLabel")}>
+            <p>{t("inspector.empty")}</p>
+          </aside>
+        )
       )}
 
       {adding !== null && (
@@ -574,6 +601,21 @@ function filterLabelKey(filter: Filter) {
   if (filter === "pending") return "file.filterPending" as const;
   if (filter === "protected") return "file.filterProtected" as const;
   return "file.filterAll" as const;
+}
+
+function useNarrowLayout() {
+  const query = "(max-width: 1180px)";
+  const [narrow, setNarrow] = useState(() =>
+    typeof window.matchMedia === "function" && window.matchMedia(query).matches,
+  );
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia(query);
+    const update = () => setNarrow(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  return narrow;
 }
 
 function readInspectorPreference() {

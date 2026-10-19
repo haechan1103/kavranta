@@ -25,6 +25,8 @@ interface Props {
   /** Changes after every save so a reveal never shows a value that was just replaced. */
   saveGeneration: number;
   onSelect: () => void;
+  /** Selecting by name also asks for the details, which on narrow windows is a drawer. */
+  onOpenDetails: () => void;
   onCheck: (checked: boolean) => void;
   onDraftChange: (value: string) => void;
   onRevert: () => void;
@@ -43,6 +45,7 @@ export function VariableRow({
   checked,
   saveGeneration,
   onSelect,
+  onOpenDetails,
   onCheck,
   onDraftChange,
   onRevert,
@@ -161,7 +164,7 @@ export function VariableRow({
 
       <div className="variable-meta">
         <div className="key-line">
-          <button type="button" className="key-button" aria-pressed={selected} onClick={onSelect}>
+          <button type="button" className="key-button" aria-pressed={selected} onClick={onOpenDetails}>
             {variable.key}
           </button>
           {!hidden && (
