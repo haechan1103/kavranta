@@ -77,7 +77,7 @@
 
 .overview-grid {
   display: grid;
-  grid-template-columns: 1.12fr 0.88fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   margin-top: 14px;
 }
@@ -130,10 +130,9 @@
 
 .protection-label {
   margin: 0 0 3px;
-  color: var(--faint);
-  font-size: var(--text-2xs);
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
 }
 
 .protection-card h3 {
@@ -337,10 +336,6 @@
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .overview-grid {
-    grid-template-columns: 1fr;
   }
 
   .protection-grid {

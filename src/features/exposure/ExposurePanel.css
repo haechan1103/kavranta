@@ -1,5 +1,5 @@
 .exposure-page {
-  width: min(1000px, 100%);
+  width: min(1120px, 100%);
   margin: 0 auto;
   padding: 42px clamp(25px, 4vw, 55px) 70px;
 }
