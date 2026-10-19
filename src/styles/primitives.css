@@ -35,26 +35,24 @@
 
 .primary-button {
   color: white;
-  background: var(--green);
-  border: 1px solid var(--green);
+  background: var(--green-solid);
+  border: 1px solid var(--green-solid);
   box-shadow: 0 5px 12px rgba(22, 118, 90, 0.14);
 }
 
 .primary-button:hover {
-  background: #0e674d;
-  border-color: #0e674d;
+  filter: brightness(0.92);
   box-shadow: 0 7px 16px rgba(22, 118, 90, 0.2);
 }
 
 .danger-button {
   color: white;
-  background: var(--red);
-  border: 1px solid var(--red);
+  background: var(--red-solid);
+  border: 1px solid var(--red-solid);
 }
 
 .danger-button:hover {
-  background: #9e3430;
-  border-color: #9e3430;
+  filter: brightness(0.92);
 }
 
 .primary-button:disabled {
@@ -69,38 +67,38 @@
 }
 
 .secondary-button {
-  color: #165d48;
+  color: var(--green-strong);
   background: var(--green-pale);
-  border: 1px solid #bce4d4;
+  border: 1px solid var(--green-line);
 }
 
 .secondary-button:hover {
-  color: #104f3d;
-  background: #dff3ea;
-  border-color: #91d2b9;
+  color: var(--green-strong);
+  background: var(--green-pale);
+  border-color: var(--green-line);
 }
 
 .quiet-button,
 .danger-quiet-button {
-  color: #4e5954;
-  background: white;
+  color: var(--muted);
+  background: var(--panel);
   border: 1px solid var(--line);
 }
 
 .danger-quiet-button {
-  color: #a03c38;
+  color: var(--red);
 }
 
 .quiet-button:hover {
   color: var(--ink);
-  background: #f6f8f6;
-  border-color: #bdc8c1;
+  background: var(--surface-muted);
+  border-color: var(--line-strong);
 }
 
 .danger-quiet-button:hover {
-  color: #8f302c;
+  color: var(--red);
   background: var(--red-pale);
-  border-color: #edc4c1;
+  border-color: var(--red-line);
 }
 
 .compact {
@@ -148,7 +146,7 @@
 .spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid #dce4df;
+  border: 2px solid var(--line);
   border-top-color: var(--green);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -198,7 +196,7 @@
   height: 20px;
   place-items: center;
   color: var(--muted);
-  background: #f0f2ef;
+  background: var(--surface-hover);
   border-radius: 999px;
   font-size: var(--text-xs);
 }
@@ -218,9 +216,9 @@
 }
 
 .badge.exposure {
-  color: #a33b32;
-  background: #fff0ed;
-  border: 1px solid #f3cbc5;
+  color: var(--red);
+  background: var(--red-pale);
+  border: 1px solid var(--red-line);
 }
 
 .icon-button {
@@ -229,7 +227,7 @@
   height: 30px;
   flex: 0 0 30px;
   place-items: center;
-  color: #69746f;
+  color: var(--faint);
   background: transparent;
   border: 0;
   border-radius: 7px;
@@ -238,7 +236,7 @@
 
 .icon-button:hover {
   color: var(--ink);
-  background: #eef1ee;
+  background: var(--surface-hover);
 }
 
 .activity-heading > div > p:last-child {

@@ -16,7 +16,7 @@
   width: 100%;
   padding: 10px 12px;
   color: var(--ink);
-  background: #f7f9f8;
+  background: var(--surface-muted);
   border: 1px solid var(--line);
   border-radius: 8px;
   font: inherit;

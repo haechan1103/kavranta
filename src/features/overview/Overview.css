@@ -12,9 +12,9 @@
   gap: 14px;
   padding: 18px;
   margin-bottom: 14px;
-  border: 1px solid #c6dfd2;
+  border: 1px solid var(--green-line);
   border-radius: 12px;
-  background: #f1f8f4;
+  background: var(--green-pale);
 }
 
 .project-next-step h3,
@@ -100,8 +100,8 @@
 }
 
 .protection-card.attention {
-  background: #fffdf8;
-  border-color: #eadcb8;
+  background: var(--amber-pale);
+  border-color: var(--amber-line);
 }
 
 .protection-card > header {
@@ -117,14 +117,14 @@
   height: 34px;
   place-items: center;
   color: white;
-  background: #24292f;
+  background: #24292f; /* theme-neutral: GitHub brand tile */
   border-radius: 9px;
   font-size: var(--text-sm);
   font-weight: 850;
 }
 
 .protection-mark.ai {
-  color: #102019;
+  color: var(--green-strong);
   background: var(--green-bright);
 }
 
@@ -163,13 +163,13 @@
 }
 
 .protection-state.warn {
-  color: #805d1c;
+  color: var(--amber);
   background: var(--amber-pale);
 }
 
 .protection-state.neutral {
   color: var(--muted);
-  background: #eef1ef;
+  background: var(--surface-hover);
 }
 
 .git-risk-list {
@@ -178,13 +178,13 @@
   gap: 10px;
   margin-top: 13px;
   padding-top: 12px;
-  border-top: 1px solid #eee4ca;
+  border-top: 1px solid var(--amber-line);
 }
 
 .git-risk-list strong {
   display: block;
   margin-bottom: 6px;
-  color: #77571d;
+  color: var(--amber);
   font-size: var(--text-2xs);
 }
 
@@ -198,9 +198,9 @@
   max-width: 100%;
   padding: 4px 6px;
   overflow: hidden;
-  color: #5f5440;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid #e8ddc2;
+  color: var(--amber);
+  background: var(--panel);
+  border: 1px solid var(--amber-line);
   border-radius: 5px;
   font-size: var(--text-2xs);
   text-overflow: ellipsis;
@@ -237,8 +237,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 9px 10px;
-  background: #f5f8f6;
-  border: 1px solid #e2e9e5;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
   border-radius: 8px;
 }
 
@@ -281,7 +281,7 @@
 
 .issue-list button:hover,
 .managed-files button:hover {
-  background: #f5f7f4;
+  background: var(--surface-muted);
 }
 
 .overview-row-copy {
@@ -313,9 +313,9 @@
   gap: 13px;
   margin-top: 14px;
   padding: 15px 17px;
-  color: #295143;
-  background: #edf7f2;
-  border: 1px solid #cee8dc;
+  color: var(--green-strong);
+  background: var(--green-pale);
+  border: 1px solid var(--green-line);
   border-radius: 11px;
 }
 
@@ -329,7 +329,7 @@
 
 .security-note p {
   margin: 4px 0 0;
-  color: #5c776d;
+  color: var(--muted);
   font-size: var(--text-xs);
 }
 .git-risk-list .critical { border-left-color: var(--red); }

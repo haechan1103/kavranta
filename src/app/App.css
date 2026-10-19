@@ -80,8 +80,8 @@
   width: 48px;
   height: 38px;
   margin-bottom: 34px;
-  background: #e7ece9;
-  border: 1px solid #ccd5d0;
+  background: var(--surface-hover);
+  border: 1px solid var(--line-strong);
   border-radius: 4px 6px 6px 6px;
 }
 
@@ -92,8 +92,8 @@
   width: 21px;
   height: 9px;
   content: "";
-  background: #e7ece9;
-  border: 1px solid #ccd5d0;
+  background: var(--surface-hover);
+  border: 1px solid var(--line-strong);
   border-bottom: 0;
   border-radius: 4px 4px 0 0;
 }
@@ -104,7 +104,7 @@
   bottom: 9px;
   width: 9px;
   height: 9px;
-  background: var(--green);
+  background: var(--green-solid);
   border-radius: 50%;
   box-shadow: 0 0 0 4px rgba(22, 118, 90, 0.1);
 }
@@ -205,7 +205,7 @@
 
 .strip-label {
   margin-right: 4px;
-  color: #6d7772;
+  color: var(--faint);
   font-size: var(--text-xs);
   font-weight: 750;
 }
@@ -226,9 +226,9 @@
   bottom: 22px;
   max-width: 400px;
   padding: 12px 15px;
-  color: #164d3d;
-  background: #edf8f3;
-  border: 1px solid #bfe5d6;
+  color: var(--green-strong);
+  background: var(--green-pale);
+  border: 1px solid var(--green-line);
   border-radius: 9px;
   box-shadow: var(--shadow);
   font-size: var(--text-sm);
@@ -239,9 +239,9 @@
   align-items: flex-start;
   gap: 10px;
   padding-right: 8px;
-  color: #8a302d;
+  color: var(--red);
   background: var(--red-pale);
-  border-color: #efc6c4;
+  border-color: var(--red-line);
 }
 
 .toast-dismiss {

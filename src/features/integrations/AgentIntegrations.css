@@ -44,11 +44,11 @@
 }
 
 .integration-card.connected {
-  border-color: #cbdcd4;
+  border-color: var(--green-line);
 }
 
 .integration-card.action-needed:not(.connected) {
-  border-color: #ded8cd;
+  border-color: var(--amber-line);
 }
 
 .integration-card header {
@@ -86,8 +86,8 @@
   align-items: center;
   gap: 6px;
   padding: 3px 7px;
-  color: #69736e;
-  background: #f0f2f0;
+  color: var(--faint);
+  background: var(--surface-hover);
   border-radius: 999px;
   font-size: var(--text-2xs);
   font-weight: 750;
@@ -97,7 +97,7 @@
   width: 6px;
   height: 6px;
   flex: 0 0 6px;
-  background: #9da6a1;
+  background: var(--faint);
   border-radius: 50%;
   content: "";
 }
@@ -108,16 +108,16 @@
 }
 
 .integration-state.installed::before {
-  background: var(--green);
+  background: var(--green-solid);
 }
 
 .integration-state.detected {
-  color: #86551f;
+  color: var(--amber);
   background: var(--amber-pale);
 }
 
 .integration-state.detected::before {
-  background: #c77c25;
+  background: var(--amber);
 }
 
 .integration-detail {
@@ -131,7 +131,7 @@
 .integration-meta {
   margin: 0 0 18px;
   padding: 5px 12px;
-  background: #f7f8f7;
+  background: var(--surface-muted);
   border: 1px solid var(--line-soft);
   border-radius: 8px;
 }
@@ -156,7 +156,7 @@
 
 .integration-meta dd {
   margin: 0;
-  color: #3f4a46;
+  color: var(--muted);
   font-size: var(--text-xs);
   font-weight: 700;
   text-align: right;
@@ -179,7 +179,7 @@
   grid-column: 1 / -1;
   padding: 70px 20px;
   color: var(--muted);
-  background: white;
+  background: var(--panel);
   border: 1px dashed var(--line);
   border-radius: 12px;
   font-size: var(--text-sm);
@@ -192,9 +192,9 @@
   gap: 11px;
   margin-top: 18px;
   padding: 14px 16px;
-  color: #5d665f;
-  background: #f0f2f0;
-  border: 1px solid #dce2de;
+  color: var(--muted);
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
   border-radius: 9px;
 }
 
@@ -205,7 +205,7 @@
   flex: 0 0 19px;
   place-items: center;
   color: white;
-  background: #748078;
+  background: #748078; /* theme-neutral: white glyph tile */
   border-radius: 50%;
   font-family: Georgia, serif;
   font-size: var(--text-sm);

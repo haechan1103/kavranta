@@ -12,24 +12,24 @@
 }
 
 .variable-row:hover {
-  background: #fafbfa;
+  background: var(--surface-muted);
 }
 
 .variable-row.selected {
-  background: #f1f8f4;
+  background: var(--green-pale);
   box-shadow: inset 3px 0 0 var(--green-strong);
 }
 
 .variable-row.checked {
-  background: #eef6f1;
+  background: var(--green-pale);
 }
 
 .variable-row.pending-replace {
-  background: #fff9ee;
+  background: var(--amber-pale);
 }
 
 .variable-row.pending-removal {
-  background: #fff6f5;
+  background: var(--red-pale);
 }
 
 .variable-row.pending-removal .key-button {
@@ -143,19 +143,19 @@
   display: flex;
   min-width: 0;
   align-items: flex-start;
-  background: #f8f9f7;
-  border: 1px solid #dfe3df;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
   border-radius: 8px;
 }
 
 .value-editor.empty {
   background: var(--red-pale);
   border-style: dashed;
-  border-color: #e3b1ad;
+  border-color: var(--red-line);
 }
 
 .value-editor:focus-within {
-  background: white;
+  background: var(--panel);
   border-style: solid;
   border-color: var(--focus);
   box-shadow: 0 0 0 1px var(--focus);
@@ -166,7 +166,7 @@
   min-width: 0;
   height: 32px;
   padding: 0 10px;
-  color: #26312d;
+  color: var(--ink);
   background: transparent;
   border: 0;
   outline: 0;
@@ -194,7 +194,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   resize: none;
-  color: #26312d;
+  color: var(--ink);
   background: transparent;
   border: 0;
   outline: 0;
@@ -218,8 +218,8 @@
 }
 
 .value-editor:has(.revealed-value-field) {
-  background: white;
-  border-color: #b9d9cd;
+  background: var(--panel);
+  border-color: var(--green-line);
 }
 
 .value-editor .icon-button.copied {
@@ -290,21 +290,21 @@
 }
 
 .access-select.protected {
-  color: #4a3a2b;
-  background: #f5f0e9;
-  border: 1px solid #e5d8c8;
+  color: var(--amber);
+  background: var(--amber-pale);
+  border: 1px solid var(--amber-line);
 }
 
 .access-select.unclassified {
   color: var(--violet);
   background: var(--violet-pale);
-  border: 1px solid #dcd6fa;
+  border: 1px solid var(--violet-line);
 }
 
 .access-select.read-write {
   color: var(--green-strong);
   background: var(--green-pale);
-  border: 1px solid #c9e9dc;
+  border: 1px solid var(--green-line);
 }
 
 .links-cell {

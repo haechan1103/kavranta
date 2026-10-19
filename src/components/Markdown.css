@@ -45,7 +45,7 @@
 }
 
 .markdown a {
-  color: #1d5fa3;
+  color: var(--link);
 }
 
 /* Shown only when the desktop opener reported a failure. Without it a link that fails to
@@ -57,7 +57,7 @@
 .markdown .md-external-failed {
   display: block;
   margin-top: 3px;
-  color: #b3452f;
+  color: var(--red);
   font-size: var(--text-2xs);
 }
 
@@ -71,7 +71,7 @@
   height: auto;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 10px;
-  background: #fff;
+  background: var(--panel);
 }
 
 .markdown .md-figure figcaption {

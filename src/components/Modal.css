@@ -14,8 +14,8 @@
   max-height: min(720px, calc(100vh - 60px));
   overflow: auto;
   color: var(--ink);
-  background: white;
-  border: 1px solid #d9dfda;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
   border-radius: 15px;
   box-shadow: 0 30px 80px rgba(9, 18, 14, 0.24);
 }
@@ -53,7 +53,7 @@
 }
 
 .modal > header .modal-close-button:hover {
-  background: #e8ece9;
+  background: var(--surface-hover);
   color: var(--ink);
 }
 
@@ -68,7 +68,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  color: #525d58;
+  color: var(--muted);
   font-size: var(--text-xs);
   font-weight: 700;
 }
@@ -79,7 +79,7 @@
   min-height: 37px;
   padding: 8px 10px;
   color: var(--ink);
-  background: #fafbfa;
+  background: var(--surface-muted);
   border: 1px solid var(--line);
   border-radius: 8px;
   font-size: var(--text-sm);

@@ -28,9 +28,9 @@
   display: grid;
   gap: 5px;
   padding: 15px 17px;
-  color: #29483d;
-  background: #edf7f2;
-  border: 1px solid #cce5da;
+  color: var(--green-strong);
+  background: var(--green-pale);
+  border: 1px solid var(--green-line);
   border-radius: 12px;
 }
 
@@ -46,7 +46,7 @@
 }
 
 .account-security-note span {
-  color: #667b73;
+  color: var(--faint);
 }
 
 .account-list {
@@ -60,14 +60,14 @@
   justify-content: space-between;
   gap: 22px;
   padding: 18px;
-  background: white;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 13px;
   box-shadow: 0 5px 18px rgba(24, 50, 40, 0.035);
 }
 
 .account-card.allowed {
-  border-color: #bfdfd2;
+  border-color: var(--green-line);
 }
 
 .account-card-copy {
@@ -88,16 +88,16 @@
 
 .account-status {
   padding: 3px 7px;
-  color: #786e60;
-  background: #f5f1e9;
+  color: var(--faint);
+  background: var(--amber-pale);
   border-radius: 999px;
   font-size: var(--text-2xs);
   font-weight: 800;
 }
 
 .account-status.allowed {
-  color: #126c51;
-  background: #dff3ea;
+  color: var(--green-strong);
+  background: var(--green-pale);
 }
 
 .account-card-copy p,
@@ -129,7 +129,7 @@
   gap: 8px;
   padding: 28px;
   text-align: center;
-  background: white;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 13px;
 }
@@ -157,9 +157,9 @@
   align-items: center;
   gap: 9px;
   padding: 11px 12px;
-  color: #24483b;
-  background: #edf7f2;
-  border: 1px solid #cce5da;
+  color: var(--green-strong);
+  background: var(--green-pale);
+  border: 1px solid var(--green-line);
   border-radius: 9px;
 }
 
