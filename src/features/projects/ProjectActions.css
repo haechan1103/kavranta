@@ -1,4 +1,9 @@
-.project-action-bar,
+.project-share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .project-action-menu {
   position: relative;
   width: 100%;
@@ -24,7 +29,7 @@
 .project-action-popover {
   position: absolute;
   z-index: 40;
-  top: -7px;
+  bottom: -7px;
   left: calc(100% + 10px);
   width: 218px;
   padding: 7px;
@@ -37,7 +42,7 @@
 
 .project-action-popover::before {
   position: absolute;
-  top: 17px;
+  bottom: 17px;
   left: -5px;
   width: 8px;
   height: 8px;

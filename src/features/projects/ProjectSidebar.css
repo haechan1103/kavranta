@@ -4,7 +4,7 @@
   --sidebar-hover: #1c2320;
   --sidebar-active: #222a26;
   --sidebar-text: #aeb8b3;
-  --sidebar-muted: #747e79;
+  --sidebar-muted: #838d88;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -473,4 +473,43 @@
 .sidebar-diagnostics-button:hover {
   background: rgba(255, 255, 255, 0.06);
   color: #d8e5e0;
+}
+
+.sidebar-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  margin: 10px 0 2px;
+  padding: 0 10px;
+  color: var(--sidebar-text);
+  background: var(--sidebar-surface);
+  border: 1px solid var(--sidebar-border);
+  border-radius: 8px;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.sidebar-search:hover {
+  color: white;
+  background: var(--sidebar-hover);
+}
+
+.sidebar-search span {
+  flex: 1;
+  text-align: left;
+}
+
+.sidebar-search kbd {
+  color: var(--sidebar-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+}
+
+@media (max-width: 760px) {
+  .sidebar-search span,
+  .sidebar-search kbd {
+    display: none;
+  }
 }

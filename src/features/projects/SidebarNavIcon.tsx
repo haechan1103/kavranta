@@ -6,7 +6,11 @@ type SidebarNavIconName =
   | "accounts"
   | "actions"
   | "integrations"
-  | "exposure";
+  | "exposure"
+  | "push"
+  | "share"
+  | "run"
+  | "search";
 
 interface Props {
   name: SidebarNavIconName;
@@ -69,6 +73,30 @@ const iconPaths: Record<SidebarNavIconName, ReactNode> = {
     <>
       <path d="M12 3l7 3v5c0 4.4-3 8.2-7 9.5C8 19.2 5 15.4 5 11V6z" />
       <path d="M12 8.5v4M12 15.5h.01" />
+    </>
+  ),
+  push: (
+    <>
+      <path d="M12 15V4M7.5 8.5 12 4l4.5 4.5" />
+      <path d="M5 14v4.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V14" />
+    </>
+  ),
+  share: (
+    <>
+      <circle cx="8" cy="9" r="3" />
+      <circle cx="17" cy="8" r="2.4" />
+      <path d="M3.5 19c.6-3 2.2-4.6 4.5-4.6s3.9 1.6 4.5 4.6M14 13.6c2.3-.4 4.4.8 5.2 3.6" />
+    </>
+  ),
+  run: (
+    <>
+      <path d="M8 5.5v13l10-6.5z" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M20 20l-4.2-4.2" />
     </>
   ),
 };

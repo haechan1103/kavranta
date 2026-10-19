@@ -5,6 +5,7 @@ import { useConfirm } from "../components/ConfirmDialog";
 import { CloseIcon } from "../components/icons";
 import { RenameModal } from "../components/RenameModal";
 import { ActionPackModal } from "../features/action-pack/ActionPackModal";
+import { CommandPalette, type PaletteItem } from "../features/command-palette/CommandPalette";
 import { FileEditor } from "../features/file-editor/FileEditor";
 import { ExportEnvModal } from "../features/export/ExportEnvModal";
 import { ImportEnvModal } from "../features/export/ImportEnvModal";
@@ -45,6 +46,7 @@ export function App() {
   const [channelPublishing, setChannelPublishing] = useState<string | null>(null);
   const [channelImporting, setChannelImporting] = useState<{ channelId: string; packageId: string } | null>(null);
   const [renamingProject, setRenamingProject] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   /** Leaving a file with staged edits asks first (ADR-0042). */
   const leaveWithPendingEdits = useCallback(async () => {
@@ -79,6 +81,66 @@ export function App() {
     setChannelPublishing(null);
     setChannelImporting(null);
   }, [manager.selectedProjectId]);
+
+  useEffect(() => {
+    const toggle = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k") return;
+      if (!paletteOpen && document.querySelector("[role='dialog']")) return;
+      event.preventDefault();
+      setPaletteOpen((open) => !open);
+    };
+    document.addEventListener("keydown", toggle);
+    return () => document.removeEventListener("keydown", toggle);
+  }, [paletteOpen]);
+
+  const buildPaletteItems = (): PaletteItem[] => {
+    const projection = manager.projection;
+    const items: PaletteItem[] = [];
+    for (const file of projection?.files ?? []) {
+      items.push({
+        id: `file:${file.path}`,
+        group: "files",
+        label: file.displayName,
+        detail: file.displayName === file.path ? undefined : file.path,
+        run: () => navigate({ kind: "file", path: file.path }),
+      });
+      for (const group of file.groups) {
+        for (const variable of group.variables) {
+          items.push({
+            id: `var:${file.path}:${variable.key}`,
+            group: "variables",
+            label: variable.key,
+            detail: file.path,
+            run: () => navigate({ kind: "file", path: file.path, query: variable.key }),
+          });
+        }
+      }
+    }
+    const views: { id: View["kind"]; label: string }[] = [
+      { id: "overview", label: t("sidebar.overview") },
+      { id: "activity", label: t("sidebar.activity") },
+      { id: "exposure", label: t("sidebar.exposure") },
+      { id: "accounts", label: t("sidebar.accounts") },
+      { id: "integrations", label: t("sidebar.aiConnections") },
+    ];
+    for (const view of views) {
+      if (view.id === "file") continue;
+      const kind = view.id;
+      items.push({ id: `view:${kind}`, group: "views", label: view.label, run: () => navigate({ kind } as View) });
+    }
+    if (projection) {
+      items.push(
+        { id: "cmd:push", group: "commands", label: t("push.headerAction"), run: () => setPushing(true) },
+        { id: "cmd:share", group: "commands", label: t("teamChannel.headerAction"), run: () => setSharing(true) },
+        { id: "cmd:action", group: "commands", label: t("action.headerAction"), run: () => setRunningAction(true) },
+        { id: "cmd:export", group: "commands", label: t("export.action"), run: () => setExporting(true) },
+        { id: "cmd:import", group: "commands", label: t("import.headerAction"), run: () => setImporting(true) },
+        { id: "cmd:refresh", group: "commands", label: t("common.refresh"), run: () => void refresh() },
+      );
+    }
+    items.push({ id: "cmd:register", group: "commands", label: t("palette.registerProject"), run: () => void manager.register() });
+    return items;
+  };
 
   // Notices fade on their own. An error stays until the user dismisses it, so a
   // failure is never missed because it vanished while they looked elsewhere.
@@ -119,6 +181,7 @@ export function App() {
         view={view}
         onSelectProject={selectProject}
         onSelectView={navigate}
+        onOpenPalette={() => setPaletteOpen(true)}
         onRegister={() => void manager.register()}
         onExportDiagnostics={(dialogTitle) => void exportDiagnostics(dialogTitle)}
         onRenameFileLabel={(projectId, path, name) => void manager.renameEnvFileLabel(projectId, path, name)}
@@ -357,6 +420,7 @@ export function App() {
       </main>
 
       {confirmDialog}
+      {paletteOpen && <CommandPalette items={buildPaletteItems()} onClose={() => setPaletteOpen(false)} />}
       <SecretInputController
         projectId={manager.selectedProject?.id ?? null}
         projection={manager.projection}
