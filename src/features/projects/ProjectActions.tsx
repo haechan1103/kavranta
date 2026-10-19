@@ -31,21 +31,37 @@ export function ProjectActions({
 }: Props) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  // The sidebar scrolls, which would clip a menu that opens beside it, so the menu is
+  // fixed to the window at the trigger's position.
+  const [anchor, setAnchor] = useState<{ left: number; bottom: number } | null>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    menuRef.current?.querySelector<HTMLButtonElement>("[role='menuitem']")?.focus();
+    menuRef.current?.querySelector<HTMLButtonElement>("[role='menuitem']")?.focus({ preventScroll: true });
     const closeOutside = (event: PointerEvent) => {
       if (event.target instanceof Node && !actionsRef.current?.contains(event.target)) {
         setOpen(false);
       }
     };
+    const closeOnMove = () => setOpen(false);
     document.addEventListener("pointerdown", closeOutside);
-    return () => document.removeEventListener("pointerdown", closeOutside);
+    window.addEventListener("resize", closeOnMove);
+    document.addEventListener("scroll", closeOnMove, true);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      window.removeEventListener("resize", closeOnMove);
+      document.removeEventListener("scroll", closeOnMove, true);
+    };
   }, [open]);
+
+  const toggle = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) setAnchor({ left: rect.right + 10, bottom: window.innerHeight - rect.bottom - 7 });
+    setOpen((current) => !current);
+  };
 
   const close = () => {
     setOpen(false);
@@ -95,7 +111,7 @@ export function ProjectActions({
           className="nav-item sidebar-project-action-trigger"
           aria-expanded={open}
           aria-haspopup="menu"
-          onClick={() => setOpen((current) => !current)}
+          onClick={toggle}
         >
           <SidebarNavIcon name="actions" />
           <span>{t("app.projectActions")}</span>
@@ -107,6 +123,7 @@ export function ProjectActions({
             className="project-action-popover"
             role="menu"
             aria-label={t("app.projectActions")}
+            style={anchor ? { left: anchor.left, bottom: anchor.bottom } : undefined}
             onKeyDown={moveFocus}
           >
             <button role="menuitem" onClick={() => run(onExport)}>{t("export.action")}</button>

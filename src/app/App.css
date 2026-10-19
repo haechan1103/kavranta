@@ -1,6 +1,8 @@
 .app-shell {
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
+  /* One row the height of the window: a tall sidebar scrolls instead of growing the shell. */
+  grid-template-rows: minmax(0, 1fr);
   height: 100vh;
   background: var(--canvas);
 }

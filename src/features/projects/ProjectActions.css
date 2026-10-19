@@ -27,10 +27,8 @@
 }
 
 .project-action-popover {
-  position: absolute;
+  position: fixed;
   z-index: 40;
-  bottom: -7px;
-  left: calc(100% + 10px);
   width: 218px;
   padding: 7px;
   background: var(--panel);
