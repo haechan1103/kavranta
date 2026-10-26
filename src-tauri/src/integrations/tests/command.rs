@@ -1,7 +1,8 @@
 use std::path::Path;
 
 use super::super::command::{
-    cursor_user_app_candidates, executable_file_names, home_cli_directories,
+    claude_desktop_bundled_candidates, cursor_user_app_candidates, executable_file_names,
+    home_cli_directories,
 };
 
 #[test]
@@ -41,6 +42,44 @@ fn cursor_app_candidates_cover_user_installs_on_macos_and_windows() {
             local.join("Cursor/Cursor.exe"),
         ]
     );
+}
+
+#[test]
+fn claude_desktop_bundled_candidates_prefer_newest_semantic_version() {
+    use std::fs;
+
+    let app_support = tempfile::tempdir().expect("temporary directory");
+    let root = app_support.path().join("Claude/claude-code");
+    let executable = |version: &str, build: &str| {
+        root.join(version)
+            .join(build)
+            .join("claude.app/Contents/MacOS/claude")
+    };
+    for path in [
+        executable("2.1.9", "synthetic-old"),
+        executable("2.1.295", "synthetic-new"),
+        executable("not-a-version", "synthetic-ignored"),
+    ] {
+        let parent = path.parent().expect("synthetic parent");
+        fs::create_dir_all(parent).expect("create synthetic bundle");
+        fs::write(&path, "").expect("write synthetic executable");
+    }
+    fs::create_dir_all(root.join("2.2.0/synthetic-incomplete")).expect("create incomplete build");
+
+    assert_eq!(
+        claude_desktop_bundled_candidates(app_support.path()),
+        vec![
+            executable("2.1.295", "synthetic-new"),
+            executable("2.1.9", "synthetic-old"),
+        ]
+    );
+}
+
+#[test]
+fn claude_desktop_bundled_candidates_are_empty_without_desktop_install() {
+    let app_support = tempfile::tempdir().expect("temporary directory");
+
+    assert!(claude_desktop_bundled_candidates(app_support.path()).is_empty());
 }
 
 #[cfg(windows)]
