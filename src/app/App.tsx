@@ -1,8 +1,13 @@
 import "./App.css";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { useConfirm } from "../components/ConfirmDialog";
+import { TopBar } from "./TopBar";
+import { CloseIcon } from "../components/icons";
 import { RenameModal } from "../components/RenameModal";
 import { ActionPackModal } from "../features/action-pack/ActionPackModal";
+import { CommandPalette, type PaletteItem } from "../features/command-palette/CommandPalette";
+import { CompareView } from "../features/compare/CompareView";
 import { FileEditor } from "../features/file-editor/FileEditor";
 import { ExportEnvModal } from "../features/export/ExportEnvModal";
 import { ImportEnvModal } from "../features/export/ImportEnvModal";
@@ -26,12 +31,16 @@ type View =
   | { kind: "integrations" }
   | { kind: "activity" }
   | { kind: "exposure" }
+  | { kind: "compare" }
   | { kind: "accounts" };
 
 export function App() {
   const { locale, t } = useI18n();
+  const { confirm, dialog: confirmDialog } = useConfirm();
+
   const manager = useEnvManager();
   const [view, setView] = useState<View>({ kind: "overview" });
+  const [pendingEdits, setPendingEdits] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [pushing, setPushing] = useState(false);
@@ -40,6 +49,32 @@ export function App() {
   const [channelPublishing, setChannelPublishing] = useState<string | null>(null);
   const [channelImporting, setChannelImporting] = useState<{ channelId: string; packageId: string } | null>(null);
   const [renamingProject, setRenamingProject] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  /** Leaving a file with staged edits asks first (ADR-0042). */
+  const leaveWithPendingEdits = useCallback(async () => {
+    if (pendingEdits === 0) return true;
+    const confirmed = await confirm({
+      title: t("app.discardTitle", { count: pendingEdits }),
+      body: t("app.discardBody"),
+      confirmLabel: t("app.discardAction"),
+      tone: "danger",
+    });
+    if (confirmed) setPendingEdits(0);
+    return confirmed;
+  }, [confirm, pendingEdits, t]);
+
+  const navigate = useCallback((next: View) => {
+    void leaveWithPendingEdits().then((leave) => {
+      if (leave) setView(next);
+    });
+  }, [leaveWithPendingEdits]);
+
+  const selectProject = useCallback((projectId: string) => {
+    void leaveWithPendingEdits().then((leave) => {
+      if (leave) manager.selectProject(projectId);
+    });
+  }, [leaveWithPendingEdits, manager.selectProject]);
 
   useEffect(() => {
     setView({ kind: "overview" });
@@ -51,13 +86,94 @@ export function App() {
   }, [manager.selectedProjectId]);
 
   useEffect(() => {
-    if (!manager.error && !manager.notice) return;
-    const timeout = window.setTimeout(() => {
-      manager.clearError();
-      manager.clearNotice();
-    }, 5000);
+    const toggle = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k") return;
+      if (!paletteOpen && document.querySelector("[role='dialog']")) return;
+      event.preventDefault();
+      setPaletteOpen((open) => !open);
+    };
+    document.addEventListener("keydown", toggle);
+    return () => document.removeEventListener("keydown", toggle);
+  }, [paletteOpen]);
+
+  const locationLabel = () => {
+    if (view.kind === "file") {
+      return manager.projection?.files.find((file) => file.path === view.path)?.displayName ?? view.path;
+    }
+    if (view.kind === "integrations") return t("sidebar.aiConnections");
+    if (!manager.selectedProject) return null;
+    if (view.kind === "activity") return t("sidebar.activity");
+    if (view.kind === "exposure") return t("sidebar.exposure");
+    if (view.kind === "compare") return t("sidebar.compare");
+    if (view.kind === "accounts") return t("sidebar.accounts");
+    return t("sidebar.overview");
+  };
+
+  const buildPaletteItems = (): PaletteItem[] => {
+    const projection = manager.projection;
+    const items: PaletteItem[] = [];
+    for (const file of projection?.files ?? []) {
+      items.push({
+        id: `file:${file.path}`,
+        group: "files",
+        label: file.displayName,
+        detail: file.displayName === file.path ? undefined : file.path,
+        run: () => navigate({ kind: "file", path: file.path }),
+      });
+      for (const group of file.groups) {
+        for (const variable of group.variables) {
+          items.push({
+            id: `var:${file.path}:${variable.key}`,
+            group: "variables",
+            label: variable.key,
+            detail: file.path,
+            run: () => navigate({ kind: "file", path: file.path, query: variable.key }),
+            copy: variable.valueState === "present" && manager.selectedProject
+              ? () => {
+                const projectId = manager.selectedProject!.id;
+                void api.copyValue(projectId, file.path, variable.key)
+                  .then(() => manager.showNotice(t("palette.copied", { key: variable.key, seconds: 45 })))
+                  .catch(() => manager.showError(t("common.copyFailed")));
+              }
+              : undefined,
+          });
+        }
+      }
+    }
+    const views: { id: View["kind"]; label: string }[] = [
+      { id: "overview", label: t("sidebar.overview") },
+      { id: "compare", label: t("sidebar.compare") },
+      { id: "activity", label: t("sidebar.activity") },
+      { id: "exposure", label: t("sidebar.exposure") },
+      { id: "accounts", label: t("sidebar.accounts") },
+      { id: "integrations", label: t("sidebar.aiConnections") },
+    ];
+    for (const view of views) {
+      if (view.id === "file") continue;
+      const kind = view.id;
+      items.push({ id: `view:${kind}`, group: "views", label: view.label, run: () => navigate({ kind } as View) });
+    }
+    if (projection) {
+      items.push(
+        { id: "cmd:push", group: "commands", label: t("push.headerAction"), run: () => setPushing(true) },
+        { id: "cmd:share", group: "commands", label: t("teamChannel.headerAction"), run: () => setSharing(true) },
+        { id: "cmd:action", group: "commands", label: t("action.headerAction"), run: () => setRunningAction(true) },
+        { id: "cmd:export", group: "commands", label: t("export.action"), run: () => setExporting(true) },
+        { id: "cmd:import", group: "commands", label: t("import.headerAction"), run: () => setImporting(true) },
+        { id: "cmd:refresh", group: "commands", label: t("common.refresh"), run: () => void refresh() },
+      );
+    }
+    items.push({ id: "cmd:register", group: "commands", label: t("palette.registerProject"), run: () => void manager.register() });
+    return items;
+  };
+
+  // Notices fade on their own. An error stays until the user dismisses it, so a
+  // failure is never missed because it vanished while they looked elsewhere.
+  useEffect(() => {
+    if (manager.error || !manager.notice) return;
+    const timeout = window.setTimeout(manager.clearNotice, 5000);
     return () => window.clearTimeout(timeout);
-  }, [manager.error, manager.notice, manager.clearError, manager.clearNotice]);
+  }, [manager.error, manager.notice, manager.clearNotice]);
 
   const refresh = async () => {
     if (!manager.selectedProjectId) return;
@@ -88,8 +204,9 @@ export function App() {
         projection={manager.projection}
         projectFailures={manager.projectFailures}
         view={view}
-        onSelectProject={manager.selectProject}
-        onSelectView={setView}
+        onSelectProject={selectProject}
+        onSelectView={navigate}
+        pendingEdits={view.kind === "file" ? { path: view.path, count: pendingEdits } : undefined}
         onRegister={() => void manager.register()}
         onExportDiagnostics={(dialogTitle) => void exportDiagnostics(dialogTitle)}
         onRenameFileLabel={(projectId, path, name) => void manager.renameEnvFileLabel(projectId, path, name)}
@@ -111,15 +228,27 @@ export function App() {
             onRunAction={() => setRunningAction(true)}
             onRefresh={() => void refresh()}
             onRemove={() => {
-              if (window.confirm(t("app.removeConfirm"))) {
-                void manager.remove(manager.selectedProject!.id);
-              }
+              const projectId = manager.selectedProject!.id;
+              void confirm({
+                title: t("app.removeConfirmTitle"),
+                body: t("app.removeConfirm"),
+                confirmLabel: t("common.remove"),
+                tone: "danger",
+              }).then((confirmed) => {
+                if (confirmed) void manager.remove(projectId);
+              });
             }}
           />
         ) : undefined}
       />
 
       <main className="main-panel">
+        <TopBar
+          projectName={manager.selectedProject?.name ?? null}
+          location={locationLabel()}
+          onOpenPalette={() => setPaletteOpen(true)}
+          onPush={manager.selectedProject && manager.projection ? () => setPushing(true) : undefined}
+        />
         {view.kind === "integrations" ? (
           <div className="content-scroll">
             <AgentIntegrations
@@ -162,7 +291,7 @@ export function App() {
               <aside className="registration-details">
                 <header>
                   <span>{t("app.afterRegistration")}</span>
-                  <small>LOCAL ONLY</small>
+                  <small>{t("app.localOnly")}</small>
                 </header>
                 <dl>
                   <div>
@@ -239,7 +368,7 @@ export function App() {
               <aside className="registration-details">
                 <header>
                   <span>{t("app.loadFailedAside")}</span>
-                  <small>LOCAL ONLY</small>
+                  <small>{t("app.localOnly")}</small>
                 </header>
                 <dl>
                   <div>
@@ -274,9 +403,9 @@ export function App() {
                 <Overview
                   projection={manager.projection}
                   onOpenFile={(path, key, options) =>
-                    setView({ kind: "file", path, query: key, emptyOnly: options?.emptyOnly })
+                    navigate({ kind: "file", path, query: key, emptyOnly: options?.emptyOnly })
                   }
-                  onOpenIntegrations={() => setView({ kind: "integrations" })}
+                  onOpenIntegrations={() => navigate({ kind: "integrations" })}
                   onApplyGitignoreGuard={manager.applyGitignoreGuard}
                 />
               )}
@@ -291,6 +420,15 @@ export function App() {
                   onRefresh={refresh}
                   onError={manager.showError}
                   onNotice={manager.showNotice}
+                  onPendingChange={setPendingEdits}
+                />
+              )}
+              {view.kind === "compare" && (
+                <CompareView
+                  projectId={manager.selectedProject.id}
+                  revision={manager.projection}
+                  onOpenVariable={(path, key) => navigate({ kind: "file", path, query: key })}
+                  onError={manager.showError}
                 />
               )}
               {view.kind === "activity" && (
@@ -320,20 +458,34 @@ export function App() {
         )}
       </main>
 
+      {confirmDialog}
+      {paletteOpen && <CommandPalette items={buildPaletteItems()} onClose={() => setPaletteOpen(false)} />}
       <SecretInputController
         projectId={manager.selectedProject?.id ?? null}
         projection={manager.projection}
         refreshProject={manager.refreshProject}
         onError={manager.showError}
       />
-      {(manager.error || manager.notice) && (
-        <div
-          className={`toast ${manager.error ? "toast-error" : "toast-success"}`}
-          role="status"
-        >
-          {manager.error ?? manager.notice}
+      {manager.error ? (
+        <div className="toast toast-error" role="alert">
+          <span>{manager.error}</span>
+          <button
+            type="button"
+            className="toast-dismiss"
+            aria-label={t("modal.close")}
+            onClick={() => {
+              manager.clearError();
+              manager.clearNotice();
+            }}
+          >
+            <CloseIcon />
+          </button>
         </div>
-      )}
+      ) : manager.notice ? (
+        <div className="toast toast-success" role="status">
+          {manager.notice}
+        </div>
+      ) : null}
       {exporting && manager.selectedProject && (
         <ExportEnvModal projectId={manager.selectedProject.id} projection={manager.projection!} onClose={() => setExporting(false)} onError={manager.showError} onNotice={manager.showNotice} />
       )}

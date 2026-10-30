@@ -21,17 +21,17 @@
   height: 28px;
   padding: 0;
   place-items: center;
-  color: #7f8a84;
+  color: var(--faint);
   background: transparent;
   border: 0;
   border-radius: 5px;
   cursor: pointer;
-  font-size: calc(16px * var(--font-scale));
+  font-size: var(--text-lg);
 }
 
 .env-file-menu-trigger:hover,
 .env-file-menu-trigger[aria-expanded="true"] {
-  color: #f3f7f5;
+  color: #f3f7f5; /* theme-neutral: always on the dark sidebar */
   background: var(--sidebar-hover);
 }
 
@@ -42,8 +42,8 @@
   right: 0;
   width: 230px;
   padding: 7px;
-  background: rgba(255, 255, 255, 0.99);
-  border: 1px solid #d6ded9;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
   border-radius: 11px;
   box-shadow: 0 18px 45px rgba(18, 33, 27, 0.18);
 }
@@ -52,7 +52,7 @@
   display: block;
   width: 100%;
   padding: 10px;
-  color: #35413c;
+  color: var(--muted);
   background: transparent;
   border: 0;
   border-radius: 8px;
@@ -62,7 +62,7 @@
 
 .env-file-action-popover button:hover,
 .env-file-action-popover button:focus-visible {
-  background: #f1f5f2;
+  background: var(--surface-muted);
 }
 
 .env-file-action-popover strong,
@@ -71,13 +71,13 @@
 }
 
 .env-file-action-popover strong {
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .env-file-action-popover small {
   margin-top: 4px;
   color: var(--muted);
-  font-size: calc(8px * var(--font-scale));
+  font-size: var(--text-2xs);
   font-weight: 500;
   line-height: 1.45;
 }

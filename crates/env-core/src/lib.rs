@@ -65,8 +65,10 @@ pub use service::{
     AddVariableRequest, CreateEnvFileRequest, CreateGroupRequest, DeleteVariableRequest,
     LinkRequest, MoveVariableRequest, MutationSummary, OpaqueValueCopyRequest,
     PreparedOpaqueValueWrite, ProjectService, ProofCheck, RedactedOccurrenceReference,
-    RedactedVariableMatch, RedactionProof, RenameEnvFileRequest, RenameEnvFileSummary,
-    RenameGroupRequest, SaveDescriptionRequest, SaveValueRequest, run_redaction_self_check,
+    RedactedSourceContent, RedactedSourceLine, RedactedVariableMatch, RedactionProof,
+    RenameEnvFileRequest, RenameEnvFileSummary, RenameGroupRequest, SaveDescriptionRequest,
+    SaveValueRequest, ValueComparison, ValueComparisonCell, ValueComparisonRow,
+    run_redaction_self_check,
 };
 pub use team_import::{
     TeamImportFileProjection, TeamImportOccurrenceProjection, TeamImportOccurrenceState,

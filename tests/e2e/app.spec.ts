@@ -57,13 +57,16 @@ test("navigates the redacted V1 workflow", async ({ page }) => {
     .click();
   await expect(page.getByRole("heading", { name: "Local environment" })).toBeVisible();
   await expect(page.getByRole("main").getByText(".env.local", { exact: true }).first()).toBeVisible();
-  const apiKeyInput = page.getByLabel("GPT_API_KEY value");
-  await expect(page.getByText("Managed together in 2 files")).toBeVisible();
-  await expect(page.getByRole("main").getByText(".env.development")).toBeVisible();
+  await page.getByRole("button", { name: "GPT_API_KEY", exact: true }).click();
+  const details = page.getByRole("complementary", { name: "Details for GPT_API_KEY" });
+  await expect(details.getByText("Saving writes the same value to all 2 files.")).toBeVisible();
+  await expect(details.getByText(".env.development")).toBeVisible();
   await page.getByTitle("Show value · hides after 30 seconds of inactivity").first().click();
   await expect(page.locator("textarea.revealed-value-field")).toBeVisible();
-  await apiKeyInput.fill("fake_e2e_replacement");
-  await expect(page.getByRole("button", { name: "Save to 2 files" })).toBeVisible();
+  await page.locator("textarea.revealed-value-field").fill("fake_e2e_replacement");
+  const pendingBar = page.getByRole("region", { name: "Pending changes" });
+  await expect(pendingBar).toContainText("1 pending");
+  await expect(pendingBar.getByRole("button", { name: /Save to 2 files/ })).toBeVisible();
   await page.screenshot({
     path: "test-results/kavranta-file-editor.png",
     fullPage: true,

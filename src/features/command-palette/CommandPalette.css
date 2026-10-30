@@ -1,0 +1,125 @@
+.palette-backdrop {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh 16px 16px;
+  background: rgba(10, 17, 14, 0.4);
+}
+
+.command-palette {
+  display: flex;
+  width: min(620px, 100%);
+  max-height: 70vh;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 30px 80px rgba(9, 18, 14, 0.28);
+}
+
+.palette-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.palette-input-row svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.palette-input-row input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font-size: var(--text-md);
+}
+
+.palette-note {
+  color: var(--faint);
+  font-size: var(--text-2xs);
+  white-space: nowrap;
+}
+
+.palette-results {
+  overflow: auto;
+  padding: 6px;
+}
+
+.palette-group-label {
+  padding: 10px 10px 4px;
+  color: var(--muted);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+}
+
+.palette-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.palette-option.active {
+  background: var(--green-pale);
+}
+
+.palette-label {
+  flex: none;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.palette-label.mono {
+  font-family: var(--font-mono);
+}
+
+.palette-detail {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-empty {
+  margin: 0;
+  padding: 18px 10px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.palette-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 10px 16px;
+  color: var(--muted);
+  background: var(--canvas);
+  border-top: 1px solid var(--line);
+  font-size: var(--text-2xs);
+}
+
+.palette-footer kbd {
+  font-family: var(--font-mono);
+}

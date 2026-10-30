@@ -1,24 +1,36 @@
 import "./VariableRow.css";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 
+import { useConfirm } from "../../components/ConfirmDialog";
 import { CopyButton } from "../../components/CopyButton";
-import { EyeIcon, EyeOffIcon, HelpIcon, MoveIcon, TrashIcon } from "../../components/icons";
-import { displayGroupName, useI18n } from "../../i18n";
+import { EyeIcon, EyeOffIcon, LinkIcon } from "../../components/icons";
+import { useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type { CodexAccess, OccurrenceProjection } from "../../lib/types";
-import { MoveVariableModal } from "./MoveVariableModal";
-import { VariableGuideModal } from "./VariableGuideModal";
+
+/** Mirrors the delay in `copy_value` (src-tauri/src/commands/env_files.rs). */
+const CLIPBOARD_CLEAR_SECONDS = 45;
 
 interface Props {
   hidden?: boolean;
   projectId: string;
   file: string;
   variable: OccurrenceProjection;
-  currentGroup: string;
-  groups: string[];
   sameKeyFiles: string[];
+  /** The staged replacement value, when the user has typed one. */
+  draft: string | undefined;
+  pendingRemoval: boolean;
+  selected: boolean;
+  checked: boolean;
+  /** Changes after every save so a reveal never shows a value that was just replaced. */
+  saveGeneration: number;
+  onSelect: () => void;
+  /** Selecting by name also asks for the details, which on narrow windows is a drawer. */
+  onOpenDetails: () => void;
+  onCheck: (checked: boolean) => void;
+  onDraftChange: (value: string) => void;
+  onRevert: () => void;
   onMutate: (operation: () => Promise<unknown>, success: string) => Promise<void>;
-  onLink: () => void;
 }
 
 export function VariableRow({
@@ -26,23 +38,26 @@ export function VariableRow({
   projectId,
   file,
   variable,
-  currentGroup,
-  groups,
   sameKeyFiles,
+  draft,
+  pendingRemoval,
+  selected,
+  checked,
+  saveGeneration,
+  onSelect,
+  onOpenDetails,
+  onCheck,
+  onDraftChange,
+  onRevert,
   onMutate,
-  onLink,
 }: Props) {
   const { t } = useI18n();
-  const [draft, setDraft] = useState("");
-  const [dirty, setDirty] = useState(false);
+  const { confirm, dialog } = useConfirm();
   const [revealed, setRevealed] = useState<string | null>(null);
   const [revealActivity, setRevealActivity] = useState(0);
-  const [editingDescription, setEditingDescription] = useState(false);
-  const [moving, setMoving] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
-  const [description, setDescription] = useState(variable.description.join("\n"));
   const revealedValueRef = useRef<HTMLTextAreaElement>(null);
   const revealRequest = useRef(0);
+  const dirty = draft !== undefined;
 
   useLayoutEffect(() => {
     revealRequest.current += 1;
@@ -50,9 +65,10 @@ export function VariableRow({
     return () => { revealRequest.current += 1; };
   }, [hidden, projectId, file, variable.key]);
 
-  useEffect(() => {
-    setDescription(variable.description.join("\n"));
-  }, [variable.description]);
+  useLayoutEffect(() => {
+    revealRequest.current += 1;
+    setRevealed(null);
+  }, [saveGeneration]);
 
   useEffect(() => {
     if (revealed === null) return;
@@ -65,28 +81,49 @@ export function VariableRow({
     if (!field) return;
     field.style.height = "auto";
     field.style.height = `${Math.min(field.scrollHeight, 240)}px`;
-  }, [revealed, draft, dirty]);
+  }, [revealed, draft]);
 
-  const value = dirty ? draft : revealed ?? "";
-  const placeholder =
-    variable.valueState === "present" ? t("row.valuePresent") : t("row.valueEmpty");
-  const hasIndependentPeers = variable.linkId === null && sameKeyFiles.length > 1;
-  const unlinkedPeerFiles =
-    variable.linkId === null
-      ? []
-      : sameKeyFiles.filter((path) => !variable.linkedFiles.includes(path));
+  const value = draft ?? revealed ?? "";
+  const empty = variable.valueState === "empty" && !dirty;
+  const placeholder = empty ? t("row.valueEmptyAction") : t("row.valuePresent");
+  const unlinkedPeers = variable.linkId === null && sameKeyFiles.length > 1;
 
   const keepRevealActive = () => {
     if (revealed !== null) setRevealActivity((activity) => activity + 1);
+  };
+
+  const toggleReveal = () => {
+    const request = ++revealRequest.current;
+    if (revealed !== null) {
+      setRevealed(null);
+      return;
+    }
+    if (dirty) {
+      setRevealed(draft);
+      setRevealActivity((activity) => activity + 1);
+      return;
+    }
+    void api
+      .readValue(projectId, file, variable.key)
+      .then((nextValue) => {
+        if (request !== revealRequest.current) return;
+        setRevealed(nextValue);
+        setRevealActivity((activity) => activity + 1);
+      })
+      .catch(() => {
+        if (request === revealRequest.current) setRevealed(null);
+      });
   };
 
   const changeAccess = async (access: CodexAccess) => {
     const downgrade = access === "read-write" && variable.codexAccess !== "read-write";
     if (
       downgrade &&
-      !window.confirm(
-        t("row.accessConfirm", { key: variable.key }),
-      )
+      !(await confirm({
+        title: t("row.accessConfirmTitle", { key: variable.key }),
+        body: t("row.accessConfirm"),
+        confirmLabel: t("row.allowAccess"),
+      }))
     ) {
       return;
     }
@@ -96,296 +133,170 @@ export function VariableRow({
     );
   };
 
-  return (
-    <article hidden={hidden} className={variable.duplicate ? "variable-row has-error" : "variable-row"}>
-      <div className="variable-main">
-        <div className="variable-meta">
-          <div className="key-line">
-            <strong>{variable.key}</strong>
-            {!hidden && (
-              <CopyButton
-                className="key-copy-button"
-                label={t("row.copyKeyLabel", { key: variable.key })}
-                title={t("row.copyKey")}
-                onCopy={() => api.copyKey(projectId, variable.key)}
-              />
-            )}
-            {variable.hasGuide && (
-              <button
-                type="button"
-                className="icon-button guide-button"
-                aria-label={t("guide.open", { key: variable.key })}
-                title={t("guide.open", { key: variable.key })}
-                onClick={() => setShowGuide(true)}
-              >
-                <HelpIcon />
-              </button>
-            )}
-            {variable.linkedCount > 1 && (
-              <span className="badge linked">{t("row.filesLinked", { count: variable.linkedCount })}</span>
-            )}
-            {hasIndependentPeers && (
-              <span className="badge available">{t("row.sameVariable", { count: sameKeyFiles.length })}</span>
-            )}
-            {variable.duplicate && <span className="badge error">{t("row.duplicate")}</span>}
-            {variable.clientExposure && (
-              <span
-                className="badge exposure"
-                title={t("row.clientExposureHelp", {
-                  prefix: variable.clientExposure.publicPrefix,
-                  indicator: variable.clientExposure.secretIndicator,
-                })}
-              >
-                {t("row.clientExposure")}
-              </span>
-            )}
-          </div>
-          {variable.description.length > 0 ? (
-            <button className="description-button" onClick={() => setEditingDescription((open) => !open)}>
-              {variable.description.join(" ")}
-            </button>
-          ) : (
-            <button className="description-button muted" onClick={() => setEditingDescription(true)}>{t("row.addDescription")}</button>
-          )}
-        </div>
+  const onFieldKeyDown = (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    keepRevealActive();
+    if (event.key === "Escape" && dirty) {
+      event.preventDefault();
+      event.stopPropagation();
+      onRevert();
+    }
+  };
 
-        <div
-          className="value-editor"
-          onFocus={keepRevealActive}
-          onKeyDown={keepRevealActive}
-          onPointerDown={keepRevealActive}
-          onWheel={keepRevealActive}
-        >
-          {revealed !== null ? (
-            <textarea
-              ref={revealedValueRef}
-              className="revealed-value-field"
-              value={value}
-              aria-label={t("row.valueLabel", { key: variable.key })}
-              rows={1}
-              onChange={(event) => {
-                setDraft(event.target.value);
-                setDirty(true);
-                keepRevealActive();
-              }}
-            />
-          ) : (
-            <input
-              type="password"
-              value={value}
-              placeholder={placeholder}
-              aria-label={t("row.valueLabel", { key: variable.key })}
-              onChange={(event) => {
-                setDraft(event.target.value);
-                setDirty(true);
-              }}
-            />
-          )}
-          <button
-            className="icon-button"
-            title={revealed === null ? t("row.reveal") : t("row.hide")}
-            aria-label={revealed === null ? t("row.reveal") : t("row.hide")}
-            onClick={() => {
-              const request = ++revealRequest.current;
-              if (revealed !== null) {
-                setRevealed(null);
-                return;
-              }
-              if (dirty) {
-                setRevealed(draft);
-                setRevealActivity((activity) => activity + 1);
-              } else {
-                void api
-                  .readValue(projectId, file, variable.key)
-                  .then((nextValue) => {
-                    if (request !== revealRequest.current) return;
-                    setRevealed(nextValue);
-                    setRevealActivity((activity) => activity + 1);
-                  })
-                  .catch(() => {
-                    if (request === revealRequest.current) setRevealed(null);
-                  });
-              }
-            }}
-          >
-            {revealed === null ? <EyeIcon /> : <EyeOffIcon />}
+  const rowState = pendingRemoval ? " pending-removal" : dirty ? " pending-replace" : "";
+
+  return (
+    <article
+      hidden={hidden}
+      className={`variable-row${selected ? " selected" : ""}${checked ? " checked" : ""}${variable.duplicate ? " has-error" : ""}${rowState}`}
+      data-variable-key={variable.key}
+      onClick={(event) => {
+        // Clicking anywhere on the row opens its details, except on a control:
+        // typing a value, copying, or changing access never opens the panel.
+        const target = event.target as HTMLElement;
+        if (target.closest("input, textarea, select, button:not(.key-button), .value-editor")) return;
+        if (target.closest(".key-button")) return;
+        onOpenDetails();
+      }}
+    >
+      <span className="row-check">
+        <input
+          type="checkbox"
+          checked={checked}
+          aria-label={t("row.select", { key: variable.key })}
+          onChange={(event) => onCheck(event.target.checked)}
+        />
+      </span>
+
+      <div className="variable-meta">
+        <div className="key-line">
+          <button type="button" className="key-button" aria-pressed={selected} onClick={onOpenDetails}>
+            {variable.key}
           </button>
           {!hidden && (
             <CopyButton
-              className="icon-button"
-              label={t("row.copyValue")}
-              onCopy={() => api.copyValue(projectId, file, variable.key)}
+              className="key-copy-button"
+              label={t("row.copyKeyLabel", { key: variable.key })}
+              title={t("row.copyKey")}
+              onCopy={() => api.copyKey(projectId, variable.key)}
             />
           )}
-        </div>
-
-        <div className="variable-actions">
-          <select
-            className={`access-select ${variable.codexAccess}`}
-            value={variable.codexAccess}
-            aria-label={t("row.aiAccess", { key: variable.key })}
-            onChange={(event) => void changeAccess(event.target.value as CodexAccess)}
-          >
-            <option value="protected">{t("row.protected")}</option>
-            <option value="unclassified">{t("row.unclassified")}</option>
-            <option value="read-write">{t("row.readWrite")}</option>
-          </select>
-          {dirty ? (
-            <button
-              className="primary-button compact"
-              disabled={variable.duplicate}
-              onClick={() => {
-                const submittedValue = draft;
-                void onMutate(
-                  () => api.saveValue(projectId, { file, key: variable.key, newValue: submittedValue }),
-                  variable.linkedCount > 1
-                    ? t("row.savedLinked", { count: variable.linkedCount })
-                    : t("row.saved", { key: variable.key }),
-                ).then(() => {
-                  setRevealed((current) => current === null ? null : submittedValue);
-                  setRevealActivity((activity) => activity + 1);
-                  setDirty(false);
-                  setDraft("");
-                });
-              }}
+          {variable.duplicate && <span className="badge error">{t("row.duplicate")}</span>}
+          {variable.clientExposure && (
+            <span
+              className="badge exposure"
+              title={t("row.clientExposureHelp", {
+                prefix: variable.clientExposure.publicPrefix,
+                indicator: variable.clientExposure.secretIndicator,
+              })}
             >
-              {variable.linkedCount > 1 ? t("row.saveLinked", { count: variable.linkedCount }) : t("common.save")}
-            </button>
-          ) : null}
-          <button
-            className="icon-button row-action-button"
-            title={t("row.moveTitle")}
-            aria-label={t("row.moveTitle")}
-            disabled={groups.filter((group) => group !== currentGroup).length === 0}
-            onClick={() => setMoving(true)}
-          >
-            <MoveIcon />
-          </button>
-          <button
-            className="icon-button row-action-button row-action-danger"
-            title={t("row.deleteTitle")}
-            aria-label={t("row.deleteTitle")}
-            onClick={() => {
-              if (
-                window.confirm(
-                  t("row.deleteConfirm", { file, key: variable.key }),
-                )
-              ) {
-                void onMutate(
-                  () => api.deleteVariable(projectId, { file, key: variable.key }),
-                  t("row.deleted", { key: variable.key }),
-                );
-              }
-            }}
-          >
-            <TrashIcon />
-          </button>
+              {t("row.clientExposure")}
+            </span>
+          )}
         </div>
+        {variable.description.length > 0 && (
+          <span className="variable-description">{variable.description.join(" ")}</span>
+        )}
       </div>
 
-      {variable.linkId && variable.linkedFiles.length > 1 && (
-        <div className="relationship-panel linked-relationship">
-          <div className="relationship-copy">
-            <strong>{t("row.linkedTitle", { count: variable.linkedFiles.length })}</strong>
-            <div className="relationship-paths">
-              {variable.linkedFiles.map((path) => (
-                <code className={path === file ? "current" : ""} key={path}>
-                  {path}
-                  {path === file && <small>{t("common.current")}</small>}
-                </code>
-              ))}
-            </div>
-            {unlinkedPeerFiles.length > 0 && (
-              <span className="unlinked-peer-note">
-                {t("row.separate", { files: unlinkedPeerFiles.join(" · ") })}
-              </span>
+      {pendingRemoval ? (
+        <div className="value-cell">
+          <span className="pending-chip remove">{t("row.pendingRemoval")}</span>
+          <button type="button" className="quiet-button compact" onClick={onRevert}>
+            {t("row.restore")}
+          </button>
+        </div>
+      ) : (
+        <div className="value-cell">
+          <div
+            className={`value-editor${empty ? " empty" : ""}`}
+            onFocus={keepRevealActive}
+            onPointerDown={keepRevealActive}
+            onWheel={keepRevealActive}
+          >
+            {revealed !== null ? (
+              <textarea
+                ref={revealedValueRef}
+                className="revealed-value-field"
+                value={value}
+                aria-label={t("row.valueLabel", { key: variable.key })}
+                rows={1}
+                onKeyDown={onFieldKeyDown}
+                onChange={(event) => {
+                  onDraftChange(event.target.value);
+                  setRevealed(event.target.value);
+                  keepRevealActive();
+                }}
+              />
+            ) : (
+              <input
+                type="password"
+                value={value}
+                placeholder={placeholder}
+                aria-label={t("row.valueLabel", { key: variable.key })}
+                onKeyDown={onFieldKeyDown}
+                onFocus={onSelect}
+                onChange={(event) => onDraftChange(event.target.value)}
+              />
+            )}
+            <button
+              type="button"
+              className="icon-button"
+              title={revealed === null ? t("row.reveal") : t("row.hide")}
+              aria-label={revealed === null ? t("row.reveal") : t("row.hide")}
+              aria-pressed={revealed !== null}
+              disabled={empty}
+              onClick={toggleReveal}
+            >
+              {revealed === null ? <EyeIcon /> : <EyeOffIcon />}
+            </button>
+            {!hidden && (
+              <CopyButton
+                className="icon-button"
+                label={t("row.copyValue")}
+                copiedHint={t("row.clipboardClears", { seconds: CLIPBOARD_CLEAR_SECONDS })}
+                disabled={empty || dirty}
+                onCopy={() => api.copyValue(projectId, file, variable.key)}
+              />
             )}
           </div>
-          <button
-            className="quiet-button compact relationship-action"
-            onClick={() => {
-              if (window.confirm(t("row.detachConfirm"))) {
-                void onMutate(
-                  () => api.detachLink(projectId, variable.linkId!, file),
-                  t("row.detached", { file }),
-                );
-              }
-            }}
-          >
-            {t("row.detach")}
-          </button>
-        </div>
-      )}
-
-      {hasIndependentPeers && (
-        <div className="relationship-panel available-relationship">
-          <div className="relationship-copy">
-            <strong>{t("row.peersTitle", { count: sameKeyFiles.length })}</strong>
-            <div className="relationship-paths">
-              {sameKeyFiles.map((path) => (
-                <code className={path === file ? "current" : ""} key={path}>
-                  {path}
-                  {path === file && <small>{t("common.current")}</small>}
-                </code>
-              ))}
+          {dirty && (
+            <div className="pending-line">
+              <span className="pending-chip replace">{t("row.pendingReplace")}</span>
+              {variable.linkedCount > 1 && (
+                <span className="pending-impact">{t("row.savedTogether", { count: variable.linkedCount })}</span>
+              )}
+              <button type="button" className="text-action" onClick={onRevert}>{t("row.revert")}</button>
             </div>
-          </div>
-          <button className="secondary-button compact relationship-action" onClick={onLink}>
-            {t("row.manageTogether")}
-          </button>
-        </div>
-      )}
-
-      {editingDescription && (
-        <div className="description-editor">
-          <textarea value={description} onChange={(event) => setDescription(event.target.value)} />
-          <div>
-            <button className="quiet-button compact" onClick={() => setEditingDescription(false)}>{t("common.cancel")}</button>
-            <button
-              className="secondary-button compact"
-              onClick={() =>
-                void onMutate(
-                  () =>
-                    api.saveDescription(projectId, {
-                      file,
-                      key: variable.key,
-                      lines: description.trim() ? description.split("\n") : [],
-                    }),
-                  t("row.descriptionSaved", { key: variable.key }),
-                ).then(() => setEditingDescription(false))
-              }
-            >
-              {t("row.saveDescription")}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {moving && (
-        <MoveVariableModal
-          variableKey={variable.key}
-          currentGroup={currentGroup}
-          groups={groups}
-          onClose={() => setMoving(false)}
-          onMove={(targetGroup) => onMutate(
-            () => api.moveVariable(projectId, {
-              file,
-              key: variable.key,
-              targetGroup,
-            }),
-            t("row.moved", { key: variable.key, group: displayGroupName(targetGroup, t) }),
           )}
-        />
+        </div>
       )}
 
-      {showGuide && (
-        <VariableGuideModal
-          projectId={projectId}
-          name={variable.key}
-          onClose={() => setShowGuide(false)}
-          onError={() => undefined}
-        />
-      )}
+      <div className="access-cell">
+        <select
+          className={`access-select ${variable.codexAccess}`}
+          value={variable.codexAccess}
+          aria-label={t("row.aiAccess", { key: variable.key })}
+          onChange={(event) => void changeAccess(event.target.value as CodexAccess)}
+        >
+          <option value="protected">{t("row.protected")}</option>
+          <option value="unclassified">{t("row.unclassified")}</option>
+          <option value="read-write">{t("row.readWrite")}</option>
+        </select>
+      </div>
+
+      <div className="links-cell">
+        {variable.linkedCount > 1 ? (
+          <span className="links-count" title={variable.linkedFiles.join(" · ")}>
+            <LinkIcon />
+            {t("row.filesLinked", { count: variable.linkedCount })}
+          </span>
+        ) : unlinkedPeers ? (
+          <span className="links-available">{t("row.sameVariable", { count: sameKeyFiles.length })}</span>
+        ) : (
+          <span className="links-none" aria-label={t("row.notLinked")}>—</span>
+        )}
+      </div>
+      {dialog}
     </article>
   );
 }

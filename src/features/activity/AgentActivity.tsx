@@ -193,7 +193,7 @@ function groupEventsByDay(
   return [...groups.values()];
 }
 
-function categoryKey(category: AgentActivityEvent["category"]) {
+export function categoryKey(category: AgentActivityEvent["category"]) {
   return (
     ({
       "structure-inspection": "activity.category.structure",

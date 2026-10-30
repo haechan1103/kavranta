@@ -68,7 +68,7 @@ describe("Overview", () => {
     );
 
     expect(screen.getByText("Git leak risk")).toBeInTheDocument();
-    expect(screen.getAllByText("apps/web/.env.local")).toHaveLength(2);
+    expect(screen.getByText("apps/web/.env.local")).toBeInTheDocument();
     expect(screen.getByText("apps/api/.env.development")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Add exact .gitignore rules" }));
     expect(apply).toHaveBeenCalledOnce();

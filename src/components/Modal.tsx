@@ -4,6 +4,9 @@ import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from "re
 import { useI18n } from "../i18n";
 import { CloseIcon } from "./icons";
 
+/** Open dialogs, innermost last. Escape closes only the innermost one. */
+const openModals: symbol[] = [];
+
 interface Props {
   title: string;
   description?: string;
@@ -27,6 +30,8 @@ export function Modal({ title, description, children, onClose, className }: Prop
   }, [onClose]);
 
   useEffect(() => {
+    const token = Symbol("modal");
+    openModals.push(token);
     const dialog = dialogRef.current;
     const initialFocus = dialog?.querySelector<HTMLElement>("[data-initial-focus]")
       ?? dialog?.querySelector<HTMLElement>(
@@ -38,12 +43,13 @@ export function Modal({ title, description, children, onClose, className }: Prop
     initialFocus?.focus();
 
     const closeOnEscape = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      if (event.key !== "Escape" || openModals.at(-1) !== token) return;
       event.preventDefault();
       closeRef.current();
     };
     document.addEventListener("keydown", closeOnEscape);
     return () => {
+      openModals.splice(openModals.indexOf(token), 1);
       document.removeEventListener("keydown", closeOnEscape);
       returnFocusRef.current?.focus();
     };

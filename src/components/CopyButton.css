@@ -10,12 +10,12 @@
   right: 0;
   bottom: calc(100% + 5px);
   padding: 5px 8px;
-  color: #16674f;
-  background: #f0faf5;
-  border: 1px solid #c9e9dc;
+  color: var(--green-strong);
+  background: var(--green-pale);
+  border: 1px solid var(--green-line);
   border-radius: 6px;
   box-shadow: 0 2px 6px rgb(22 77 61 / 8%);
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
   font-weight: 500;
   line-height: 1.4;
   white-space: nowrap;
@@ -31,7 +31,7 @@
 .copy-feedback[data-outcome="failed"] {
   color: var(--red);
   background: var(--red-pale);
-  border-color: #efc6c4;
+  border-color: var(--red-line);
 }
 
 .copy-icon {

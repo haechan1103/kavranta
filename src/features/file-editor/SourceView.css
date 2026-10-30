@@ -1,0 +1,117 @@
+.source-view {
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.source-note {
+  margin: 0;
+  padding: 8px 14px;
+  color: var(--muted);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-xs);
+}
+
+.source-loading {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.source-lines {
+  margin: 0;
+  padding: 6px 0;
+  list-style: none;
+}
+
+.source-line {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: baseline;
+  min-height: 24px;
+}
+
+.source-line.pending-replace {
+  background: var(--amber-pale);
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+
+.source-line.pending-removal {
+  background: var(--red-pale);
+  box-shadow: inset 3px 0 0 var(--red);
+}
+
+.source-line.pending-removal .source-key {
+  text-decoration: line-through;
+}
+
+.source-number {
+  padding-right: 12px;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-align: right;
+  user-select: none;
+}
+
+.source-code {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.source-code.comment {
+  color: var(--muted);
+}
+
+.source-code.group {
+  color: var(--green-strong);
+  font-weight: 600;
+}
+
+.source-key {
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.source-key:hover {
+  color: var(--green-strong);
+  text-decoration: underline;
+}
+
+.source-mask {
+  color: var(--faint);
+  letter-spacing: 0.08em;
+}
+
+.source-empty,
+.source-withheld {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+}
+
+.source-empty {
+  color: var(--red);
+  background: var(--red-pale);
+}
+
+.source-withheld {
+  color: var(--violet);
+  background: var(--violet-pale);
+}

@@ -1,6 +1,7 @@
 import "./AccountVault.css";
 import { useEffect, useState, type FormEvent } from "react";
 
+import { useConfirm } from "../../components/ConfirmDialog";
 import { Modal } from "../../components/Modal";
 import { localizeError, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
@@ -14,6 +15,7 @@ interface Props {
 }
 export function AccountVault({ projectId, projectName, onError, onNotice }: Props) {
   const { locale, t } = useI18n();
+  const { confirm, dialog } = useConfirm();
   const [accounts, setAccounts] = useState<AccountProjection[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -62,7 +64,13 @@ export function AccountVault({ projectId, projectName, onError, onNotice }: Prop
   };
 
   const remove = async (account: AccountProjection) => {
-    if (!window.confirm(t("accounts.deleteConfirm", { name: account.displayName }))) return;
+    const confirmed = await confirm({
+      title: t("accounts.deleteConfirmTitle", { name: account.displayName }),
+      body: t("accounts.deleteConfirm"),
+      confirmLabel: t("common.delete"),
+      tone: "danger",
+    });
+    if (!confirmed) return;
     setBusyId(account.id);
     try {
       await api.deleteAccount(projectId, account.id);
@@ -156,6 +164,7 @@ export function AccountVault({ projectId, projectName, onError, onNotice }: Prop
           onError={onError}
         />
       )}
+      {dialog}
     </section>
   );
 }

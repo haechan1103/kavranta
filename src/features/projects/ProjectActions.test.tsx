@@ -20,15 +20,34 @@ function renderActions() {
 }
 
 describe("ProjectActions", () => {
-  it("keeps every project-level action available from one menu", async () => {
+  it("puts frequent outbound flows directly in the sidebar, outside the menu", async () => {
     const user = userEvent.setup();
     const actions = renderActions();
 
-    await user.click(screen.getByRole("button", { name: "Project actions" }));
-    await user.click(screen.getByRole("menuitem", { name: "Push variables" }));
+    await user.click(screen.getByRole("button", { name: "Push variables" }));
+    await user.click(screen.getByRole("button", { name: "Team sharing" }));
 
     expect(actions.onPush).toHaveBeenCalledOnce();
-    expect(screen.queryByRole("menuitem", { name: "Push variables" })).not.toBeInTheDocument();
+    expect(actions.onShare).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("moves through the housekeeping menu with the arrow keys and closes on Escape", async () => {
+    const user = userEvent.setup();
+    renderActions();
+
+    const trigger = screen.getByRole("button", { name: "Project actions" });
+    await user.click(trigger);
+    const items = screen.getAllByRole("menuitem");
+    expect(items[0]).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(items[1]).toHaveFocus();
+    await user.keyboard("{ArrowUp}{ArrowUp}");
+    expect(items.at(-1)).toHaveFocus();
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
   it("keeps destructive project removal behind the project menu", async () => {

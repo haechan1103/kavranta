@@ -8,7 +8,7 @@
 .variable-finder > label {
   display: block;
   margin-bottom: 8px;
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 
@@ -16,16 +16,16 @@
   width: 100%;
   padding: 10px 12px;
   color: var(--ink);
-  background: #f7f9f8;
+  background: var(--surface-muted);
   border: 1px solid var(--line);
   border-radius: 8px;
   font: inherit;
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .variable-finder > p {
   color: var(--muted);
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .variable-finder > ul {
@@ -64,11 +64,11 @@
 }
 
 .variable-finder strong {
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .variable-finder code,
 .variable-finder small {
   color: var(--muted);
-  font-size: calc(9px * var(--font-scale));
+  font-size: var(--text-xs);
 }

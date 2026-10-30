@@ -1,5 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import * as api from "../../lib/api";
@@ -8,6 +9,13 @@ import { FileEditor } from "./FileEditor";
 
 vi.mock("../../lib/api", () => ({
   createGroup: vi.fn(async () => ({ affectedFiles: [".env.local"], keys: [] })),
+  saveValue: vi.fn(async () => ({ affectedFiles: [".env.local"], keys: [] })),
+  deleteVariable: vi.fn(async () => ({ affectedFiles: [".env.local"], keys: [] })),
+  listAgentActivity: vi.fn(async () => []),
+  readValue: vi.fn(async () => "fake_preview_value"),
+  copyValue: vi.fn(async () => undefined),
+  copyKey: vi.fn(async () => undefined),
+  setCodexAccess: vi.fn(async () => undefined),
 }));
 
 const projection: ProjectProjection = {
@@ -36,205 +44,220 @@ const projection: ProjectProjection = {
   ],
 };
 
+function withVariables(groups: { name: string; variables: OccurrenceProjection[] }[]): ProjectProjection {
+  return { ...projection, files: [{ ...projection.files[0]!, groups }] };
+}
+
+type EditorProps = ComponentProps<typeof FileEditor>;
+
+function editorProps(overrides: Partial<EditorProps> = {}): EditorProps {
+  return {
+    projectId: "demo",
+    projection,
+    filePath: ".env.local",
+    onRefresh: vi.fn(async () => undefined),
+    onError: vi.fn(),
+    onNotice: vi.fn(),
+    ...overrides,
+  };
+}
+
 describe("FileEditor", () => {
-  it("combines metadata search with missing-only filtering and reports no matches", async () => {
+  it("combines metadata search with the empty filter and reports no matches", async () => {
     const user = userEvent.setup();
-    render(<FileEditor projectId="demo" filePath={projection.files[0]!.path} projection={{ ...projection,
-      files: [{ ...projection.files[0]!, groups: [{ name: "App", variables: [
-        { ...variable("PORT", "empty"), description: ["Listener address"] }, variable("MODE"),
-      ] }] }],
-    }} onRefresh={vi.fn()} onError={vi.fn()} onNotice={vi.fn()} />);
+    render(<FileEditor {...editorProps({ projection: withVariables([{ name: "App", variables: [
+      { ...variable("PORT", "empty"), description: ["Listener address"] }, variable("MODE"),
+    ] }]) })} />);
+
     await user.type(screen.getByRole("searchbox"), "listener");
-    await user.click(screen.getByRole("button", { name: /Missing values only/ }));
+    await user.click(screen.getByRole("button", { name: /^Empty/ }));
     expect(screen.getByText("PORT")).toBeVisible();
     expect(screen.getByText("MODE")).not.toBeVisible();
     await user.clear(screen.getByRole("searchbox"));
     await user.type(screen.getByRole("searchbox"), "MODE");
     expect(screen.getByText("No variables match these filters")).toBeVisible();
     await user.clear(screen.getByRole("searchbox"));
-    expect(screen.getByText("PORT")).toBeVisible();
-    expect(screen.getByText("MODE")).not.toBeVisible();
-    // Toggling the filter card off, then clearing search, restores every row.
-    await user.click(screen.getByRole("button", { name: /Missing values only/ }));
-    expect(screen.getByRole("button", { name: /Missing values only/ })).toHaveAttribute("aria-pressed", "false");
+    await user.click(screen.getByRole("button", { name: /^All/ }));
     expect(screen.getByText("MODE")).toBeVisible();
   });
 
-  it("preserves an unsaved draft when search hides and restores its row", async () => {
+  it("keeps a typed draft when search hides and restores its row", async () => {
     const user = userEvent.setup();
-    render(<FileEditor projectId="demo" filePath={projection.files[0]!.path} projection={{ ...projection,
-      files: [{ ...projection.files[0]!, groups: [{ name: "App", variables: [variable("PORT"), variable("MODE")] }] }],
-    }} onRefresh={vi.fn()} onError={vi.fn()} onNotice={vi.fn()} />);
+    render(<FileEditor {...editorProps({ projection: withVariables([{ name: "App", variables: [variable("PORT"), variable("MODE")] }]) })} />);
+
     await user.type(screen.getByLabelText("PORT value"), "fake_draft_only");
     await user.type(screen.getByRole("searchbox"), "MODE");
-    expect(screen.getByText("PORT")).not.toBeVisible();
+    expect(screen.getByLabelText("PORT value")).not.toBeVisible();
     await user.clear(screen.getByRole("searchbox"));
     expect(screen.getByLabelText("PORT value")).toHaveValue("fake_draft_only");
-    expect(screen.getByLabelText("PORT value")).toBeVisible();
   });
 
   it("opens with the variable search supplied by the overview", () => {
-    render(<FileEditor projectId="demo" filePath={projection.files[0]!.path} initialSearch="MODE" projection={{ ...projection,
-      files: [{ ...projection.files[0]!, groups: [{ name: "App", variables: [variable("PORT"), variable("MODE")] }] }],
-    }} onRefresh={vi.fn()} onError={vi.fn()} onNotice={vi.fn()} />);
+    render(<FileEditor {...editorProps({ initialSearch: "MODE", projection: withVariables([{ name: "App", variables: [variable("PORT"), variable("MODE")] }]) })} />);
     expect(screen.getByRole("searchbox")).toHaveValue("MODE");
     expect(screen.getByText("PORT")).not.toBeVisible();
     expect(screen.getByText("MODE")).toBeVisible();
   });
+
   it("creates an explicit empty group from the file header", async () => {
     const user = userEvent.setup();
     const refresh = vi.fn(async () => undefined);
-    render(
-      <FileEditor
-        projectId="demo"
-        projection={projection}
-        filePath=".env.local"
-        onRefresh={refresh}
-        onError={vi.fn()}
-        onNotice={vi.fn()}
-      />,
-    );
+    render(<FileEditor {...editorProps({ onRefresh: refresh })} />);
 
     expect(screen.getByText("No variables yet. Add a new variable to this group.")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Organize comments" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("navigation", { name: "Jump to environment variable group" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "+ New group" }));
     await user.type(screen.getByLabelText("Group name"), "Database");
     await user.click(screen.getByRole("button", { name: "Create group" }));
 
-    expect(api.createGroup).toHaveBeenCalledWith("demo", {
-      file: ".env.local",
-      name: "Database",
-    });
+    expect(api.createGroup).toHaveBeenCalledWith("demo", { file: ".env.local", name: "Database" });
     expect(refresh).toHaveBeenCalled();
   });
 
-  it("shows sticky group shortcuts only for files with at least ten variables", async () => {
+  it("filters to empty values and says when none remain", async () => {
     const user = userEvent.setup();
-    const scrollIntoView = vi.fn();
-    const scrollBy = vi.fn();
-    HTMLElement.prototype.scrollIntoView = scrollIntoView;
-    HTMLElement.prototype.scrollBy = scrollBy;
-    const clientWidth = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(200);
-    const scrollWidth = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(600);
-    const largeProjection: ProjectProjection = {
-      ...projection,
-      files: [{
-        ...projection.files[0]!,
-        groups: [
-          { name: "GPT", variables: Array.from({ length: 5 }, (_, index) => variable(`GPT_${index}`)) },
-          { name: "Database", variables: Array.from({ length: 5 }, (_, index) => variable(`DB_${index}`)) },
-        ],
-      }],
-    };
+    const view = render(<FileEditor {...editorProps({ projection: withVariables([
+      { name: "GPT", variables: [variable("GPT_API_KEY", "empty"), variable("GPT_MODEL")] },
+      { name: "Database", variables: [variable("DATABASE_URL")] },
+    ]) })} />);
 
-    render(
-      <FileEditor
-        projectId="demo"
-        projection={largeProjection}
-        filePath=".env.local"
-        onRefresh={vi.fn(async () => undefined)}
-        onError={vi.fn()}
-        onNotice={vi.fn()}
-      />,
-    );
-
-    const navigation = screen.getByRole("navigation", { name: "Jump to environment variable group" });
-    expect(navigation).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Database · 5" }));
-    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" });
-    await waitFor(() => expect(screen.getByRole("button", { name: "Next groups" })).toBeEnabled());
-    await user.click(screen.getByRole("button", { name: "Next groups" }));
-    expect(scrollBy).toHaveBeenCalled();
-
-    await user.click(screen.getByRole("button", { name: "All groups" }));
-    expect(navigation).toHaveClass("expanded");
-    expect(screen.queryByRole("button", { name: "Next groups" })).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Collapse groups" }));
-    expect(navigation).not.toHaveClass("expanded");
-    expect(screen.getByRole("button", { name: "Next groups" })).toBeInTheDocument();
-
-    clientWidth.mockRestore();
-    scrollWidth.mockRestore();
-  });
-
-  it("filters the file view to variables whose values are empty", async () => {
-    const user = userEvent.setup();
-    const filterProjection: ProjectProjection = {
-      ...projection,
-      files: [{
-        ...projection.files[0]!,
-        groups: [
-          {
-            name: "GPT",
-            variables: [variable("GPT_API_KEY", "empty"), variable("GPT_MODEL")],
-          },
-          {
-            name: "Database",
-            variables: [variable("DATABASE_URL")],
-          },
-        ],
-      }],
-    };
-
-    render(
-      <FileEditor
-        projectId="demo"
-        projection={filterProjection}
-        filePath=".env.local"
-        onRefresh={vi.fn(async () => undefined)}
-        onError={vi.fn()}
-        onNotice={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByText("GPT_API_KEY")).toBeInTheDocument();
-    expect(screen.getByText("GPT_MODEL")).toBeInTheDocument();
-    expect(screen.getByText("DATABASE_URL")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Missing values only/ }));
-
-    expect(screen.getByText("GPT_API_KEY")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^Empty/ }));
+    expect(screen.getByText("GPT_API_KEY")).toBeVisible();
     expect(screen.getByText("GPT_MODEL")).not.toBeVisible();
-    expect(screen.getByText("DATABASE_URL")).not.toBeVisible();
-    expect(
-      screen.queryByRole("heading", { name: "Database" }),
-    ).not.toBeInTheDocument();
-    // The filter card states its own on/off condition instead of a filtered count.
-    expect(screen.getByRole("button", { name: /Missing values only/ })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("On")).toBeInTheDocument();
-    expect(screen.queryByText("Off")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Database", hidden: true })).not.toBeVisible();
 
-    await user.click(screen.getByRole("button", { name: /Missing values only/ }));
-    expect(screen.getByText("DATABASE_URL")).toBeInTheDocument();
-    expect(screen.getByText("Off")).toBeInTheDocument();
+    view.rerender(<FileEditor {...editorProps({ projection: withVariables([
+      { name: "GPT", variables: [variable("GPT_API_KEY")] },
+    ]) })} />);
+    expect(screen.getByText("Every variable has a value")).toBeInTheDocument();
   });
 
-  it("explains when the selected file has no empty variables", async () => {
+  it("collapses a group without losing its rows", async () => {
     const user = userEvent.setup();
-    const completeProjection: ProjectProjection = {
-      ...projection,
-      files: [{
-        ...projection.files[0]!,
-        groups: [{ name: "GPT", variables: [variable("GPT_API_KEY")] }],
-      }],
-    };
+    render(<FileEditor {...editorProps({ projection: withVariables([{ name: "GPT", variables: [variable("GPT_MODEL")] }]) })} />);
 
-    render(
-      <FileEditor
-        projectId="demo"
-        projection={completeProjection}
-        filePath=".env.local"
-        onRefresh={vi.fn(async () => undefined)}
-        onError={vi.fn()}
-        onNotice={vi.fn()}
-      />,
-    );
+    const toggle = screen.getByRole("button", { name: /GPT/, expanded: true });
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByText("GPT_MODEL")).not.toBeVisible();
+  });
 
-    await user.click(screen.getByRole("button", { name: /Missing values only/ }));
+  it("stages typed values and saves them together", async () => {
+    const user = userEvent.setup();
+    const onNotice = vi.fn();
+    const onPendingChange = vi.fn();
+    vi.mocked(api.saveValue).mockClear();
+    render(<FileEditor {...editorProps({ onNotice, onPendingChange, projection: withVariables([
+      { name: "App", variables: [variable("PORT"), variable("MODE")] },
+    ]) })} />);
 
-    expect(screen.getByText("Every variable has a value")).toBeInTheDocument();
-    expect(screen.getByText("GPT_API_KEY")).not.toBeVisible();
+    await user.type(screen.getByLabelText("PORT value"), "fake_port");
+    await user.type(screen.getByLabelText("MODE value"), "fake_mode");
+    const bar = screen.getByRole("region", { name: "Pending changes" });
+    expect(bar).toHaveTextContent("2 pending");
+    expect(onPendingChange).toHaveBeenLastCalledWith(2);
+    expect(api.saveValue).not.toHaveBeenCalled();
+
+    await user.click(within(bar).getByRole("button", { name: /^Save/ }));
+
+    expect(api.saveValue).toHaveBeenCalledWith("demo", { file: ".env.local", key: "PORT", newValue: "fake_port" });
+    expect(api.saveValue).toHaveBeenCalledWith("demo", { file: ".env.local", key: "MODE", newValue: "fake_mode" });
+    expect(onNotice).toHaveBeenCalledWith("Saved 2 changes to 1 files.");
+    expect(screen.queryByRole("region", { name: "Pending changes" })).not.toBeInTheDocument();
+    expect(onPendingChange).toHaveBeenLastCalledWith(0);
+  });
+
+  it("saves with the keyboard shortcut", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.saveValue).mockClear();
+    render(<FileEditor {...editorProps({ projection: withVariables([{ name: "App", variables: [variable("PORT")] }]) })} />);
+
+    await user.type(screen.getByLabelText("PORT value"), "fake_port");
+    await user.keyboard("{Meta>}s{/Meta}");
+
+    expect(api.saveValue).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks once before a save that deletes, naming the keys", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.deleteVariable).mockClear();
+    render(<FileEditor {...editorProps({ projection: withVariables([{ name: "App", variables: [variable("PORT"), variable("MODE")] }]) })} />);
+
+    await user.click(screen.getByRole("checkbox", { name: "Select PORT" }));
+    await user.click(screen.getByRole("checkbox", { name: "Select MODE" }));
+    await user.click(screen.getByRole("button", { name: "Mark for deletion" }));
+    expect(screen.getAllByText("Will be deleted")).toHaveLength(2);
+    expect(api.deleteVariable).not.toHaveBeenCalled();
+
+    const bar = screen.getByRole("region", { name: "Pending changes" });
+    await user.click(within(bar).getByRole("button", { name: /^Save/ }));
+    const dialog = screen.getByRole("dialog", { name: "Delete 2 variables?" });
+    expect(dialog).toHaveTextContent("PORT · MODE");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(api.deleteVariable).not.toHaveBeenCalled();
+    expect(screen.getAllByText("Will be deleted")).toHaveLength(2);
+
+    await user.click(within(bar).getByRole("button", { name: /^Save/ }));
+    await user.click(screen.getByRole("button", { name: "Save and delete 2" }));
+    expect(api.deleteVariable).toHaveBeenCalledWith("demo", { file: ".env.local", key: "PORT" });
+    expect(api.deleteVariable).toHaveBeenCalledWith("demo", { file: ".env.local", key: "MODE" });
+  });
+
+  it("keeps a failed item pending and names it", async () => {
+    const user = userEvent.setup();
+    const onError = vi.fn();
+    vi.mocked(api.saveValue).mockReset();
+    vi.mocked(api.saveValue)
+      .mockResolvedValueOnce({ affectedFiles: [".env.local"], keys: ["PORT"] })
+      .mockRejectedValueOnce(new Error("write failed"));
+    render(<FileEditor {...editorProps({ onError, projection: withVariables([{ name: "App", variables: [variable("PORT"), variable("MODE")] }]) })} />);
+
+    await user.type(screen.getByLabelText("PORT value"), "fake_port");
+    await user.type(screen.getByLabelText("MODE value"), "fake_mode");
+    await user.click(screen.getByRole("button", { name: /^Save/ }));
+
+    expect(onError).toHaveBeenCalledWith("Saved 1. These did not save and are still pending: MODE");
+    expect(screen.getByRole("region", { name: "Pending changes" })).toHaveTextContent("1 pending");
+    expect(screen.getByLabelText("MODE value")).toHaveValue("fake_mode");
+    expect(screen.getByLabelText("PORT value")).toHaveValue("");
+  });
+
+  it("keeps drafts through an external change and says what changed", async () => {
+    const user = userEvent.setup();
+    const props = editorProps({ projection: withVariables([{ name: "App", variables: [variable("PORT")] }]) });
+    const view = render(<FileEditor {...props} />);
+
+    await user.type(screen.getByLabelText("PORT value"), "fake_port");
+    view.rerender(<FileEditor {...props} projection={withVariables([{ name: "App", variables: [variable("PORT"), variable("SENTRY_DSN")] }])} />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("This file was changed by another program.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Added: SENTRY_DSN.");
+    expect(screen.getByLabelText("PORT value")).toHaveValue("fake_port");
+  });
+
+  it("keeps the details column in place on wide windows, empty until something is selected", async () => {
+    const user = userEvent.setup();
+    render(<FileEditor {...editorProps({ projection: withVariables([{ name: "App", variables: [variable("PORT")] }]) })} />);
+
+    expect(screen.getByRole("complementary", { name: "Variable details" })).toHaveTextContent("Select a variable");
+    await user.click(screen.getByRole("button", { name: "PORT" }));
+    expect(screen.getByRole("complementary", { name: "Details for PORT" })).toBeInTheDocument();
+  });
+
+  it("opens the narrow-window drawer from the row, never from editing a value", async () => {
+    const user = userEvent.setup();
+    const matchMedia = vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    Object.defineProperty(window, "matchMedia", { configurable: true, value: matchMedia });
+    try {
+      render(<FileEditor {...editorProps({ projection: withVariables([{ name: "App", variables: [variable("PORT")] }]) })} />);
+
+      await user.type(screen.getByLabelText("PORT value"), "fake_port");
+      expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+
+      await user.click(screen.getByText("PORT").closest("article")!);
+      expect(screen.getByRole("complementary", { name: "Details for PORT" })).toBeInTheDocument();
+    } finally {
+      Reflect.deleteProperty(window, "matchMedia");
+    }
   });
 });
 

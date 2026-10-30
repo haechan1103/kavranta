@@ -20,6 +20,7 @@ use crate::{
 };
 
 mod access;
+mod comparison;
 mod exposure;
 mod file_paths;
 mod guides;
@@ -29,8 +30,11 @@ mod persistence;
 mod project;
 mod redaction_proof;
 mod search;
+mod source_view;
 
+pub use comparison::{ValueComparison, ValueComparisonCell, ValueComparisonRow};
 pub use redaction_proof::{ProofCheck, RedactionProof, run_redaction_self_check};
+pub use source_view::{RedactedSourceContent, RedactedSourceLine};
 mod structure;
 mod values;
 

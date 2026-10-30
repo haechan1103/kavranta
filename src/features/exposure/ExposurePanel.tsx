@@ -5,6 +5,7 @@ import { localizeError, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type {
   ExposureDisposition,
+  ExposureKind,
   ExposureProjection,
   ExposureSeverity,
   RedactionProof,
@@ -121,7 +122,7 @@ export function ExposurePanel({ projectId, onError }: Props) {
           {projection.findings.map((finding) => (
             <li className="exposure-item" key={`${finding.kind}:${finding.path}`}>
               <code className="exposure-path">{finding.path}</code>
-              <span className="exposure-kind">{finding.kind}</span>
+              <span className="exposure-kind">{kindLabel(finding.kind, t)}</span>
               <span className={`exposure-severity ${finding.disposition}`}>
                 {dispositionLabel(finding.disposition, t)}
               </span>
@@ -162,6 +163,33 @@ function ExposureCount({
       <span>{label}</span>
     </div>
   );
+}
+
+function kindLabel(kind: ExposureKind, t: ReturnType<typeof useI18n>["t"]) {
+  switch (kind) {
+    case "env-file":
+      return t("exposure.kind.envFile");
+    case "dev-vars":
+      return t("exposure.kind.devVars");
+    case "credential-file":
+      return t("exposure.kind.credentialFile");
+    case "npmrc":
+      return t("exposure.kind.npmrc");
+    case "pypirc":
+      return t("exposure.kind.pypirc");
+    case "netrc":
+      return t("exposure.kind.netrc");
+    case "ssh-private-key":
+      return t("exposure.kind.sshPrivateKey");
+    case "aws-credentials":
+      return t("exposure.kind.awsCredentials");
+    case "mcp-config":
+      return t("exposure.kind.mcpConfig");
+    case "google-services":
+      return t("exposure.kind.googleServices");
+    case "shell-history":
+      return t("exposure.kind.shellHistory");
+  }
 }
 
 function dispositionLabel(

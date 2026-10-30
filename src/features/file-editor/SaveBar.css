@@ -1,0 +1,79 @@
+/* Sticks to the bottom of the scrolling file screen while changes are pending. */
+.save-bar {
+  position: sticky;
+  z-index: 4;
+  bottom: 0;
+  margin: var(--space-4) 0 0;
+  padding-bottom: var(--space-4);
+  background: linear-gradient(transparent, var(--canvas) 30%);
+}
+
+.save-bar-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  padding: 10px 12px 10px 16px;
+  background: var(--amber-pale);
+  border: 1px solid var(--amber-line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+.save-bar-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  background: var(--amber);
+  border-radius: 50%;
+}
+
+.save-bar-summary {
+  display: flex;
+  flex: 1 1 240px;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.save-bar-summary span {
+  color: var(--muted);
+}
+
+.save-review {
+  display: flex;
+  flex-direction: column;
+  max-height: 220px;
+  margin: 0 0 var(--space-2);
+  padding: 6px;
+  overflow: auto;
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+.save-review li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 34px;
+  padding: 0 8px;
+  font-size: var(--text-xs);
+}
+
+.save-review code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.save-review-files {
+  flex: 1;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

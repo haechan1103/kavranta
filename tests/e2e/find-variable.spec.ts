@@ -7,11 +7,7 @@ test("opens the next missing variable with a focused file filter", async ({
   await page
     .getByRole("button", { name: "Fill the next missing value" })
     .click();
-  await expect(
-    page.getByRole("searchbox", {
-      name: "Find by name, group, or description",
-    }),
-  ).toHaveValue("NEXT_PUBLIC_APP_URL");
+  await expect(page.getByRole("button", { name: /^Empty/ })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByLabel("NEXT_PUBLIC_APP_URL value")).toBeVisible();
   await expect(page.getByLabel("GPT_API_KEY value")).not.toBeVisible();
 });

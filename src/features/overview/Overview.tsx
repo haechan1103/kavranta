@@ -113,21 +113,6 @@ export function Overview({ projection, onOpenFile, onOpenIntegrations, onApplyGi
             </div>
           )}
         </section>
-
-        <section className="panel">
-          <div className="panel-title"><h3>{t("overview.managedFiles")}</h3><span>{projection.files.length}</span></div>
-          <div className="managed-files">
-            {projection.files.map((file) => {
-              const count = file.groups.reduce((total, group) => total + group.variables.length, 0);
-              return (
-                <button key={file.path} onClick={() => onOpenFile(file.path)}>
-                  <span className="overview-row-copy"><strong>{file.path}</strong><small>{t("overview.fileSummary", { variables: count, groups: file.groups.length })}</small></span>
-                  <span>→</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
       </div>
 
       <div className="protection-grid">

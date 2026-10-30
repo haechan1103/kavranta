@@ -1,5 +1,5 @@
 .exposure-page {
-  width: min(1000px, 100%);
+  width: min(1120px, 100%);
   margin: 0 auto;
   padding: 42px clamp(25px, 4vw, 55px) 70px;
 }
@@ -15,15 +15,15 @@
 .exposure-intro h2 {
   margin: 0;
   color: var(--ink);
-  font-size: calc(25px * var(--font-scale));
-  letter-spacing: -0.04em;
+  font-size: var(--text-xl);
+  letter-spacing: -0.01em;
 }
 
 .exposure-intro > div > p:last-child {
   max-width: 680px;
   margin: 11px 0 0;
   color: var(--muted);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
   line-height: 1.75;
 }
 
@@ -33,7 +33,7 @@
   gap: 9px;
   margin-bottom: 20px;
   color: var(--muted);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .exposure-counts {
@@ -53,31 +53,31 @@
 }
 
 .exposure-count strong {
-  font-size: calc(24px * var(--font-scale));
+  font-size: var(--text-xl);
   color: var(--ink);
 }
 
 .exposure-count span {
   color: var(--muted);
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .exposure-count.danger strong {
-  color: #d24a3a;
+  color: var(--red);
 }
 
 .exposure-count.warn strong {
-  color: #c07a1e;
+  color: var(--amber);
 }
 
 .exposure-count.ok strong {
-  color: #2f9e6f;
+  color: var(--green);
 }
 
 .exposure-headline {
   margin: 0 0 14px;
   color: var(--ink);
-  font-size: calc(13px * var(--font-scale));
+  font-size: var(--text-md);
 }
 
 .exposure-list {
@@ -103,8 +103,8 @@
   min-width: 0;
   overflow: hidden;
   color: var(--ink);
-  font-family: "SF Mono", ui-monospace, Menlo, monospace;
-  font-size: calc(11px * var(--font-scale));
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -112,24 +112,24 @@
 .exposure-kind,
 .exposure-reason {
   color: var(--muted);
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .exposure-severity {
   padding: 3px 9px;
   border-radius: 999px;
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
   font-weight: 650;
 }
 
 .exposure-severity.exposed,
 .exposure-severity.certain {
-  color: #d24a3a;
+  color: var(--red);
   background: rgba(210, 74, 58, 0.12);
 }
 
 .exposure-severity.likely {
-  color: #c07a1e;
+  color: var(--amber);
   background: rgba(192, 122, 30, 0.12);
 }
 
@@ -140,20 +140,20 @@
 
 .exposure-severity.allowed,
 .exposure-severity.managed {
-  color: #2f9e6f;
+  color: var(--green);
   background: rgba(47, 158, 111, 0.12);
 }
 
 .exposure-footnote {
   margin-top: 18px;
   color: var(--muted);
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .exposure-metrics {
   margin: 0 0 14px;
   color: var(--muted);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .exposure-proof {
@@ -164,7 +164,7 @@
 }
 
 .exposure-proof-result {
-  color: #2f9e6f;
-  font-size: calc(11px * var(--font-scale));
+  color: var(--green);
+  font-size: var(--text-sm);
   font-weight: 650;
 }

@@ -9,7 +9,7 @@
 .guide-missing {
   margin: 0;
   color: var(--muted);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .guide-toolbar {
@@ -22,12 +22,12 @@
 
 .guide-step-count {
   color: var(--muted);
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .guide-refresh {
   padding: 2px 8px;
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .guide-steps {

@@ -81,6 +81,10 @@ impl AssignmentRef<'_> {
     pub(crate) fn value_bytes(&self) -> &[u8] {
         self.value
     }
+
+    pub(crate) fn decoded_value(&self) -> EnvResult<String> {
+        decode_value(self.value)
+    }
 }
 
 impl Document {

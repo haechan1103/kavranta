@@ -15,7 +15,7 @@ import { SidebarNavIcon } from "./SidebarNavIcon";
 import { ProjectSwitcherModal } from "./ProjectSwitcherModal";
 
 interface View {
-  kind: "overview" | "file" | "integrations" | "activity" | "accounts" | "exposure";
+  kind: "overview" | "file" | "integrations" | "activity" | "accounts" | "exposure" | "compare";
   path?: string;
 }
 
@@ -27,14 +27,24 @@ interface Props {
   view: View;
   onSelectProject: (projectId: string) => void;
   onSelectView: (
-    view: { kind: "overview" } | { kind: "file"; path: string } | { kind: "integrations" } | { kind: "activity" } | { kind: "exposure" } | { kind: "accounts" },
+    view: { kind: "overview" } | { kind: "file"; path: string } | { kind: "integrations" } | { kind: "activity" } | { kind: "exposure" } | { kind: "compare" } | { kind: "accounts" },
   ) => void;
   onRegister: () => void;
   onRenameFileLabel: (projectId: string, path: string, name: string) => void;
   onRenameFileOnDisk: (projectId: string, path: string, newName: string) => void;
   onExportDiagnostics: (destinationLabel: string) => void;
+  /** Staged changes in the open file, shown beside it so they are not forgotten. */
+  pendingEdits?: { path: string; count: number };
   projectActions?: ReactNode;
 }
+
+const sidebarViews = [
+  { kind: "overview", icon: "overview", label: "sidebar.overview" },
+  { kind: "compare", icon: "compare", label: "sidebar.compare" },
+  { kind: "activity", icon: "activity", label: "sidebar.activity" },
+  { kind: "exposure", icon: "exposure", label: "sidebar.exposure" },
+  { kind: "accounts", icon: "accounts", label: "sidebar.accounts" },
+] as const;
 
 export function ProjectSidebar({
   projects,
@@ -48,6 +58,7 @@ export function ProjectSidebar({
   onRenameFileLabel,
   onRenameFileOnDisk,
   onExportDiagnostics,
+  pendingEdits,
   projectActions,
 }: Props) {
   const { locale, setLocale, t } = useI18n();
@@ -89,57 +100,64 @@ export function ProjectSidebar({
 
       {projection && (
         <nav className="file-navigation" aria-label={t("sidebar.projectViews")}>
-          <button
-            className={view.kind === "overview" ? "nav-item active" : "nav-item"}
-            onClick={() => onSelectView({ kind: "overview" })}
-          >
-            <SidebarNavIcon name="overview" /> Overview
-            {projection.issueCount > 0 && <b>{projection.issueCount}</b>}
-          </button>
-          <button
-            className={view.kind === "activity" ? "nav-item active" : "nav-item"}
-            onClick={() => onSelectView({ kind: "activity" })}
-          >
-            <SidebarNavIcon name="activity" /> {t("sidebar.activity")}
-          </button>
-          <button
-            className={view.kind === "accounts" ? "nav-item active" : "nav-item"}
-            onClick={() => onSelectView({ kind: "accounts" })}
-          >
-            <SidebarNavIcon name="accounts" /> {t("sidebar.accounts")}
-          </button>
-          <button
-            className={view.kind === "exposure" ? "nav-item active" : "nav-item"}
-            onClick={() => onSelectView({ kind: "exposure" })}
-          >
-            <SidebarNavIcon name="exposure" /> {t("sidebar.exposure")}
-          </button>
-          {selectedProject && projectActions}
-          <p className="file-label">ENV FILES</p>
-          {projection.files.map((file) => (
-            <div className="sidebar-file-row" key={file.path}>
-              <button
-                className={view.kind === "file" && view.path === file.path ? "nav-item sidebar-file-button active" : "nav-item sidebar-file-button"}
-                onClick={() => onSelectView({ kind: "file", path: file.path })}
-                title={`${file.displayName}\n${file.path}`}
-              >
-                <span className="file-dot" />
-                <span className="sidebar-file-copy">
-                  <span className="truncate">{file.displayName}</span>
-                  {file.displayName !== file.path && <small className="truncate">{file.path}</small>}
-                </span>
-                {file.warnings.length > 0 && <b>!</b>}
-              </button>
-              {selectedProjectId && (
-                <EnvFileActions
-                  path={file.path}
-                  displayName={file.displayName}
-                  onRenameLabel={(path, name) => onRenameFileLabel(selectedProjectId, path, name)}
-                  onRenameFile={(path, newName) => onRenameFileOnDisk(selectedProjectId, path, newName)}
-                />
+          <p className="file-label">{t("sidebar.envFiles")}</p>
+          {projection.files.map((file) => {
+            const active = view.kind === "file" && view.path === file.path;
+            return (
+              <div className="sidebar-file-row" key={file.path}>
+                <button
+                  className={active ? "nav-item sidebar-file-button active" : "nav-item sidebar-file-button"}
+                  aria-current={active ? "page" : undefined}
+                  onClick={() => onSelectView({ kind: "file", path: file.path })}
+                  title={`${file.displayName}\n${file.path}`}
+                >
+                  <span className="file-dot" />
+                  <span className="sidebar-file-copy">
+                    <span className="truncate">{file.displayName}</span>
+                    {file.displayName !== file.path && <small className="truncate">{file.path}</small>}
+                  </span>
+                  {pendingEdits && pendingEdits.path === file.path && pendingEdits.count > 0 && (
+                    <span className="sidebar-pending" aria-label={t("sidebar.pendingEdits", { count: pendingEdits.count })}>
+                      {pendingEdits.count}
+                    </span>
+                  )}
+                  {file.warnings.length > 0 && (
+                    <b aria-label={t("sidebar.fileWarnings", { count: file.warnings.length })}>!</b>
+                  )}
+                </button>
+                {selectedProjectId && (
+                  <EnvFileActions
+                    path={file.path}
+                    displayName={file.displayName}
+                    onRenameLabel={(path, name) => onRenameFileLabel(selectedProjectId, path, name)}
+                    onRenameFile={(path, newName) => onRenameFileOnDisk(selectedProjectId, path, newName)}
+                  />
+                )}
+              </div>
+            );
+          })}
+
+          <p className="file-label">{t("sidebar.views")}</p>
+          {sidebarViews.map(({ kind, icon, label }) => (
+            <button
+              key={kind}
+              className={view.kind === kind ? "nav-item active" : "nav-item"}
+              aria-current={view.kind === kind ? "page" : undefined}
+              onClick={() => onSelectView({ kind })}
+            >
+              <SidebarNavIcon name={icon} /> {t(label)}
+              {kind === "overview" && projection.issueCount > 0 && (
+                <b aria-label={t("sidebar.issueCount", { count: projection.issueCount })}>{projection.issueCount}</b>
               )}
-            </div>
+            </button>
           ))}
+
+          {selectedProject && projectActions && (
+            <>
+              <p className="file-label">{t("sidebar.share")}</p>
+              {projectActions}
+            </>
+          )}
         </nav>
       )}
 

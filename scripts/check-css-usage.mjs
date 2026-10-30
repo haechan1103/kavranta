@@ -97,6 +97,27 @@ for (const cssFile of cssFiles) {
     }
   }
 
+  // ADR-0041: text sizes come from the shared scale so nothing drops below 11px again.
+  // Colors come from tokens so the dark theme stays complete. The always-dark sidebar
+  // and the agent brand marks own fixed colors; anything else needs a theme-neutral note.
+  const fixedColorOwners = new Set(["tokens.css", "ProjectSidebar.css", "AgentBrandMark.css"]);
+  if (path.basename(cssFile) !== "tokens.css") {
+    css.split(/\r?\n/).forEach((line, index) => {
+      for (const sizeMatch of line.matchAll(/font-size:\s*([^;}]+)/g)) {
+        if (!/^var\(--text-(2xs|xs|sm|md|lg|xl|2xl)\)$/.test(sizeMatch[1].trim())) {
+          errors.push(`${relativePath}:${index + 1} font-size must use a --text-* token`);
+        }
+      }
+      if (
+        !fixedColorOwners.has(path.basename(cssFile)) &&
+        /#[0-9a-fA-F]{3,8}\b/.test(line) &&
+        !line.includes("theme-neutral:")
+      ) {
+        errors.push(`${relativePath}:${index + 1} color must use a token (or note why it is theme-neutral)`);
+      }
+    });
+  }
+
   const selectors = css.matchAll(/(?:^|\n)\s*(\.[^{}]+)\{/g);
   const classNames = new Set();
   for (const selectorMatch of selectors) {

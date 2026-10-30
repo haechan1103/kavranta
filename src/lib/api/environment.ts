@@ -1,10 +1,28 @@
-import { demoProjection } from "../demo";
-import type { AgentActivityEvent, CodexAccess, GitignoreUpdateSummary, MutationSummary, ProjectProjection } from "../types";
+import { demoComparison, demoProjection, demoRedactedSource } from "../demo";
+import type {
+  AgentActivityEvent,
+  CodexAccess,
+  GitignoreUpdateSummary,
+  MutationSummary,
+  ProjectProjection,
+  RedactedSourceLine,
+  ValueComparison,
+} from "../types";
 import { call, isTauriRuntime } from "./shared";
 
 export async function scanProject(projectId: string): Promise<ProjectProjection> {
   if (!isTauriRuntime) return demoProjection;
   return call("scan_project", { request: { projectId } });
+}
+
+export async function compareProjectValues(projectId: string): Promise<ValueComparison> {
+  if (!isTauriRuntime) return demoComparison;
+  return call("compare_project_values", { request: { projectId } });
+}
+
+export async function readRedactedSource(projectId: string, file: string): Promise<RedactedSourceLine[]> {
+  if (!isTauriRuntime) return demoRedactedSource(file);
+  return call("read_redacted_source", { request: { projectId, file } });
 }
 
 export async function applyGitignoreGuard(projectId: string): Promise<GitignoreUpdateSummary> {

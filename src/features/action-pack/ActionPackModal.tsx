@@ -1,6 +1,7 @@
 import "./ActionPackModal.css";
 import { useEffect, useMemo, useState } from "react";
 
+import { useConfirm } from "../../components/ConfirmDialog";
 import { Modal } from "../../components/Modal";
 import { localizeError, useI18n } from "../../i18n";
 import * as api from "../../lib/api";
@@ -20,6 +21,7 @@ interface Props {
 
 export function ActionPackModal({ projectId, projection, onClose, onError, onNotice }: Props) {
   const { locale, t } = useI18n();
+  const { confirm, dialog } = useConfirm();
   const [packs, setPacks] = useState<ActionPackInfo[]>([]);
   const [packId, setPackId] = useState("");
   const [file, setFile] = useState(projection.files[0]?.path ?? "");
@@ -91,7 +93,13 @@ export function ActionPackModal({ projectId, projection, onClose, onError, onNot
   };
 
   const remove = async () => {
-    if (!pack || !window.confirm(t("action.removeConfirm", { name: pack.displayName }))) return;
+    if (!pack) return;
+    const confirmed = await confirm({
+      title: t("action.removeConfirm", { name: pack.displayName }),
+      confirmLabel: t("common.remove"),
+      tone: "danger",
+    });
+    if (!confirmed) return;
     setBusy(true);
     try {
       await api.removeActionPack(pack.id);
@@ -118,6 +126,7 @@ export function ActionPackModal({ projectId, projection, onClose, onError, onNot
   };
 
   return (
+    <>
     <Modal className="action-pack-modal" title={t("action.title")} description={t("action.description")} onClose={onClose}>
       <div className="action-pack-toolbar">
         <label>
@@ -158,5 +167,7 @@ export function ActionPackModal({ projectId, projection, onClose, onError, onNot
           )}
       <div className="modal-actions"><button className="quiet-button" onClick={onClose}>{t("common.close")}</button><button className="primary-button" disabled={!ready || busy} onClick={() => void run()}>{busy ? t("action.running") : t("action.run")}</button></div>
     </Modal>
+    {dialog}
+    </>
   );
 }

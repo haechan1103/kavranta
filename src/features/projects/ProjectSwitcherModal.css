@@ -20,7 +20,7 @@
   min-height: 55px;
   padding: 9px 11px;
   color: var(--ink);
-  background: #fafbfa;
+  background: var(--surface-muted);
   border: 1px solid var(--line);
   border-radius: 10px;
   cursor: pointer;
@@ -28,19 +28,19 @@
 }
 
 .project-switcher-option:hover {
-  background: #f4f8f6;
-  border-color: #b8cfc6;
+  background: var(--surface-muted);
+  border-color: var(--green-line);
 }
 
 .project-switcher-option.current {
-  background: #f1faf6;
-  border-color: #9fd5c1;
+  background: var(--green-pale);
+  border-color: var(--green-line);
   box-shadow: inset 3px 0 var(--green);
 }
 
 .project-switcher-option.current .project-glyph {
-  color: #102019;
-  background: #62d6ae;
+  color: var(--green-strong);
+  background: var(--green-solid);
 }
 
 .project-switcher-copy {
@@ -58,32 +58,32 @@
 }
 
 .project-switcher-copy strong {
-  font-size: calc(11px * var(--font-scale));
+  font-size: var(--text-sm);
 }
 
 .project-switcher-copy small {
   color: var(--muted);
-  font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: calc(8px * var(--font-scale));
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
 }
 
 .current-project-badge {
   padding: 4px 7px;
   color: var(--green);
-  background: white;
-  border: 1px solid #c8e7db;
+  background: var(--panel);
+  border: 1px solid var(--green-line);
   border-radius: 999px;
-  font-size: calc(7px * var(--font-scale));
+  font-size: var(--text-2xs);
   font-weight: 750;
 }
 
 .project-switcher-empty {
   padding: 30px 12px;
   color: var(--muted);
-  background: #fafbfa;
+  background: var(--surface-muted);
   border: 1px dashed var(--line);
   border-radius: 10px;
-  font-size: calc(10px * var(--font-scale));
+  font-size: var(--text-sm);
   text-align: center;
 }
 
@@ -101,16 +101,16 @@
 .project-switcher-failure {
   flex: 0 0 auto;
   padding: 2px 6px;
-  border: 1px solid #eccf9a;
+  border: 1px solid var(--amber-line);
   border-radius: 999px;
-  color: #b06f12;
-  background: #fdf6e7;
-  font-size: calc(7.5px * var(--font-scale));
+  color: var(--amber);
+  background: var(--amber-pale);
+  font-size: var(--text-2xs);
   font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;
 }
 
 .project-switcher-option.failed .project-switcher-copy strong {
-  color: #c07a1e;
+  color: var(--amber);
 }
