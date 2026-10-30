@@ -281,30 +281,28 @@ function demoVariable(
   };
 }
 
-export const demoComparison: ValueComparison = (() => {
-  const files = demoProjection.files.map((file) => file.path);
-  const keys = [
-    ...new Set(demoProjection.files.flatMap((file) => file.groups.flatMap((group) => group.variables.map((variable) => variable.key)))),
-  ].sort();
-  return {
-    files,
-    rows: keys.map((key, keyIndex) => {
-      const seen: number[] = [];
-      return {
-        key,
-        cells: demoProjection.files.map((file, fileIndex): ValueComparisonCell => {
-          const variable = file.groups.flatMap((group) => group.variables).find((entry) => entry.key === key);
-          if (!variable) return { state: "missing" };
-          if (variable.valueState === "empty") return { state: "empty" };
-          // Every third name holds a different value in each file; the rest match.
-          const token = keyIndex % 3 === 0 ? fileIndex : -1;
-          if (!seen.includes(token)) seen.push(token);
-          return { state: "present", group: seen.indexOf(token) };
-        }),
-      };
-    }),
-  };
-})();
+const same = (group: number): ValueComparisonCell => ({ state: "present", group });
+const missing: ValueComparisonCell = { state: "missing" };
+const empty: ValueComparisonCell = { state: "empty" };
+
+/** Synthetic equality states only; demo mode never has values to compare. */
+export const demoComparison: ValueComparison = {
+  files: [".env.local", ".env.development", "apps/web/.env.local"],
+  rows: [
+    { key: "APP_ENV", cells: [same(0), same(1), same(2)] },
+    { key: "DATABASE_POOL_SIZE", cells: [same(0), same(0), missing] },
+    { key: "DATABASE_SCHEMA", cells: [same(0), same(0), same(0)] },
+    { key: "DATABASE_URL", cells: [same(0), same(1), missing] },
+    { key: "ENABLE_CACHE", cells: [same(0), same(0), same(0)] },
+    { key: "GPT_API_KEY", cells: [same(0), same(0), same(0)] },
+    { key: "GPT_MODEL", cells: [same(0), same(1), same(1)] },
+    { key: "LOG_LEVEL", cells: [same(0), same(1), same(0)] },
+    { key: "NEXT_PUBLIC_APP_URL", cells: [missing, missing, empty] },
+    { key: "OPENAI_BASE_URL", cells: [same(0), same(0), same(0)] },
+    { key: "PORT", cells: [same(0), same(0), same(1)] },
+    { key: "SESSION_TTL", cells: [same(0), empty, missing] },
+  ],
+};
 
 export function demoRedactedSource(path: string): RedactedSourceLine[] {
   const file = demoProjection.files.find((entry) => entry.path === path);

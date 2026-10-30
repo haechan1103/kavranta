@@ -29,10 +29,11 @@ the [first-launch notes](#windows-first-launch) before installing.
 
 1. Open Kavranta and choose your existing project folder. Registration discovers
    supported files without changing them.
-2. Open a file, turn on **Missing values only**, and fill one empty variable. If all
-   values are present, review an existing variable instead.
-3. Check which files Save will affect, then save when ready. Keep using your normal
-   development command. Same-name variables are independent unless you link them.
+2. Open a file, choose the **Empty** filter, and type a value. Edits stay pending
+   (highlighted, with Revert) until you save, so you can fill several at once.
+3. The save bar lists every file Save will touch. Press **Save** or ⌘S when ready,
+   then keep using your normal development command. Same-name variables are
+   independent unless you link them.
 
 Connecting an AI agent is optional. No hosted account or new runtime is required
 for local editing. If no files appear, follow the project's setup guide and refresh;
@@ -45,7 +46,7 @@ example/template files are intentionally excluded and are not copied automatical
 <details>
   <summary>Watch the broader workflow (synthetic data)</summary>
 
-![Kavranta demo showing project overview, env editing, AWS deployment, team sharing, and AI tool connections](assets/screenshots/kavranta-demo.gif)
+![Kavranta demo showing the project overview, file table, source view, file comparison, ⌘K search, AWS push, and AI tool connections](assets/screenshots/kavranta-demo.gif)
 
 </details>
 
@@ -71,30 +72,56 @@ Kavranta is a local-first desktop app. Register a project and it discovers the r
 | **Share without committing env files** | **Deploy only what you select** | **Catch Git mistakes early** |
 | Export all or selected variables as a passphrase-encrypted package, or publish immutable packages through a mounted team folder. | Send selected values to GitHub Actions, Cloudflare Workers, Expo EAS, AWS, or a locally installed CLI Pack without creating a temporary env file. | Detect missing ignore rules, already tracked env files, historical paths, and suspicious public frontend variable names. |
 | **Finish incomplete setup faster** | **Keep reusable accounts out of project files** | **Grant access per project** |
-| Filter an env file to only variables that still need a value, with the remaining count visible at a glance. | Store optional usernames and passwords in Apple Keychain or Windows Credential Manager instead of `.env`, Git, or Kavranta's local metadata. | New accounts start blocked. Explicitly allow or revoke each project; a grant never lets an AI agent run a login on its own. |
+| Filter an env file to empty, pending, or AI-blocked variables, stage several edits, and save them together with ⌘S. | Store optional usernames and passwords in Apple Keychain or Windows Credential Manager instead of `.env`, Git, or Kavranta's local metadata. | New accounts start blocked. Explicitly allow or revoke each project; a grant never lets an AI agent run a login on its own. |
+| **See which files disagree** | **Review before anything leaves** | **Find anything with ⌘K** |
+| Compare every variable across local, development, and app env files. Kavranta shows only same/different/missing—never the values. | Every push shows the destination, source file, and each name first, and warns when a provider cannot undo a replacement. | Jump to any variable, file, view, or command by name. ⌘↵ copies a value without opening the file. Search never reads values. |
 
 ## See the workflow
 
-### Included in the 0.7.6 release
+### New in 0.7.20: a redesigned workspace
 
-Project-wide metadata search, direct navigation to a missing variable, and combined
-name/missing-value filters are implemented in this source tree. Search does not
-inspect values, and changing filters preserves unsaved drafts. The separate
-[website](https://haechan1103.github.io/kavranta/) includes an EN/KO sample-linking
-playground hosted as static assets on GitHub Pages.
+The whole app was rebuilt around how env files are actually edited: one table per
+file, a details panel beside it, and changes you review before they are written.
+It follows your system's light or dark appearance and uses one readable type scale
+throughout.
+
+<table>
+  <tr>
+    <td width="50%"><strong>Compare files</strong><br />Every name against every env file: Set, Value A/B/C, Empty, or Missing. "Differences only" shows what needs attention. Equality is computed in Rust; no value reaches the screen.</td>
+    <td width="50%"><strong>Source view</strong><br />See the file exactly as it is laid out—comments, groups, and order—with every value masked. Commented-out secrets and unreadable lines are withheld entirely.</td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshots/kavranta-compare-files.png" alt="Compare files view showing which variables differ across three env files without showing values" /></td>
+    <td><img src="assets/screenshots/kavranta-source-view.png" alt="Source view of an env file with comments, groups, and masked values" /></td>
+  </tr>
+  <tr>
+    <td width="50%"><strong>⌘K palette</strong><br />Search variable names, files, views, and commands from anywhere. It says plainly that it never searches values.</td>
+    <td width="50%"><strong>Push review</strong><br />Confirm the destination, source file, and every name before a value leaves your computer.</td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshots/kavranta-command-palette.png" alt="Command palette listing matching variable names" /></td>
+    <td><img src="assets/screenshots/kavranta-push-review.png" alt="Push review step listing destination, source file, and variable names" /></td>
+  </tr>
+</table>
+
 See [ROADMAP.md](ROADMAP.md) for verification gates and work still outstanding.
 
 ### Organize real env files, not copies
 
-Projects and files can have local display names while their physical paths remain visible and unchanged. Values are masked by default; variable names can be copied, groups can be jumped to quickly, and linked rows show every file affected by Save.
+Each file is one table: name and description, the masked value with reveal and copy,
+AI access, and which other files share the key. Click a row for its details—description,
+linked files, setup guide, recent AI activity—without leaving the table. Edits and
+deletions stay pending until you save, and the save bar names every file Save will
+touch, including linked members. Projects and files can have display names while
+their physical paths stay visible and unchanged.
 
-![Kavranta file editor with masked synthetic values, linked files, and group navigation](assets/screenshots/kavranta-editor.png)
+![Kavranta file editor table with a pending edit, the details panel, and the save bar](assets/screenshots/kavranta-editor.png)
 
 ### Know what needs attention
 
 The project overview combines missing values, parse warnings, Git leak checks, and
 managed-file navigation without reading values for those checks. AI policy stays in
-the owning variable row. Inside a file, turn on **Missing values only** to focus on
+the owning variable row. Inside a file, choose the **Empty** filter to focus on
 unfinished setup.
 
 ![Kavranta project overview with Git safety and AI access status](assets/screenshots/kavranta-overview.png)
@@ -139,7 +166,7 @@ For a server env file outside a project, an administrator can install the fixed 
 
 ![Compare selected local variables with an allowlisted server Runtime through the encrypted verifier](assets/screenshots/kavranta-runtime-compare.png)
 
-Provider push is always explicit and one-way. GitHub and Cloudflare secret values cannot be read back, so Kavranta does not pretend to verify them. AWS and registered Runtime targets expose a separate comparison operation that returns only equality states. Unselected remote entries are never deleted.
+Every push opens a review step before anything is sent: destination, source file, each name with its remote type, and a warning when the provider keeps no previous value. Provider push is always explicit and one-way. GitHub and Cloudflare secret values cannot be read back, so Kavranta does not pretend to verify them. AWS and registered Runtime targets expose a separate comparison operation that returns only equality states. Unselected remote entries are never deleted.
 
 ## Supported deployment targets
 
@@ -198,6 +225,9 @@ OpenCode after installation or an update.
 claude plugin marketplace add haechan1103/kavranta
 claude plugin install kavranta@kavranta
 ```
+
+On macOS, Kavranta also detects the Claude Code copy bundled with the Claude desktop
+app, so the connection can be installed from the AI tools screen without a separate CLI.
 </details>
 
 <details>
