@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use directories::BaseDirs;
+use semver::Version;
 
 use super::model::AgentIntegrationId;
 
@@ -28,7 +29,54 @@ fn executable_candidates(id: AgentIntegrationId) -> Vec<PathBuf> {
             "/Applications/Codex.app/Contents/Resources/codex",
         ));
     }
+    if cfg!(target_os = "macos")
+        && id == AgentIntegrationId::ClaudeCode
+        && let Some(base) = BaseDirs::new()
+    {
+        candidates.extend(claude_desktop_bundled_candidates(base.data_dir()));
+    }
     deduplicate_paths(candidates)
+}
+
+/// Claude desktop runs its Code tab on a private Claude Code copy stored under
+/// `Claude/claude-code/<version>/<build>/`. It shares `~/.claude` with the CLI, so a
+/// plugin installed through it reaches desktop sessions without a separate CLI. The
+/// layout is observed rather than documented: it stays a fallback after every CLI
+/// location, and the newest semantic version is tried first.
+pub(super) fn claude_desktop_bundled_candidates(app_support: &Path) -> Vec<PathBuf> {
+    let mut versioned = child_directories(&app_support.join("Claude/claude-code"))
+        .into_iter()
+        .filter_map(|directory| {
+            let name = directory.file_name()?.to_str()?;
+            let version = Version::parse(name).ok()?;
+            Some((version, directory))
+        })
+        .flat_map(|(version, directory)| {
+            child_directories(&directory).into_iter().map(move |build| {
+                (
+                    version.clone(),
+                    build.join("claude.app/Contents/MacOS/claude"),
+                )
+            })
+        })
+        .filter(|(_, executable)| executable.is_file())
+        .collect::<Vec<_>>();
+    versioned.sort_by(|left, right| right.0.cmp(&left.0));
+    versioned
+        .into_iter()
+        .map(|(_, executable)| executable)
+        .collect()
+}
+
+fn child_directories(directory: &Path) -> Vec<PathBuf> {
+    let Ok(entries) = std::fs::read_dir(directory) else {
+        return Vec::new();
+    };
+    entries
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .filter(|path| path.is_dir())
+        .collect()
 }
 
 pub(super) fn detect_vscode() -> bool {
