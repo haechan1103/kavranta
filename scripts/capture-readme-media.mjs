@@ -15,6 +15,10 @@ const brandDir = path.join(root, "assets", "brand");
 const workDir = path.join(root, "test-results", "readme-media");
 const overviewPath = path.join(outputDir, "kavranta-overview.png");
 const heroPath = path.join(outputDir, "kavranta-editor.png");
+const sourcePath = path.join(outputDir, "kavranta-source-view.png");
+const compareFilesPath = path.join(outputDir, "kavranta-compare-files.png");
+const palettePath = path.join(outputDir, "kavranta-command-palette.png");
+const pushReviewPath = path.join(outputDir, "kavranta-push-review.png");
 const integrationsPath = path.join(outputDir, "kavranta-ai-integrations.png");
 const providerPath = path.join(outputDir, "kavranta-cloudflare-push.png");
 const awsPath = path.join(outputDir, "kavranta-aws-compare.png");
@@ -38,6 +42,15 @@ async function openProjectAction(page, name) {
   await page.getByRole("menuitem", { name }).click();
 }
 
+function sidebar(page) {
+  return page.locator("aside.sidebar");
+}
+
+async function openPush(page) {
+  await sidebar(page).getByRole("button", { name: "Push variables" }).click();
+  await page.getByRole("heading", { name: "Push variables" }).waitFor();
+}
+
 async function captureScreenshots() {
   const context = await browser.newContext({ viewport: { width: 1440, height: 940 } });
   const page = await context.newPage();
@@ -45,21 +58,41 @@ async function captureScreenshots() {
   await page.getByText("Action inbox").waitFor();
   await page.screenshot({ path: overviewPath, fullPage: true });
 
-  await page.getByRole("button", { name: /Local environment.*\.env\.local/ }).click();
+  await sidebar(page).getByRole("button", { name: /Local environment.*\.env\.local/ }).click();
   await page.getByRole("heading", { name: "Local environment" }).waitFor();
-  await page.screenshot({ path: heroPath, fullPage: true });
+  await page.locator('[data-variable-key="GPT_API_KEY"] .variable-description').click();
+  await page.locator('[data-variable-key="OPENAI_BASE_URL"] .value-editor input').fill("fake-readme-draft");
+  await page.getByRole("region", { name: "Pending changes" }).waitFor();
+  await page.screenshot({ path: heroPath });
 
-  await openProjectAction(page, "Push variables");
-  await page.getByRole("heading", { name: "Push variables" }).waitFor();
+  await page.getByRole("button", { name: "Source", exact: true }).click();
+  await page.getByRole("region", { name: "File source" }).waitFor();
+  await page.screenshot({ path: sourcePath });
+  await page.getByRole("button", { name: "Table", exact: true }).click();
+  await page.getByRole("button", { name: "Revert all" }).click();
+
+  await sidebar(page).getByRole("button", { name: "Compare files" }).click();
+  await page.getByRole("heading", { name: "Compare values across files" }).waitFor();
+  await page.screenshot({ path: compareFilesPath });
+
+  await page.keyboard.press("Meta+K");
+  await page.getByPlaceholder("Variable name, file, or command").fill("gpt");
+  await page.screenshot({ path: palettePath });
+  await page.keyboard.press("Escape");
+
+  await openPush(page);
   await page.getByRole("button", { name: /Cloudflare Workers/ }).click();
   await page.getByRole("textbox", { name: "Cloudflare Worker", exact: true }).fill("sample-worker");
   await page.getByRole("button", { name: "Select all" }).click();
   await page.screenshot({ path: providerPath, fullPage: true });
+  await page.getByRole("button", { name: /^Review / }).click();
+  await page.getByRole("region", { name: "Review before pushing" }).waitFor();
+  await page.screenshot({ path: pushReviewPath, fullPage: true });
+  await page.getByRole("button", { name: "Back" }).click();
   await page.getByRole("button", { name: "Cancel" }).click();
 
   await page.setViewportSize({ width: 1440, height: 1200 });
-  await openProjectAction(page, "Push variables");
-  await page.getByRole("heading", { name: "Push variables" }).waitFor();
+  await openPush(page);
   await page.getByRole("button", { name: /AWS Secrets Manager/ }).click();
   await page.getByLabel("Secret path prefix").fill("sample-saas/staging");
   await page.getByRole("button", { name: "Select all" }).click();
@@ -69,8 +102,7 @@ async function captureScreenshots() {
   await page.screenshot({ path: awsPath, fullPage: true });
   await page.getByRole("button", { name: "Cancel" }).click();
 
-  await openProjectAction(page, "Push variables");
-  await page.getByRole("heading", { name: "Push variables" }).waitFor();
+  await openPush(page);
   await page.getByRole("button", { name: /Remote Runtime/ }).click();
   await page.locator('select').filter({ has: page.locator('option[value="demo-runtime-staging"]') }).waitFor();
   await page.getByRole("button", { name: "Select all" }).click();
@@ -87,7 +119,7 @@ async function captureScreenshots() {
   await page.screenshot({ path: sharingPath, fullPage: true });
   await page.getByRole("button", { name: "Cancel" }).click();
 
-  await openProjectAction(page, "Team sharing");
+  await sidebar(page).getByRole("button", { name: "Team sharing" }).click();
   await page.getByRole("heading", { name: "Team sharing" }).waitFor();
   await page.getByText("Product team · shared folder").waitFor();
   await page.screenshot({ path: teamChannelPath, fullPage: true });
@@ -101,12 +133,12 @@ async function captureScreenshots() {
   await page.screenshot({ path: importPath, fullPage: true });
   await page.getByRole("button", { name: "Cancel" }).click();
 
-  await page.getByRole("button", { name: "AI activity" }).click();
+  await sidebar(page).getByRole("button", { name: "AI activity" }).click();
   await page.getByRole("heading", { name: "AI activity" }).waitFor();
   await page.locator(".activity-item").first().waitFor();
   await page.screenshot({ path: activityPath, fullPage: true });
 
-  await page.getByRole("button", { name: "AI tool connections" }).click();
+  await sidebar(page).getByRole("button", { name: "AI tool connections" }).click();
   await page.locator(".integration-page").waitFor();
   await page.screenshot({ path: integrationsPath, fullPage: true });
   await context.close();
@@ -128,29 +160,32 @@ async function captureDemoFrames() {
   await page.goto(baseUrl);
   await page.getByText("Action inbox").waitFor();
   await capture(6);
-  await page.getByRole("button", { name: /Local environment.*\.env\.local/ }).hover();
+  const localFile = sidebar(page).getByRole("button", { name: /Local environment.*\.env\.local/ });
+  await localFile.hover();
   await capture(2);
-  await page.getByRole("button", { name: /Local environment.*\.env\.local/ }).click();
+  await localFile.click();
   await page.getByRole("heading", { name: "Local environment" }).waitFor();
+  await capture(4);
+  await page.locator('[data-variable-key="GPT_API_KEY"] .variable-description').click();
   await capture(6);
-  await openProjectAction(page, "Push variables");
-  await page.getByRole("heading", { name: "Push variables" }).waitFor();
+  await page.getByRole("button", { name: "Source", exact: true }).click();
+  await page.getByRole("region", { name: "File source" }).waitFor();
+  await capture(6);
+  await sidebar(page).getByRole("button", { name: "Compare files" }).click();
+  await page.getByRole("heading", { name: "Compare values across files" }).waitFor();
+  await capture(6);
+  await page.keyboard.press("Meta+K");
+  await page.getByPlaceholder("Variable name, file, or command").fill("database");
+  await capture(6);
+  await page.keyboard.press("Escape");
+  await openPush(page);
   await page.getByRole("button", { name: /AWS Secrets Manager/ }).click();
   await capture(6);
   await page.getByRole("button", { name: "Cancel" }).click();
-  await openProjectAction(page, "Team sharing");
-  await page.getByRole("heading", { name: "Team sharing" }).waitFor();
-  await capture(6);
-  await page.getByRole("button", { name: "Close", exact: true }).click();
-  await page.getByRole("button", { name: "AI tool connections" }).hover();
-  await capture(2);
-  await page.getByRole("button", { name: "AI tool connections" }).click();
+  await sidebar(page).getByRole("button", { name: "AI tool connections" }).click();
   await page.locator(".integration-page").waitFor();
   await capture(6);
-  const overviewButton = page.locator('nav[aria-label="Project views"] button').first();
-  await overviewButton.hover();
-  await capture(2);
-  await overviewButton.click();
+  await sidebar(page).getByRole("button", { name: "Overview" }).click();
   await page.getByText("Action inbox").waitFor();
   await capture(6);
 
