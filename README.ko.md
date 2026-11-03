@@ -285,6 +285,14 @@ brew install --cask haechan1103/tap/kavranta
 현재 Mac에 맞춰 Apple Silicon 또는 Intel DMG가 자동으로 선택됩니다. 이후 새 버전은
 `brew upgrade --cask haechan1103/tap/kavranta`로 설치할 수 있습니다.
 
+Homebrew 6부터는 서드파티 Cask를 신뢰(trust)해야 불러옵니다. 위처럼 전체 이름으로 설치하면
+Kavranta Cask가 자동으로 신뢰됩니다. 예전에 설치한 앱을 업그레이드할 때 신뢰되지 않은 Tap이라는
+오류가 나오면 Tap 전체가 아니라 이 Cask만 신뢰하세요.
+
+```bash
+brew trust --cask haechan1103/tap/kavranta
+```
+
 직접 설치하거나 Windows에서 설치하려면
 [GitHub Releases](https://github.com/haechan1103/kavranta/releases/latest)에서 컴퓨터에 맞는 파일을 받으세요.
 

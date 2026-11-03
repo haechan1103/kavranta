@@ -299,6 +299,14 @@ brew install --cask haechan1103/tap/kavranta
 Homebrew selects the Apple Silicon or Intel DMG for the current Mac. Future releases
 can be installed with `brew upgrade --cask haechan1103/tap/kavranta`.
 
+Homebrew 6 and later load third-party casks only after you trust them. Installing by
+the full name above trusts the Kavranta cask for you. If an older installation reports
+an untrusted tap on upgrade, trust only this cask, not the whole tap:
+
+```bash
+brew trust --cask haechan1103/tap/kavranta
+```
+
 For a manual installation or Windows, download the installer for your computer from
 [GitHub Releases](https://github.com/haechan1103/kavranta/releases/latest):
 
