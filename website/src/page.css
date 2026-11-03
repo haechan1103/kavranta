@@ -71,7 +71,7 @@
 .hero h1 {
   position: relative;
   width: fit-content;
-  margin: 28px auto 20px;
+  margin: 22px auto 20px;
   font-size: clamp(44px, 5.4vw, 76px);
   line-height: 1.27;
   font-weight: 660;
@@ -126,6 +126,95 @@
   height: 3px;
   background: #b2bcb0;
   border-radius: 50%;
+}
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  border: 1px solid #cfe3d5;
+  border-radius: 999px;
+  background: #fff;
+  color: #3e4f45;
+  font-size: 13px;
+  box-shadow: 0 6px 18px #1c392c12;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.hero-pill:hover {
+  border-color: #8fcfb0;
+  transform: translateY(-1px);
+}
+.hero-pill b {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #1c392c;
+  color: var(--mint);
+  font-size: 11px;
+  font-weight: 700;
+}
+.hero-pill span {
+  color: var(--green);
+}
+.hero-shot {
+  position: relative;
+  max-width: 1140px;
+  margin: 56px auto 0;
+  padding: 0;
+  border: 1px solid #b9cdb9;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow:
+    0 40px 90px #1c392c2e,
+    0 0 0 10px #e7f2de;
+  animation: hero-shot-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.hero-shot-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 32px;
+  padding: 0 14px;
+  background: #17281f;
+  color: #8a9d8d;
+  font-size: 10px;
+}
+.hero-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.hero-shot figcaption {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #101a16d9;
+  color: #c9d3ce;
+  font-size: 10px;
+}
+@keyframes hero-shot-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.985);
+  }
+}
+.download-latest {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 6px 12px;
+  border: 1px solid #ffffff2e;
+  border-radius: 999px;
+  color: #c4e9d4;
+  font-size: 12px;
+}
+.download-latest:hover {
+  border-color: #9ff0cb;
 }
 .integrations-strip {
   max-width: 1200px;

@@ -2,6 +2,9 @@ import { useState } from "react";
 import { WorkflowDemo } from "./WorkflowDemo";
 import { LinkPlayground } from "./LinkPlayground";
 import { useSiteLocale } from "./SiteLocale";
+import { Showcase } from "./Showcase";
+import { TrafficLights } from "./DemoWindowChrome";
+import heroShot from "../../assets/screenshots/kavranta-editor.png";
 
 const repository = "https://github.com/haechan1103/kavranta";
 const downloads = `${repository}/releases/latest`;
@@ -32,6 +35,7 @@ export function LandingPage() {
           kavranta
         </a>
         <nav aria-label={c.navigation}>
+          <a href="#whats-new">{c.newPill}</a>
           <a href="#try">{c.try}</a>
           <a href="#features">{c.features}</a>
           <a href="#guide">{c.guide}</a>
@@ -63,6 +67,10 @@ export function LandingPage() {
       </header>
       <main id="main">
         <section className="hero">
+          <a className="hero-pill" href="#whats-new">
+            <b>{c.newPill}</b>
+            {c.newPillBody} <span aria-hidden="true">→</span>
+          </a>
           <h1>
             {c.hero[0]}
             <br />
@@ -85,10 +93,21 @@ export function LandingPage() {
               <span key={note}>{note}</span>
             ))}
           </div>
+          <figure className="hero-shot">
+            <div className="hero-shot-bar">
+              <TrafficLights />
+              <span>Kavranta</span>
+            </div>
+            <img
+              src={heroShot}
+              alt={c.heroShotAlt}
+              width={1440}
+              height={940}
+              fetchPriority="high"
+            />
+            <figcaption>{c.heroShotCaption}</figcaption>
+          </figure>
         </section>
-
-        <LinkPlayground />
-        <WorkflowDemo />
 
         <section className="integrations-strip" aria-label={c.tools}>
           <p>{c.tools}</p>
@@ -102,11 +121,17 @@ export function LandingPage() {
               "Codex",
               "Copilot",
               "Cursor",
+              "OpenCode",
             ].map((name) => (
               <span key={name}>{name}</span>
             ))}
           </div>
         </section>
+
+        <Showcase />
+        <LinkPlayground />
+        <WorkflowDemo />
+
         <section className="features-section section-shell" id="features">
           <div className="section-heading">
             <div>
@@ -208,6 +233,12 @@ export function LandingPage() {
             {c.downloadTitle[1]}
           </h2>
           <p>{c.downloadBody}</p>
+          <a
+            className="download-latest"
+            href="https://github.com/haechan1103/kavranta/releases/tag/v0.7.20"
+          >
+            <span className="live-dot" /> {c.latest} ↗
+          </a>
           <div className="download-buttons">
             <a className="button" href={downloads}>
               {c.mac}

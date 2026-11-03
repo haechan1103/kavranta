@@ -13,6 +13,15 @@
   </p>
 </div>
 
+<p align="center">
+  <img src="assets/screenshots/kavranta-editor.png" width="920" alt="가려진 값, 변경 대기 중인 수정, 상세 패널, 저장 바가 보이는 Kavranta 파일 표 (합성 데이터)" />
+</p>
+
+> **0.7.20 새 기능 — 새로 설계한 작업 화면.** 파일마다 하나의 표와 모아서 저장, 상세 패널,
+> 값을 보여주지 않는 파일 비교, 값을 가린 원문 보기, ⌘K 검색, 올리기 전 검토 단계가
+> 들어갔습니다. [릴리스 노트](https://github.com/haechan1103/kavranta/releases/tag/v0.7.20) ·
+> [바뀐 점 보기](#0720-새-기능-새로-설계한-작업-화면)
+
 ## 바로 시작하기
 
 macOS에서는:
@@ -112,8 +121,7 @@ env 파일을 실제로 고치는 흐름에 맞춰 앱 전체를 다시 만들�
 파일, 설정 가이드, 최근 AI 활동을 볼 수 있습니다. 수정과 삭제는 저장하기 전까지 대기
 상태로 남고, 저장 바가 연결된 파일까지 포함해 저장으로 바뀌는 파일을 모두 알려줍니다.
 프로젝트와 파일에 표시 이름을 붙여도 실제 경로는 그대로 보이고 바뀌지 않습니다.
-
-![변경 대기 중인 값, 상세 패널, 저장 바가 보이는 Kavranta 파일 편집 표](assets/screenshots/kavranta-editor.png)
+이 문서 맨 위 스크린샷이 수정 하나가 대기 중이고 상세 패널이 열린 파일 화면입니다.
 
 ### 지금 확인해야 할 것만 모아봅니다
 
@@ -276,6 +284,14 @@ brew install --cask haechan1103/tap/kavranta
 
 현재 Mac에 맞춰 Apple Silicon 또는 Intel DMG가 자동으로 선택됩니다. 이후 새 버전은
 `brew upgrade --cask haechan1103/tap/kavranta`로 설치할 수 있습니다.
+
+Homebrew 6부터는 서드파티 Cask를 신뢰(trust)해야 불러옵니다. 위처럼 전체 이름으로 설치하면
+Kavranta Cask가 자동으로 신뢰됩니다. 예전에 설치한 앱을 업그레이드할 때 신뢰되지 않은 Tap이라는
+오류가 나오면 Tap 전체가 아니라 이 Cask만 신뢰하세요.
+
+```bash
+brew trust --cask haechan1103/tap/kavranta
+```
 
 직접 설치하거나 Windows에서 설치하려면
 [GitHub Releases](https://github.com/haechan1103/kavranta/releases/latest)에서 컴퓨터에 맞는 파일을 받으세요.

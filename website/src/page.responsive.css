@@ -94,6 +94,28 @@
     font-size: 9px;
     gap: 8px;
   }
+  .hero-pill {
+    font-size: 11px;
+    gap: 7px;
+  }
+  .hero-pill b {
+    font-size: 10px;
+  }
+  .hero-shot {
+    margin-top: 34px;
+    border-radius: 9px;
+    box-shadow:
+      0 20px 40px #1c392c2e,
+      0 0 0 5px #e7f2de;
+  }
+  .hero-shot-bar {
+    height: 22px;
+  }
+  .hero-shot figcaption {
+    position: static;
+    border-radius: 0;
+    text-align: center;
+  }
   .integrations-strip {
     margin-top: 35px;
     padding-bottom: 36px;
