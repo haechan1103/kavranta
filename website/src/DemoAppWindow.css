@@ -1,0 +1,580 @@
+/* Scaled replica of the 0.7.20 desktop layout used inside the workflow stage. */
+.da-layout {
+  display: grid;
+  grid-template-columns: 178px minmax(0, 1fr);
+  height: calc(100% - 33px);
+  font-size: 10px;
+  color: #17251f;
+}
+.da-sidebar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 10px;
+  background: #101a16;
+  color: #c9d3ce;
+  overflow: hidden;
+}
+.da-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.da-brand img {
+  width: 18px;
+  height: 18px;
+}
+.da-project {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 0 6px;
+  padding: 7px;
+  border-radius: 7px;
+  background: #1a2621;
+  color: #fff;
+  font-weight: 650;
+}
+.da-project > span {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 5px;
+  background: #1f4d39;
+  color: #9ff0cb;
+  font-size: 9px;
+}
+.da-project small {
+  margin-left: auto;
+  color: #838d88;
+  font-size: 8px;
+}
+.da-label {
+  margin: 12px 4px 4px;
+  color: #838d88;
+  font-size: 8.5px;
+  font-weight: 650;
+}
+.da-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 26px;
+  padding: 0 7px;
+  border-radius: 6px;
+  color: #c9d3ce;
+}
+.da-nav .live-dot {
+  margin-left: auto;
+}
+.da-file {
+  min-height: 34px;
+}
+.da-file > i {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: #4f5c56;
+}
+.da-file > span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  font-weight: 600;
+}
+.da-file code {
+  color: #838d88;
+  font-size: 7.5px;
+}
+.da-nav.active {
+  background: #1d2a25;
+  color: #fff;
+}
+.da-nav.active > i {
+  background: #41c791;
+}
+.da-nav.linked {
+  color: #9ff0cb;
+}
+.da-nav.pushed {
+  background: #1f4d39;
+  color: #fff;
+}
+.da-badge {
+  display: grid;
+  width: 15px;
+  height: 15px;
+  margin-left: auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #e5a33a;
+  color: #2a1a00;
+  font-size: 8px;
+  animation: da-pop 0.35s ease-out;
+}
+.da-link-mark {
+  margin-left: auto;
+  color: #9ff0cb;
+}
+.da-icon {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.da-footer {
+  position: absolute;
+  left: 14px;
+  bottom: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #838d88;
+  font-size: 8.5px;
+}
+.da-main {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  background: #f6f8f5;
+}
+.da-topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 210px) auto;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 14px;
+  border-bottom: 1px solid #e1e7e2;
+  background: #fbfcfa;
+}
+.da-crumb {
+  overflow: hidden;
+  color: #6c7a72;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.da-crumb > span {
+  margin: 0 3px;
+}
+.da-crumb b {
+  color: #17251f;
+}
+.da-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 7px;
+  overflow: hidden;
+  border: 1px solid #dfe5e0;
+  border-radius: 6px;
+  background: #fff;
+  color: #7c8882;
+  font-size: 8.5px;
+  white-space: nowrap;
+}
+.da-search svg {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+.da-search kbd,
+.da-save kbd {
+  margin-left: auto;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #eef1ee;
+  font: inherit;
+  font-size: 7.5px;
+}
+.da-push {
+  padding: 4px 8px;
+  border: 1px solid #dfe5e0;
+  border-radius: 6px;
+  background: #fff;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.da-content {
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  padding: 16px 18px 0;
+}
+.da-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.da-heading h3 {
+  font-size: 17px;
+  letter-spacing: -0.4px;
+}
+.da-heading code {
+  display: block;
+  margin-top: 1px;
+  color: #6c7a72;
+  font-size: 8px;
+}
+.da-heading p {
+  margin-top: 3px;
+  color: #6c7a72;
+  font-size: 9px;
+}
+.da-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.da-switch {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid #dfe5e0;
+  border-radius: 6px;
+  background: #eef1ee;
+  font-size: 8.5px;
+}
+.da-switch > * {
+  padding: 3px 7px;
+  border-radius: 4px;
+  color: #6c7a72;
+  white-space: nowrap;
+}
+.da-switch b {
+  background: #fff;
+  color: #17251f;
+}
+.da-primary {
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #1c6b4c;
+  color: #fff;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.da-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 12px 0 10px;
+}
+.da-chips > span {
+  padding: 3px 8px;
+  border: 1px solid #dfe5e0;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 8.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.da-chips > span.active {
+  border-color: #8fcfb0;
+  background: #e3f4ea;
+  color: #155c40;
+}
+.da-chips small {
+  margin-left: 3px;
+  color: #6c7a72;
+}
+.da-table {
+  overflow: hidden;
+  border: 1px solid #e1e7e2;
+  border-radius: 8px;
+  background: #fff;
+}
+.da-head,
+.da-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.2fr) 70px minmax(0, 0.9fr);
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+}
+.da-head {
+  height: 24px;
+  border-bottom: 1px solid #e1e7e2;
+  color: #6c7a72;
+  font-size: 8px;
+  font-weight: 650;
+}
+.da-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 12px;
+  border-bottom: 1px solid #e1e7e2;
+  background: #f3f6f3;
+  font-weight: 700;
+}
+.da-group small {
+  color: #6c7a72;
+  font-weight: 500;
+}
+.da-row {
+  min-height: 38px;
+  border-bottom: 1px solid #edf1ee;
+}
+.da-row.changed {
+  background: #fdf3e1;
+  box-shadow: inset 2px 0 0 #d69326;
+}
+.da-key {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.da-key code {
+  font-size: 9.5px;
+  font-weight: 700;
+}
+.da-key small {
+  overflow: hidden;
+  color: #6c7a72;
+  font-size: 8px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.da-value-cell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+}
+.da-value {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid #e1e7e2;
+  border-radius: 6px;
+  background: #f6f8f5;
+  color: #6c7a72;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 8.5px;
+  white-space: nowrap;
+}
+.da-value i {
+  font-style: normal;
+  letter-spacing: 1px;
+}
+.da-value.empty {
+  border-style: dashed;
+  border-color: #e7a6a0;
+  background: #fdf0ee;
+  color: #b6382c;
+  font-family: inherit;
+  font-weight: 650;
+}
+.da-changed {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #f8e2b8;
+  color: #8a5a10;
+  font-size: 7.5px;
+  font-weight: 700;
+}
+.da-access {
+  padding: 3px 0;
+  border: 1px solid #ecd29c;
+  border-radius: 999px;
+  background: #fdf3e1;
+  color: #8a5a10;
+  font-size: 8px;
+  font-weight: 700;
+  text-align: center;
+}
+.da-access.allowed {
+  border-color: #b8e0cb;
+  background: #e8f6ee;
+  color: #155c40;
+}
+.da-links {
+  overflow: hidden;
+  color: #9aa49f;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.da-links.linked {
+  color: #1c6b4c;
+  font-weight: 650;
+}
+.animated-variable {
+  animation: da-rise 0.45s ease-out;
+}
+.demo-link-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-bottom: 1px solid #edf1ee;
+  background: #eef8f2;
+  color: #1c6b4c;
+  font-size: 8.5px;
+  font-weight: 650;
+}
+.demo-link-detail code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 8px;
+}
+.demo-save-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 18px 12px;
+  padding: 0 10px;
+  min-height: 30px;
+  border: 1px solid #e1e7e2;
+  border-radius: 8px;
+  background: #fff;
+  color: #4d5c54;
+  font-size: 9px;
+}
+.demo-save-status.pending {
+  border-color: #ecd29c;
+  background: #fdf6e8;
+}
+.demo-save-status small {
+  color: #6c7a72;
+}
+.da-check {
+  color: #1c8a5c;
+  font-weight: 800;
+}
+.da-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d69326;
+}
+.da-save-actions {
+  display: flex;
+  gap: 5px;
+  margin-left: auto;
+}
+.da-save-actions > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 1px solid #dfe5e0;
+  border-radius: 6px;
+  background: #fff;
+  font-weight: 650;
+}
+.da-save-actions > .da-save {
+  border-color: #1c6b4c;
+  background: #1c6b4c;
+  color: #fff;
+}
+.da-save kbd {
+  background: #2b7d5b;
+}
+@keyframes da-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes da-pop {
+  from {
+    transform: scale(0.4);
+  }
+}
+@media (max-width: 1100px) {
+  .da-layout {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+  .da-search {
+    display: none;
+  }
+  .da-topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+@media (max-width: 700px) {
+  .da-layout {
+    grid-template-columns: 92px minmax(0, 1fr);
+    height: calc(100% - 28px);
+    font-size: 7.5px;
+  }
+  .da-sidebar {
+    padding: 10px 5px;
+  }
+  .da-brand {
+    font-size: 9px;
+  }
+  .da-brand img {
+    width: 13px;
+    height: 13px;
+  }
+  .da-project small,
+  .da-file code,
+  .da-footer,
+  .da-actions .da-switch,
+  .da-head,
+  .da-links,
+  .da-access,
+  .da-chips > span:nth-child(n + 3) {
+    display: none;
+  }
+  .da-label {
+    font-size: 6.5px;
+  }
+  .da-nav {
+    min-height: 20px;
+    gap: 4px;
+    padding: 0 4px;
+  }
+  .da-topbar {
+    height: 26px;
+    padding: 0 8px;
+  }
+  .da-content {
+    padding: 10px 9px 0;
+  }
+  .da-heading h3 {
+    font-size: 12px;
+  }
+  .da-head,
+  .da-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    padding: 0 7px;
+  }
+  .da-key code {
+    font-size: 7px;
+  }
+  .da-value {
+    font-size: 6.5px;
+  }
+  .demo-save-status {
+    margin: 8px 9px;
+    font-size: 7px;
+  }
+  .da-save-actions > span:first-child {
+    display: none;
+  }
+}
