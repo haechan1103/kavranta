@@ -13,6 +13,15 @@
   </p>
 </div>
 
+<p align="center">
+  <img src="assets/screenshots/kavranta-editor.png" width="920" alt="Kavranta file table with masked values, a pending edit, the details panel, and the save bar (synthetic data)" />
+</p>
+
+> **New in 0.7.20 — a redesigned workspace.** One table per env file with staged saves,
+> a details panel, value-free file comparison, a masked source view, ⌘K search, and a
+> review step before every push. [Release notes](https://github.com/haechan1103/kavranta/releases/tag/v0.7.20) ·
+> [What changed](#new-in-0720-a-redesigned-workspace)
+
 ## Start here
 
 On macOS:
@@ -113,9 +122,8 @@ AI access, and which other files share the key. Click a row for its details—de
 linked files, setup guide, recent AI activity—without leaving the table. Edits and
 deletions stay pending until you save, and the save bar names every file Save will
 touch, including linked members. Projects and files can have display names while
-their physical paths stay visible and unchanged.
-
-![Kavranta file editor table with a pending edit, the details panel, and the save bar](assets/screenshots/kavranta-editor.png)
+their physical paths stay visible and unchanged. The screenshot at the top of this
+page shows a file with one pending edit and its details panel open.
 
 ### Know what needs attention
 
