@@ -103,3 +103,29 @@ test("English mobile layout stays within the viewport", async ({ page }) => {
     fullPage: true,
   });
 });
+
+test("the 0.7.20 showcase switches screenshots by click and arrow keys", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: /New in 0.7.20/ }).first().click();
+  const tabs = page.getByRole("tablist", { name: "NEW IN 0.7.20" });
+  const panel = page.getByRole("tabpanel");
+  await expect(tabs.getByRole("tab", { name: /Compare files/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(panel.getByRole("img")).toHaveAttribute(
+    "alt",
+    /Compare files view/,
+  );
+  await tabs.getByRole("tab", { name: /Push review/ }).click();
+  await expect(panel).toContainText("Know exactly what leaves your computer.");
+  await page.keyboard.press("ArrowRight");
+  await expect(tabs.getByRole("tab", { name: /Compare files/ })).toBeFocused();
+  await page.keyboard.press("End");
+  await expect(panel.getByRole("img")).toHaveAttribute("alt", /Push review/);
+  await expect(
+    page.getByRole("img", { name: /Kavranta file table/ }),
+  ).toBeVisible();
+});

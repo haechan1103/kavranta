@@ -6,12 +6,6 @@
   .app-window {
     height: 555px;
   }
-  .demo-editor {
-    padding: 28px 35px;
-  }
-  .demo-variable {
-    min-height: 72px;
-  }
   .terminal-window {
     top: 300px;
   }
@@ -37,22 +31,6 @@
   .app-window {
     width: 95%;
     height: 490px;
-  }
-  .demo-app-layout {
-    grid-template-columns: 145px 1fr;
-  }
-  .demo-brand {
-    font-size: 13px;
-  }
-  .demo-editor {
-    padding: 20px;
-  }
-  .demo-variable {
-    gap: 10px;
-    grid-template-columns: 1fr 1fr 47px;
-  }
-  .demo-variable code {
-    font-size: 8px;
   }
   .terminal-window {
     width: 53%;
@@ -108,138 +86,6 @@
   .traffic-lights i {
     width: 5px;
     height: 5px;
-  }
-  .demo-app-layout {
-    grid-template-columns: 85px 1fr;
-    height: calc(100% - 28px);
-  }
-  .demo-sidebar {
-    padding: 14px 5px;
-  }
-  .demo-brand {
-    gap: 4px;
-    padding: 0 2px;
-    font-size: 9px;
-  }
-  .demo-brand img {
-    width: 16px;
-    height: 18px;
-  }
-  .demo-project {
-    font-size: 6px;
-    padding: 6px 3px;
-    gap: 4px;
-    margin: 16px 0;
-  }
-  .demo-project > span {
-    font-size: 7px;
-    padding: 3px 4px;
-  }
-  .demo-nav-item {
-    font-size: 6px;
-    gap: 4px;
-    padding: 0 4px;
-    height: 27px;
-  }
-  .demo-nav-item small {
-    font-size: 6px;
-  }
-  .demo-nav-label {
-    font-size: 6px;
-    margin: 18px 4px 7px;
-    letter-spacing: 0.5px;
-  }
-  .demo-sidebar-footer {
-    font-size: 5px;
-    left: 9px;
-    bottom: 13px;
-    gap: 3px;
-  }
-  .demo-sidebar-footer .live-dot {
-    width: 3px;
-    height: 3px;
-  }
-  .demo-editor {
-    padding: 16px 11px;
-  }
-  .editor-breadcrumb {
-    font-size: 6px;
-  }
-  .editor-heading {
-    margin: 14px 0 16px;
-  }
-  .editor-heading h3 {
-    font-size: 15px;
-    letter-spacing: -0.5px;
-  }
-  .editor-heading p {
-    font-size: 6px;
-  }
-  .demo-add-label {
-    font-size: 6px;
-    padding: 6px;
-    white-space: nowrap;
-    margin-left: 5px;
-  }
-  .editor-tabs {
-    font-size: 6px;
-    gap: 14px;
-    height: 25px;
-    margin-bottom: 13px;
-  }
-  .editor-tabs b {
-    padding: 1px 2px;
-    margin-left: 2px;
-  }
-  .demo-group {
-    margin-bottom: 11px;
-  }
-  .demo-group > header {
-    height: 28px;
-    padding: 0 8px;
-    font-size: 8px;
-  }
-  .demo-group > header small {
-    font-size: 5px;
-    letter-spacing: 0;
-  }
-  .demo-variable {
-    grid-template-columns: 1fr 62px;
-    gap: 7px;
-    padding: 11px 8px;
-    min-height: 58px;
-  }
-  .demo-variable code {
-    font-size: 7px;
-  }
-  .demo-variable small {
-    font-size: 6px;
-    margin-top: 5px;
-  }
-  .masked-value {
-    padding: 6px 4px;
-    letter-spacing: 0;
-    font-size: 6px;
-  }
-  .policy-pill {
-    display: none;
-  }
-  .demo-variable.highlighted {
-    padding-left: 6px;
-  }
-  .demo-link-detail {
-    flex-wrap: wrap;
-    gap: 4px;
-    font-size: 6px;
-    padding: 7px;
-  }
-  .demo-link-detail code {
-    font-size: 6px;
-    padding: 2px 4px;
-  }
-  .demo-save-status {
-    font-size: 6px;
-    line-height: 1.5;
   }
   .terminal-window {
     position: relative;

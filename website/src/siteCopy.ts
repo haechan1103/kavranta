@@ -14,26 +14,76 @@ export const en = {
     "Find the right variable. See exactly which files will change. Save once—and keep using your existing dev commands.",
   heroCta: "Try with sample files",
   heroSecondary: "Get the desktop app",
+  newPill: "New in 0.7.20",
+  newPillBody: "A redesigned workspace",
+  heroShotAlt:
+    "Kavranta file table with masked values, a pending edit, the details panel, and the save bar",
+  heroShotCaption: "Real app screenshot · synthetic data",
   heroNote: ["macOS & Windows", "Free · MIT", "No account required"],
   tools: "Works alongside your existing tools.",
   featureEyebrow: "FEWER FILES TO HUNT THROUGH.",
   featureTitle: ["Small tasks.", "Less repetition."],
   featureBody:
-    "Start with the files you already have. Add links or an AI connection when you need them.",
+    "Start with the files you already have. Add links, comparisons, or an AI connection when you need them.",
   cards: [
     {
-      title: "Find it. Fill it. Get back to work.",
-      body: "See missing values across a project, find variables by name, and open the file that needs your attention.",
+      title: "Find it. Fill it. Save once.",
+      body: "Filter a file to empty values, type several replacements, and save them together with ⌘S. The save bar names every file that changes.",
     },
     {
       title: "Choose the files that share a value.",
-      body: "Link selected same-name variables inside one project. Review every affected file before saving. Other occurrences remain independent.",
+      body: "Link selected same-name variables inside one project. Saving from any member updates every linked file. Other occurrences stay independent.",
+    },
+    {
+      title: "See which files disagree.",
+      body: "Compare every variable across local, development, and app env files. You see same, different, or missing—never the values.",
     },
     {
       title: "Give an agent a task, not a pasted secret.",
-      body: "Supported agents can inspect names, reuse protected values, and push selected variables through the local broker. The receiving tool or provider gets the value; normal agent responses do not.",
+      body: "Codex, Claude Code, Copilot, Cursor, and OpenCode work through a local broker. The provider receives the value; the agent receives a status.",
+    },
+    {
+      title: "Review before anything leaves.",
+      body: "Push to GitHub Actions, Cloudflare, Expo EAS, or AWS only after a review of the destination, source file, and every name.",
+    },
+    {
+      title: "Share without committing env files.",
+      body: "Send all or selected variables as an encrypted package, or through a team folder. Teammates review each conflict before applying.",
     },
   ],
+  showcase: {
+    eyebrow: "NEW IN 0.7.20",
+    title: ["A workspace built", "around your env files."],
+    body: "Every screen was rebuilt so you can see what will change before it changes—and never see a value you did not ask for.",
+    caption: "Real app screenshots with synthetic data.",
+    release: "Read the 0.7.20 release notes",
+    tabs: [
+      {
+        label: "Compare files",
+        title: "Spot drift between environments.",
+        body: "Every variable against every env file: Set, Value A/B/C, Empty, or Missing. Equality is computed in Rust per request and nothing is stored.",
+        alt: "Compare files view showing which variables differ across three env files without showing values",
+      },
+      {
+        label: "Source view",
+        title: "Read the file the way it is written.",
+        body: "Comments, groups, and order exactly as on disk, with every value masked. Commented-out secrets and unreadable lines are withheld entirely.",
+        alt: "Source view of an env file with comments, groups, and masked values",
+      },
+      {
+        label: "⌘K search",
+        title: "Jump anywhere by name.",
+        body: "Variables, files, views, and commands from one box. ⌘↵ copies a value without opening the file. Search never reads values.",
+        alt: "Command palette listing matching variable names",
+      },
+      {
+        label: "Push review",
+        title: "Know exactly what leaves your computer.",
+        body: "Destination, source file, and each name with its remote type—plus a warning when the provider cannot undo a replacement.",
+        alt: "Push review step listing destination, source file, and variable names",
+      },
+    ],
+  },
   localEyebrow: "AT HOME IN YOUR PROJECT.",
   localTitle: ["Your files stay yours.", "So does your workflow."],
   localBody:
@@ -64,8 +114,8 @@ export const en = {
     },
     {
       title: "Finish one missing value.",
-      body: "Open a file, use Missing values only, enter a replacement, and Save. If your files are complete, review one existing variable.",
-      hint: "Open file → Missing values only → Save",
+      body: "Open a file, choose the Empty filter, type a value, and press ⌘S. Edits stay pending until you save, so you can fill several at once.",
+      hint: "Open file → Empty → ⌘S",
     },
     {
       title: "Connect an AI tool when useful.",
@@ -91,6 +141,11 @@ export const en = {
         "Only explicitly linked variables in the same project change together on Save. Provider push is a requested, one-way operation. GitHub Secrets cannot be read back, so a successful push does not prove current equality.",
     },
     {
+      question: "Can Compare or Source view show my values?",
+      answer:
+        "No. Both are computed in Rust and return only names, line structure, and same/different/missing states. Commented-out assignments and unreadable lines are withheld, and neither view is available to AI agents.",
+    },
+    {
       question: "Which computers are supported?",
       answer:
         "macOS Apple Silicon and Intel, plus Windows 10/11 x64. macOS apps are Developer ID signed and notarized. Windows is currently an unsigned beta: SmartScreen may warn, and organization policy may block installation. Linux is not yet supported.",
@@ -100,6 +155,7 @@ export const en = {
   downloadTitle: ["One folder.", "A clearer setup."],
   downloadBody:
     "Choose an installer from the official GitHub release, or use Homebrew on macOS.",
+  latest: "Latest release: v0.7.20",
   mac: "macOS installers",
   windows: "Windows unsigned beta",
   copy: "Copy",
@@ -153,6 +209,28 @@ export const en = {
     connections: "AI connections",
     activity: "AI activity",
     connected: "AI tool connected",
+    change: "Change",
+    envFiles: "Env files",
+    views: "Views",
+    compare: "Compare files",
+    share: "Share and deploy",
+    push: "Push variables",
+    search: "Search variables, files and commands",
+    table: "Table",
+    source: "Source",
+    empty: "Empty",
+    pending: "Pending",
+    aiCannotRead: "AI cannot read",
+    colKey: "Key",
+    colValue: "Value",
+    colAccess: "AI access",
+    colLinks: "Managed together",
+    valueSet: "Value set",
+    changed: "Changed",
+    pendingCount: "1 pending",
+    pendingDetail: "1 changed · .env.local",
+    review: "Review",
+    save: "Save",
     variables: "variables",
     groups: "groups",
     add: "+ New variable",
@@ -197,26 +275,76 @@ export const ko: typeof en = {
     "필요한 변수를 찾고, 바뀔 파일을 확인하고, 한 번에 저장하세요. 개발 서버를 켜는 명령은 쓰던 그대로입니다.",
   heroCta: "샘플 파일로 직접 체험",
   heroSecondary: "데스크톱 앱 받기",
+  newPill: "0.7.20 새 버전",
+  newPillBody: "작업 화면을 새로 설계했습니다",
+  heroShotAlt:
+    "가려진 값, 변경 대기 중인 수정, 상세 패널, 저장 바가 보이는 Kavranta 파일 표",
+  heroShotCaption: "실제 앱 화면 · 합성 데이터",
   heroNote: ["macOS & Windows", "무료 · MIT", "가입 없이 시작"],
   tools: "지금 사용하는 도구와 함께.",
   featureEyebrow: "찾는 시간은 줄이고.",
   featureTitle: ["작은 설정 작업을", "더 간단하게."],
   featureBody:
-    "이미 있는 파일부터 시작하세요. 연결과 AI 연동은 필요할 때 더하면 됩니다.",
+    "이미 있는 파일부터 시작하세요. 연결, 비교, AI 연동은 필요할 때 더하면 됩니다.",
   cards: [
     {
-      title: "찾고, 채우고, 개발을 이어가세요.",
-      body: "프로젝트의 빈 값을 확인하고 변수명으로 검색해 필요한 파일을 바로 여세요.",
+      title: "찾고, 채우고, 한 번에 저장.",
+      body: "비어 있음 필터로 좁히고 여러 값을 입력한 뒤 ⌘S로 한 번에 저장하세요. 저장 바가 바뀌는 파일을 모두 알려줍니다.",
     },
     {
       title: "같이 쓸 값만 직접 연결하세요.",
-      body: "한 프로젝트 안에서 같은 이름의 변수를 골라 연결합니다. 저장할 파일을 먼저 확인하며 다른 항목은 독립적으로 유지됩니다.",
+      body: "한 프로젝트 안에서 같은 이름의 변수를 골라 연결합니다. 어느 파일에서 저장해도 연결된 파일이 함께 바뀌고, 나머지는 독립적으로 유지됩니다.",
+    },
+    {
+      title: "파일끼리 다른 값을 한눈에.",
+      body: "local, development, 앱별 env 파일의 모든 변수를 비교합니다. 같음·다름·없음만 보여주고 값은 절대 보여주지 않습니다.",
     },
     {
       title: "AI에겐 비밀 대신 할 일을 알려주세요.",
-      body: "지원 에이전트는 로컬 Broker로 이름 조회, 보호된 값 재사용, 선택한 변수 배포를 수행합니다. 값을 받는 곳은 대상 도구나 Provider이며 일반 에이전트 응답에는 반환되지 않습니다.",
+      body: "Codex, Claude Code, Copilot, Cursor, OpenCode가 로컬 Broker를 통해 작업합니다. 값은 Provider가 받고, 에이전트에는 결과만 돌아갑니다.",
+    },
+    {
+      title: "보내기 전에 한 번 더 확인.",
+      body: "GitHub Actions, Cloudflare, Expo EAS, AWS로 올리기 전에 보낼 곳, 가져올 파일, 변수 이름을 하나하나 검토합니다.",
+    },
+    {
+      title: "env 파일을 커밋하지 않고 공유.",
+      body: "전체 또는 일부 변수를 암호화 패키지나 팀 폴더로 전달합니다. 팀원은 충돌을 하나씩 확인한 뒤 적용합니다.",
     },
   ],
+  showcase: {
+    eyebrow: "0.7.20 새 기능",
+    title: ["env 파일에 맞춰", "다시 만든 작업 화면."],
+    body: "바뀌기 전에 무엇이 바뀌는지 먼저 보이고, 요청하지 않은 값은 절대 보이지 않도록 모든 화면을 다시 만들었습니다.",
+    caption: "합성 데이터로 찍은 실제 앱 화면입니다.",
+    release: "0.7.20 릴리스 노트 읽기",
+    tabs: [
+      {
+        label: "파일 비교",
+        title: "환경마다 달라진 값을 바로 찾기.",
+        body: "모든 변수를 모든 env 파일과 맞대어 있음, 값 A/B/C, 비어 있음, 없음으로 보여줍니다. 같은지 여부는 요청마다 Rust에서 계산하고 저장하지 않습니다.",
+        alt: "세 env 파일 사이에서 값이 다른 변수를 값 없이 보여주는 파일 비교 화면",
+      },
+      {
+        label: "파일 원문",
+        title: "파일에 적힌 그대로 읽기.",
+        body: "주석, 그룹, 순서를 디스크에 있는 그대로 보여주고 값은 모두 가립니다. 주석 처리된 비밀과 해석할 수 없는 줄은 내용 자체를 보내지 않습니다.",
+        alt: "주석, 그룹, 가려진 값이 보이는 env 파일 원문 화면",
+      },
+      {
+        label: "⌘K 검색",
+        title: "이름만으로 어디든 이동.",
+        body: "변수, 파일, 화면, 명령을 한 곳에서 찾습니다. ⌘↵로 파일을 열지 않고 값을 복사합니다. 검색은 값을 읽지 않습니다.",
+        alt: "일치하는 변수 이름을 보여주는 명령 팔레트",
+      },
+      {
+        label: "올리기 전 검토",
+        title: "무엇이 컴퓨터를 떠나는지 정확히.",
+        body: "보낼 곳, 가져올 파일, 변수별 원격 유형을 보여주고, 이전 값을 보관하지 않는 대상이면 경고합니다.",
+        alt: "보낼 곳, 가져올 파일, 변수 이름을 보여주는 올리기 검토 단계",
+      },
+    ],
+  },
   localEyebrow: "프로젝트의 원래 자리에서.",
   localTitle: ["파일은 원래 자리에.", "주도권은 당신에게."],
   localBody:
@@ -247,8 +375,8 @@ export const ko: typeof en = {
     },
     {
       title: "빈 값 하나를 채워 보세요.",
-      body: "파일에서 값 없음 필터를 켜고 입력한 뒤 저장하세요. 이미 다 채웠다면 기존 변수 하나를 살펴보세요.",
-      hint: "파일 열기 → 값 없음 필터 → 저장",
+      body: "파일에서 비어 있음 필터를 고르고 값을 입력한 뒤 ⌘S를 누르세요. 저장 전까지 대기 상태로 남아 여러 개를 한 번에 채울 수 있습니다.",
+      hint: "파일 열기 → 비어 있음 → ⌘S",
     },
     {
       title: "필요할 때 AI를 연결하세요.",
@@ -274,6 +402,11 @@ export const ko: typeof en = {
         "같은 프로젝트에서 직접 연결한 변수만 저장할 때 함께 변경됩니다. Provider 배포는 요청한 단방향 전송입니다. GitHub Secret은 다시 읽을 수 없어 현재 값의 일치를 보장하지 않습니다.",
     },
     {
+      question: "파일 비교나 원문 보기에서 값이 보이나요?",
+      answer:
+        "아니요. 둘 다 Rust에서 계산해 이름, 줄 구조, 같음·다름·없음 상태만 돌려줍니다. 주석 처리된 할당과 해석할 수 없는 줄은 내용을 보내지 않으며, AI 에이전트에는 두 기능 모두 제공하지 않습니다.",
+    },
+    {
       question: "어떤 컴퓨터에서 쓸 수 있나요?",
       answer:
         "macOS Apple Silicon·Intel과 Windows 10/11 x64를 지원합니다. macOS 앱은 Developer ID 서명과 공증을 거칩니다. Windows는 현재 미서명 베타로 SmartScreen 경고가 표시되거나 조직 정책에 따라 차단될 수 있습니다. Linux는 아직 지원하지 않습니다.",
@@ -283,6 +416,7 @@ export const ko: typeof en = {
   downloadTitle: ["폴더 하나부터.", "설정은 더 명확하게."],
   downloadBody:
     "공식 GitHub 릴리스에서 설치 파일을 고르거나 macOS에서 Homebrew를 사용하세요.",
+  latest: "최신 릴리스: v0.7.20",
   mac: "macOS 설치 파일",
   windows: "Windows 미서명 베타",
   copy: "복사",
@@ -336,6 +470,28 @@ export const ko: typeof en = {
     connections: "AI 도구 연결",
     activity: "AI 활동",
     connected: "AI 도구 연결됨",
+    change: "변경",
+    envFiles: "환경 파일",
+    views: "보기",
+    compare: "파일 비교",
+    share: "공유와 배포",
+    push: "환경변수 올리기",
+    search: "변수, 파일, 명령 검색",
+    table: "표",
+    source: "파일 원문",
+    empty: "비어 있음",
+    pending: "변경 대기",
+    aiCannotRead: "AI 읽기 불가",
+    colKey: "키",
+    colValue: "값",
+    colAccess: "AI 접근",
+    colLinks: "함께 관리",
+    valueSet: "값 있음",
+    changed: "변경됨",
+    pendingCount: "변경 대기 1건",
+    pendingDetail: "1개 변경 · .env.local",
+    review: "검토",
+    save: "저장",
     variables: "개 변수",
     groups: "개 그룹",
     add: "+ 새 변수",
