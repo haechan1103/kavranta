@@ -246,11 +246,30 @@ describe("VariableRow", () => {
     vi.mocked(api.setCodexAccess).mockClear();
     render(<VariableRow {...rowProps({ projectId: "fixture-project", onMutate })} />);
 
-    await user.selectOptions(screen.getByRole("combobox", { name: /GPT_API_KEY/ }), "read-write");
+    const trigger = screen.getByRole("button", { name: "GPT_API_KEY AI access: Protected" });
+    expect(trigger).toHaveAttribute("title", expect.stringContaining("AI sees the name"));
+    await user.click(trigger);
+    expect(screen.getByRole("menuitemradio", { name: /Protected/ })).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByRole("menuitemradio", { name: /AI allowed/ }));
     expect(screen.getByRole("dialog", { name: "Let AI tools read GPT_API_KEY?" })).toBeInTheDocument();
     expect(api.setCodexAccess).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Allow AI access" }));
 
     expect(api.setCodexAccess).toHaveBeenCalledWith("fixture-project", "GPT_API_KEY", "read-write", true);
+  });
+
+  it("closes the AI access menu on Escape without changing the policy", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.setCodexAccess).mockClear();
+    render(<VariableRow {...rowProps({ projectId: "fixture-project" })} />);
+
+    const trigger = screen.getByRole("button", { name: /GPT_API_KEY AI access/ });
+    await user.click(trigger);
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    await user.keyboard("{ArrowDown}{Escape}");
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+    expect(api.setCodexAccess).not.toHaveBeenCalled();
   });
 });

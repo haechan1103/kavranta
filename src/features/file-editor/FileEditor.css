@@ -141,9 +141,9 @@
 }
 
 .filter-chip.active {
-  color: var(--green-strong);
-  background: var(--green-pale);
-  border-color: var(--green-strong);
+  color: var(--ink);
+  background: var(--surface-muted);
+  border-color: var(--ink);
 }
 
 .bulk-bar {
@@ -213,7 +213,7 @@
 .variables-table-head,
 .variable-row {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1.25fr) minmax(0, 1.3fr) 132px 128px;
+  grid-template-columns: 28px minmax(0, 1.25fr) minmax(0, 1.3fr) 44px 128px;
   align-items: center;
   gap: var(--space-3);
   padding: 0 14px 0 10px;

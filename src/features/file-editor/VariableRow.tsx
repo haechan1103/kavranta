@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from
 import { useConfirm } from "../../components/ConfirmDialog";
 import { CopyButton } from "../../components/CopyButton";
 import { EyeIcon, EyeOffIcon, LinkIcon } from "../../components/icons";
+import { AccessMenu } from "./AccessMenu";
 import { useI18n } from "../../i18n";
 import * as api from "../../lib/api";
 import type { CodexAccess, OccurrenceProjection } from "../../lib/types";
@@ -272,16 +273,11 @@ export function VariableRow({
       )}
 
       <div className="access-cell">
-        <select
-          className={`access-select ${variable.codexAccess}`}
-          value={variable.codexAccess}
-          aria-label={t("row.aiAccess", { key: variable.key })}
-          onChange={(event) => void changeAccess(event.target.value as CodexAccess)}
-        >
-          <option value="protected">{t("row.protected")}</option>
-          <option value="unclassified">{t("row.unclassified")}</option>
-          <option value="read-write">{t("row.readWrite")}</option>
-        </select>
+        <AccessMenu
+          variableKey={variable.key}
+          access={variable.codexAccess}
+          onChange={(access) => void changeAccess(access)}
+        />
       </div>
 
       <div className="links-cell">
