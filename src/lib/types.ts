@@ -185,12 +185,20 @@ export interface ActionPackInfo {
   target: string;
   cliVersion: string | null;
   profileId: string | null;
+  /** Fixed HTTP method; null for CLI actions. */
+  method: "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE" | null;
+  /** Top-level JSON body fields the caller may fill (protocol v2). */
+  bodyFields: string[];
+  /** Result keys the response projection may return (protocol v2). */
+  outputFields: string[];
 }
 
 export interface ActionExecutionRequest {
   packId: string;
   file: string;
   bindings: Record<string, string>;
+  /** JSON object with only allowlisted top-level fields; never a managed value. */
+  body?: string;
 }
 
 export interface ActionExecutionResult {
@@ -201,6 +209,8 @@ export interface ActionExecutionResult {
   durationMs: number | null;
   exitCode: number | null;
   resultCode: string;
+  /** Projected, secret-scrubbed scalar fields (protocol v2). */
+  output?: Record<string, string>;
 }
 
 export interface GitSafetyProjection {

@@ -142,6 +142,23 @@ export async function listActionPacks(projectId: string): Promise<ActionPackInfo
       target: "https://api.example.com/health",
       cliVersion: null,
       profileId: null,
+      method: "GET",
+      bodyFields: [],
+      outputFields: [],
+    }, {
+      id: "local.demo.chat",
+      displayName: "Model gateway chat",
+      description: "Send one chat request with a protected API key.",
+      packVersion: "1.0.0",
+      kind: "http",
+      available: true,
+      bindings: [{ id: "GPT_API_KEY", destination: "Authorization" }],
+      target: "https://gateway.example.com/v1/chat/completions",
+      cliVersion: null,
+      profileId: null,
+      method: "POST",
+      bodyFields: ["model", "prompt"],
+      outputFields: ["content", "model"],
     }];
   }
   return call("list_action_packs", { request: { projectId } });
@@ -179,6 +196,9 @@ export async function executeActionPack(
       durationMs: 84,
       exitCode: null,
       resultCode: "ACTION_SUCCEEDED",
+      output: request.packId === "local.demo.chat"
+        ? { content: "Demo reply: the request reached the gateway.", model: "demo-model" }
+        : undefined,
     };
   }
   return call("execute_action_pack", { payload: { projectId, request } });
