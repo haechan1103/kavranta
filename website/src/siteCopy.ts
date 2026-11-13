@@ -11,7 +11,7 @@ export const en = {
   download: "Download",
   hero: ["One edit.", "Every file you choose."],
   heroBody:
-    "Find the right variable. See exactly which files will change. Save once—and keep using your existing dev commands.",
+    "Find the right variable. See exactly which files will change. Save once, and keep using your existing dev commands.",
   heroCta: "Try with sample files",
   heroSecondary: "Get the desktop app",
   newPill: "New in 0.7.20",
@@ -22,12 +22,12 @@ export const en = {
   heroNote: ["macOS & Windows", "Free · MIT", "No account required"],
   tools: "Works alongside your existing tools.",
   featureEyebrow: "FEWER FILES TO HUNT THROUGH.",
-  featureTitle: ["Small tasks.", "Less repetition."],
+  featureTitle: ["Everyday env file work,", "in one desktop app."],
   featureBody:
     "Start with the files you already have. Add links, comparisons, or an AI connection when you need them.",
   cards: [
     {
-      title: "Find it. Fill it. Save once.",
+      title: "Fill empty values and save them together.",
       body: "Filter a file to empty values, type several replacements, and save them together with ⌘S. The save bar names every file that changes.",
     },
     {
@@ -54,7 +54,7 @@ export const en = {
   showcase: {
     eyebrow: "NEW IN 0.7.20",
     title: ["A workspace built", "around your env files."],
-    body: "Every screen was rebuilt so you can see what will change before it changes—and never see a value you did not ask for.",
+    body: "The workspace was redesigned so you can see what will change before it changes, and so you never see a value you did not ask for.",
     caption: "Real app screenshots with synthetic data.",
     release: "Read the 0.7.20 release notes",
     tabs: [
@@ -78,14 +78,14 @@ export const en = {
       },
       {
         label: "Push review",
-        title: "Know exactly what leaves your computer.",
-        body: "Destination, source file, and each name with its remote type—plus a warning when the provider cannot undo a replacement.",
+        title: "Review what leaves your computer.",
+        body: "Destination, source file, and each name with its remote type, plus a warning when the provider cannot undo a replacement.",
         alt: "Push review step listing destination, source file, and variable names",
       },
     ],
   },
-  localEyebrow: "AT HOME IN YOUR PROJECT.",
-  localTitle: ["Your files stay yours.", "So does your workflow."],
+  localEyebrow: "LOCAL-FIRST",
+  localTitle: ["Kavranta edits the files", "your project already uses."],
   localBody:
     "Keep your comments, file layout, and command for starting the app. Local editing does not need a hosted account.",
   security: "Read the security model",
@@ -103,7 +103,7 @@ export const en = {
       body: "Distinguish missing ignore rules, tracked files, and paths in Git history.",
     },
   ],
-  guideEyebrow: "YOUR FIRST USEFUL TASK.",
+  guideEyebrow: "FIRST RUN",
   guideTitle: "Start with one project.",
   fullGuide: "Read the full guide",
   steps: [
@@ -151,8 +151,8 @@ export const en = {
         "macOS Apple Silicon and Intel, plus Windows 10/11 x64. macOS apps are Developer ID signed and notarized. Windows is currently an unsigned beta: SmartScreen may warn, and organization policy may block installation. Linux is not yet supported.",
     },
   ],
-  downloadEyebrow: "TRY IT ON YOUR OWN PROJECT.",
-  downloadTitle: ["One folder.", "A clearer setup."],
+  downloadEyebrow: "DOWNLOAD",
+  downloadTitle: ["Point it at a project", "you already work on."],
   downloadBody:
     "Choose an installer from the official GitHub release, or use Homebrew on macOS.",
   latest: "Latest release: v0.7.20",
@@ -195,7 +195,7 @@ export const en = {
     pause: "Pause demo",
     play: "Play demo",
     replay: "Replay demo from start",
-    seal: ["Ask naturally.", "See the impact."],
+    seal: ["Ask in plain language,", "then see what changed."],
     disclosure: [
       "Illustrated with synthetic data.",
       "No real file changes or external requests.",
@@ -251,7 +251,7 @@ export const en = {
     working: "Applying the requested task",
     idle: "All changes saved",
     terminalConnected: "Kavranta connected",
-    terminalTitle: "Keep your development flow.",
+    terminalTitle: "Work from your AI agent.",
     terminalBody: "Ask for an environment task in your own words.",
     terminalNote: "Protected values stay out of normal responses",
     done: "Done",
@@ -283,12 +283,12 @@ export const ko: typeof en = {
   heroNote: ["macOS & Windows", "무료 · MIT", "가입 없이 시작"],
   tools: "지금 사용하는 도구와 함께.",
   featureEyebrow: "찾는 시간은 줄이고.",
-  featureTitle: ["작은 설정 작업을", "더 간단하게."],
+  featureTitle: ["매일 하는 env 파일 작업을", "데스크톱 앱 하나에서."],
   featureBody:
     "이미 있는 파일부터 시작하세요. 연결, 비교, AI 연동은 필요할 때 더하면 됩니다.",
   cards: [
     {
-      title: "찾고, 채우고, 한 번에 저장.",
+      title: "빈 값을 채우고 한 번에 저장.",
       body: "비어 있음 필터로 좁히고 여러 값을 입력한 뒤 ⌘S로 한 번에 저장하세요. 저장 바가 바뀌는 파일을 모두 알려줍니다.",
     },
     {
@@ -315,7 +315,7 @@ export const ko: typeof en = {
   showcase: {
     eyebrow: "0.7.20 새 기능",
     title: ["env 파일에 맞춰", "다시 만든 작업 화면."],
-    body: "바뀌기 전에 무엇이 바뀌는지 먼저 보이고, 요청하지 않은 값은 절대 보이지 않도록 모든 화면을 다시 만들었습니다.",
+    body: "바뀌기 전에 무엇이 바뀌는지 먼저 보이고, 요청하지 않은 값은 절대 보이지 않도록 작업 화면을 새로 설계했습니다.",
     caption: "합성 데이터로 찍은 실제 앱 화면입니다.",
     release: "0.7.20 릴리스 노트 읽기",
     tabs: [
@@ -339,14 +339,14 @@ export const ko: typeof en = {
       },
       {
         label: "올리기 전 검토",
-        title: "무엇이 컴퓨터를 떠나는지 정확히.",
+        title: "컴퓨터를 떠나는 항목을 먼저 검토.",
         body: "보낼 곳, 가져올 파일, 변수별 원격 유형을 보여주고, 이전 값을 보관하지 않는 대상이면 경고합니다.",
         alt: "보낼 곳, 가져올 파일, 변수 이름을 보여주는 올리기 검토 단계",
       },
     ],
   },
-  localEyebrow: "프로젝트의 원래 자리에서.",
-  localTitle: ["파일은 원래 자리에.", "주도권은 당신에게."],
+  localEyebrow: "로컬 우선",
+  localTitle: ["이미 쓰던 파일을", "그 자리에서 편집합니다."],
   localBody:
     "주석, 파일 배치, 개발 명령을 그대로 유지합니다. 로컬 편집을 위해 온라인 계정을 만들 필요가 없습니다.",
   security: "보안 모델 읽기",
@@ -364,7 +364,7 @@ export const ko: typeof en = {
       body: "ignore 누락, 추적 중인 파일, Git 기록에 남은 경로를 알려줍니다.",
     },
   ],
-  guideEyebrow: "첫 번째 유용한 작업.",
+  guideEyebrow: "처음 실행할 때",
   guideTitle: "프로젝트 하나로 시작하세요.",
   fullGuide: "전체 가이드 읽기",
   steps: [
@@ -412,8 +412,8 @@ export const ko: typeof en = {
         "macOS Apple Silicon·Intel과 Windows 10/11 x64를 지원합니다. macOS 앱은 Developer ID 서명과 공증을 거칩니다. Windows는 현재 미서명 베타로 SmartScreen 경고가 표시되거나 조직 정책에 따라 차단될 수 있습니다. Linux는 아직 지원하지 않습니다.",
     },
   ],
-  downloadEyebrow: "이제 내 프로젝트에서.",
-  downloadTitle: ["폴더 하나부터.", "설정은 더 명확하게."],
+  downloadEyebrow: "다운로드",
+  downloadTitle: ["지금 작업 중인 프로젝트에", "바로 써 보세요."],
   downloadBody:
     "공식 GitHub 릴리스에서 설치 파일을 고르거나 macOS에서 Homebrew를 사용하세요.",
   latest: "최신 릴리스: v0.7.20",
@@ -456,7 +456,7 @@ export const ko: typeof en = {
     pause: "데모 일시정지",
     play: "데모 재생",
     replay: "데모 처음부터 재생",
-    seal: ["요청은 자연스럽게.", "반영은 정확하게."],
+    seal: ["평소 말로 요청하고", "바뀐 결과를 확인하세요."],
     disclosure: [
       "합성 데이터로 재현한 데모입니다.",
       "실제 파일 변경이나 외부 전송은 없습니다.",
@@ -512,8 +512,8 @@ export const ko: typeof en = {
     working: "AI 작업을 반영하고 있습니다",
     idle: "모든 변경사항이 저장되었습니다",
     terminalConnected: "Kavranta 연결됨",
-    terminalTitle: "개발 흐름을 이어가세요.",
-    terminalBody: "환경변수 작업을 자연스럽게 요청하세요.",
+    terminalTitle: "AI 에이전트에서 바로 작업",
+    terminalBody: "환경변수 작업을 원하는 말로 요청하세요.",
     terminalNote: "보호된 값은 일반 응답에 반환되지 않습니다",
     done: "완료",
     inProgress: "작업 중",
