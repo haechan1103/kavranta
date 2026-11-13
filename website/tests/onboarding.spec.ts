@@ -120,7 +120,7 @@ test("the 0.7.20 showcase switches screenshots by click and arrow keys", async (
     /Compare files view/,
   );
   await tabs.getByRole("tab", { name: /Push review/ }).click();
-  await expect(panel).toContainText("Know exactly what leaves your computer.");
+  await expect(panel).toContainText("Review what leaves your computer.");
   await page.keyboard.press("ArrowRight");
   await expect(tabs.getByRole("tab", { name: /Compare files/ })).toBeFocused();
   await page.keyboard.press("End");

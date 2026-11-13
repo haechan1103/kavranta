@@ -50,18 +50,19 @@ pub(super) fn broker_path_is_missing(path: &Path) -> bool {
     let Ok(metadata) = fs::metadata(path) else {
         return true;
     };
-    if !metadata.is_file() {
-        return true;
-    }
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        metadata.permissions().mode() & 0o111 == 0
-    }
-    #[cfg(not(unix))]
-    {
-        false
-    }
+    !metadata.is_file() || !is_executable(&metadata)
+}
+
+#[cfg(unix)]
+fn is_executable(metadata: &fs::Metadata) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+    metadata.permissions().mode() & 0o111 != 0
+}
+
+/// Windows has no executable bit; any regular file is treated as runnable.
+#[cfg(not(unix))]
+fn is_executable(_metadata: &fs::Metadata) -> bool {
+    true
 }
 
 pub(super) fn connection_configuration_is_current(
