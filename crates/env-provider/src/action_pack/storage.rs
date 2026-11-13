@@ -443,6 +443,25 @@ pub(crate) fn pack_info(
     manifest: &ActionPackManifest,
     resolved: Option<&ResolvedActionPack>,
 ) -> ActionPackInfo {
+    let (method, body_fields, output_fields) = match &manifest.action {
+        ActionDefinition::Http {
+            method,
+            request_body,
+            response_projection,
+            ..
+        } => (
+            Some(*method),
+            request_body
+                .as_ref()
+                .map(|policy| policy.fields.clone())
+                .unwrap_or_default(),
+            response_projection
+                .as_ref()
+                .map(|projection| projection.fields.keys().cloned().collect())
+                .unwrap_or_default(),
+        ),
+        ActionDefinition::Cli { .. } => (None, Vec::new(), Vec::new()),
+    };
     let (kind, bindings, target, cli_version, profile_id, available) = match &manifest.action {
         ActionDefinition::Cli {
             executable_candidates,
@@ -492,6 +511,9 @@ pub(crate) fn pack_info(
         target,
         cli_version,
         profile_id,
+        method,
+        body_fields,
+        output_fields,
     }
 }
 
@@ -596,6 +618,44 @@ mod tests {
             "result.bin".to_owned(),
         ];
         validate_manifest(&cli).expect("CLI pack without a variable-name argument");
+    }
+
+    #[test]
+    fn pack_info_describes_the_fixed_request_shape_without_values() {
+        let mut manifest = http_manifest("https://api.example.com/chat");
+        manifest.action_protocol_version = "0.2.0".to_owned();
+        let ActionDefinition::Http {
+            method,
+            request_body,
+            response_projection,
+            ..
+        } = &mut manifest.action
+        else {
+            unreachable!()
+        };
+        *method = HttpActionMethod::Post;
+        *request_body = Some(HttpRequestBodyPolicy {
+            content_type: HttpBodyContentType::Json,
+            fields: vec!["model".to_owned(), "messages".to_owned()],
+        });
+        *response_projection = Some(HttpResponseProjection {
+            content_type: HttpBodyContentType::Json,
+            fields: BTreeMap::from([(
+                "content".to_owned(),
+                "choices.0.message.content".to_owned(),
+            )]),
+            max_bytes: 4096,
+        });
+
+        let info = pack_info(&manifest, None);
+
+        assert_eq!(info.method, Some(HttpActionMethod::Post));
+        assert_eq!(info.body_fields, vec!["model", "messages"]);
+        assert_eq!(info.output_fields, vec!["content"]);
+        let serialized = serde_json::to_string(&info).expect("serialize");
+        assert!(serialized.contains("\"method\":\"POST\""));
+        assert!(!serialized.contains("choices.0.message.content"));
+        assert!(!serialized.contains("Bearer"));
     }
 
     #[test]
