@@ -282,12 +282,25 @@ export function VariableRow({
 
       <div className="links-cell">
         {variable.linkedCount > 1 ? (
-          <span className="links-count" title={variable.linkedFiles.join(" · ")}>
+          <span
+            className="links-count"
+            role="img"
+            aria-label={t("row.filesLinked", { count: variable.linkedCount })}
+            title={`${t("row.filesLinked", { count: variable.linkedCount })} · ${variable.linkedFiles.join(" · ")}`}
+          >
             <LinkIcon />
-            {t("row.filesLinked", { count: variable.linkedCount })}
+            {variable.linkedCount}
           </span>
         ) : unlinkedPeers ? (
-          <span className="links-available">{t("row.sameVariable", { count: sameKeyFiles.length })}</span>
+          <span
+            className="links-available"
+            role="img"
+            aria-label={t("row.sameVariable", { count: sameKeyFiles.length })}
+            title={`${t("row.sameVariable", { count: sameKeyFiles.length })} · ${t("row.sameVariableHint")}`}
+          >
+            <LinkIcon />
+            {sameKeyFiles.length}
+          </span>
         ) : (
           <span className="links-none" aria-label={t("row.notLinked")}>—</span>
         )}

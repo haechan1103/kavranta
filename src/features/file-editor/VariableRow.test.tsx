@@ -199,16 +199,19 @@ describe("VariableRow", () => {
 
   it("shows how many files a linked variable is managed with", () => {
     render(<VariableRow {...rowProps()} />);
-    expect(screen.getByText("3 files linked")).toHaveAttribute(
+    expect(screen.getByRole("img", { name: "3 files linked" })).toHaveAttribute(
       "title",
-      ".env.local · .env.development · apps/api/.env",
+      "3 files linked · .env.local · .env.development · apps/api/.env",
     );
   });
 
   it("points out unlinked same-name occurrences", () => {
     const unlinked = { ...variable, linkedCount: 0, linkId: null, linkedFiles: [] };
     render(<VariableRow {...rowProps({ variable: unlinked, sameKeyFiles: [".env.local", ".env.development"] })} />);
-    expect(screen.getByText("Same key in 2 files")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Same key in 2 files" })).toHaveAttribute(
+      "title",
+      expect.stringContaining("Not linked yet"),
+    );
   });
 
   it("copies the environment variable name independently from its value", async () => {

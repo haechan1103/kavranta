@@ -281,23 +281,36 @@
   font-size: var(--text-xs);
 }
 
-.links-count {
+/* Icon plus count; the file names live in the tooltip and the details panel. */
+.links-count,
+.links-available {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: var(--green-strong);
+  gap: 4px;
+  color: var(--ink);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  cursor: default;
 }
 
-.links-count .ui-svg {
+.links-count .ui-svg,
+.links-available .ui-svg {
   width: 14px;
   height: 14px;
 }
 
+.links-count .ui-svg {
+  color: var(--green-strong);
+}
+
 .links-available {
-  color: var(--amber);
-  font-weight: 600;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.links-available .ui-svg {
+  color: var(--faint);
 }
 
 .links-none {
