@@ -552,3 +552,30 @@ export type RedactedSourceLine = { line: number } & (
   | { kind: "assignment"; key: string; valueState: ValueState }
   | { kind: "unparsed" }
 );
+
+/** A request saved in the Actions dialog. Holds variable names and a checked body, never values. */
+export interface SavedActionRequest {
+  id: string;
+  projectId: string;
+  packId: string;
+  name: string;
+  file: string;
+  bindings: Record<string, string>;
+  body?: string;
+  updatedAt: number;
+}
+
+/** One desktop Action run: allowlisted metadata and redacted projected output. */
+export interface ActionRunRecord {
+  id: string;
+  projectId: string;
+  packId: string;
+  requestName?: string;
+  at: number;
+  succeeded: boolean;
+  statusCode: number | null;
+  durationMs: number | null;
+  exitCode: number | null;
+  resultCode: string;
+  output: Record<string, string>;
+}
