@@ -29,9 +29,10 @@ fn catalog_validation_requires_every_agent_manifest() {
 
 #[test]
 fn agent_bundle_version_is_independent_from_the_app_release() {
-    // 2.7.0 added the recorded-deployment-target capability. Keep this in step with
-    // plugins/kavranta/VERSION; validate-agent-bundle.mjs enforces the manifest side.
-    assert_eq!(agent_bundle_version(), "2.7.0");
+    // 2.7.1 lets the Skill send allowlisted Action bodies and report projected output.
+    // Keep this in step with plugins/kavranta/VERSION; validate-agent-bundle.mjs
+    // enforces the manifest side.
+    assert_eq!(agent_bundle_version(), "2.7.1");
     assert_ne!(agent_bundle_version(), env!("CARGO_PKG_VERSION"));
 }
 

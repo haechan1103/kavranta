@@ -17,10 +17,12 @@
   <img src="assets/screenshots/kavranta-editor.png" width="920" alt="Kavranta file table with masked values, a pending edit, the details panel, and the save bar (synthetic data)" />
 </p>
 
-> **New in 0.7.20 — a redesigned workspace.** One table per env file with staged saves,
-> a details panel, value-free file comparison, a masked source view, ⌘K search, and a
-> review step before every push. [Release notes](https://github.com/haechan1103/kavranta/releases/tag/v0.7.20) ·
-> [What changed](#new-in-0720-a-redesigned-workspace)
+> **New in 0.7.21 — Actions you can save and replay.** Call a fixed API like an HTTP
+> client: pick a variable for each header, edit the JSON body, save the request, and
+> keep a history of responses—without the key ever reaching the screen or an AI chat.
+> The file table is calmer too, with icon-only AI access and links.
+> [Release notes](https://github.com/haechan1103/kavranta/releases/tag/v0.7.21) ·
+> [0.7.20 redesign](#new-in-0720-a-redesigned-workspace)
 
 ## Start here
 
