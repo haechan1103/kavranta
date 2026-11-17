@@ -1,0 +1,78 @@
+.action-variable select,
+.action-body-input {
+  width: 100%;
+  height: 40px;
+  color: var(--ink);
+  background-color: transparent;
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.action-body-input {
+  padding: 0 12px;
+  border-left: 1px solid var(--line-soft);
+}
+
+.action-variable select:focus-visible,
+.action-body-input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.action-body {
+  display: grid;
+  gap: 8px;
+}
+
+.action-body-mode {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.action-body-mode button {
+  padding: 3px 9px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.action-body-mode button[aria-pressed="true"] {
+  color: var(--ink);
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+
+.action-body-mode small {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: var(--text-2xs);
+}
+
+.action-json {
+  min-height: 140px;
+  padding: 10px 12px;
+  resize: vertical;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+
+.action-json.invalid {
+  border-color: var(--red);
+}
+
+.action-json-error {
+  margin: 0;
+  color: var(--red);
+  font-size: var(--text-xs);
+}

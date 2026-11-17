@@ -275,11 +275,18 @@ variable.
 - Call `plan_action` with the Pack ID, file, and binding-ID-to-variable-name map.
   Verify the redacted Pack, file, names, and target summary, then call `apply_plan`
   immediately when they match the user's request.
+- When `list_action_packs` returns `bodyFields` for a Pack (protocol 0.2), pass
+  `body` as a JSON object string whose top-level keys are a subset of those fields,
+  filled only with non-secret request content from the user's request (for example a
+  model name or a prompt). Never put a managed value, credential, header value, or
+  command in the body; the Broker rejects a body that contains a bound secret.
 - Never call the Pack executable, curl, an HTTP client, shell, or generic command
-  tool directly. Never pass a value, assignment, request body, header value, command,
-  or argument fragment to Broker tools.
-- Report only success, stable result code, optional HTTP status, duration, and exit
-  code. A successful status does not authorize reading or describing a response body.
+  tool directly. Never pass a value, assignment, header value, command, or argument
+  fragment to Broker tools.
+- Report success, stable result code, optional HTTP status, duration, exit code, and
+  any projected `output` fields the Broker returns for that Pack. Those fields are
+  allowlisted by the Pack and scrubbed of bound secrets; do not infer or describe any
+  other part of the response body.
 - Protected and unclassified values can run through this opaque path. Do not call
   `read_allowed_value` or downgrade policy first.
 - The installed CLI or fixed API receives the value by design. Do not describe the

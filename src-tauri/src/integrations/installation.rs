@@ -50,17 +50,14 @@ pub(super) fn broker_path_is_missing(path: &Path) -> bool {
     let Ok(metadata) = fs::metadata(path) else {
         return true;
     };
-    if !metadata.is_file() {
-        return true;
-    }
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        metadata.permissions().mode() & 0o111 == 0
+        !metadata.is_file() || metadata.permissions().mode() & 0o111 == 0
     }
     #[cfg(not(unix))]
     {
-        false
+        !metadata.is_file()
     }
 }
 

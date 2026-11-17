@@ -1,7 +1,17 @@
 import { open } from "@tauri-apps/plugin-dialog";
 
 import { demoAgentIntegrations } from "../demo";
-import type { ActionExecutionRequest, ActionExecutionResult, ActionPackInfo, AgentIntegrationId, AgentIntegrationStatus, DeploymentProviderStatus, PersonalProviderPackInfo } from "../types";
+import type {
+  ActionExecutionRequest,
+  ActionExecutionResult,
+  ActionPackInfo,
+  ActionRunRecord,
+  AgentIntegrationId,
+  AgentIntegrationStatus,
+  DeploymentProviderStatus,
+  PersonalProviderPackInfo,
+  SavedActionRequest,
+} from "../types";
 import { ApiError, call, isTauriRuntime } from "./shared";
 
 export async function listAgentIntegrations(): Promise<AgentIntegrationStatus[]> {
@@ -142,6 +152,23 @@ export async function listActionPacks(projectId: string): Promise<ActionPackInfo
       target: "https://api.example.com/health",
       cliVersion: null,
       profileId: null,
+      method: "GET",
+      bodyFields: [],
+      outputFields: [],
+    }, {
+      id: "local.demo.chat",
+      displayName: "Model gateway chat",
+      description: "Send one chat request with a protected API key.",
+      packVersion: "1.0.0",
+      kind: "http",
+      available: true,
+      bindings: [{ id: "GPT_API_KEY", destination: "Authorization" }],
+      target: "https://gateway.example.com/v1/chat/completions",
+      cliVersion: null,
+      profileId: null,
+      method: "POST",
+      bodyFields: ["model", "prompt"],
+      outputFields: ["content", "model"],
     }];
   }
   return call("list_action_packs", { request: { projectId } });
@@ -169,8 +196,25 @@ export async function removeActionPack(id: string): Promise<void> {
 export async function executeActionPack(
   projectId: string,
   request: ActionExecutionRequest,
+  requestName?: string,
 ): Promise<ActionExecutionResult> {
   if (!isTauriRuntime) {
+    const output: Record<string, string> | undefined = request.packId === "local.demo.chat"
+      ? { content: "Demo reply: the request reached the gateway.", model: "demo-model" }
+      : undefined;
+    demoHistory.unshift({
+      id: `run-${demoHistory.length + 1}`,
+      projectId,
+      packId: request.packId,
+      requestName,
+      at: Date.now(),
+      succeeded: true,
+      statusCode: 200,
+      durationMs: 84,
+      exitCode: null,
+      resultCode: "ACTION_SUCCEEDED",
+      output: output ?? {},
+    });
     return {
       packId: request.packId,
       kind: "http",
@@ -179,9 +223,73 @@ export async function executeActionPack(
       durationMs: 84,
       exitCode: null,
       resultCode: "ACTION_SUCCEEDED",
+      output,
     };
   }
-  return call("execute_action_pack", { payload: { projectId, request } });
+  return call("execute_action_pack", { payload: { projectId, request, requestName } });
+}
+
+// Demo mode keeps saved requests and history in memory only.
+const demoRequests: SavedActionRequest[] = [{
+  id: "demo-request-1",
+  projectId: "demo-project",
+  packId: "local.demo.chat",
+  name: "Short greeting",
+  file: ".env.local",
+  bindings: { GPT_API_KEY: "GPT_API_KEY" },
+  body: JSON.stringify({ model: "demo-model", prompt: "Say hello in one sentence." }),
+  updatedAt: 0,
+}];
+const demoHistory: ActionRunRecord[] = [];
+
+export async function listActionRequests(projectId: string): Promise<SavedActionRequest[]> {
+  if (!isTauriRuntime) return demoRequests.filter((request) => request.projectId === projectId);
+  return call("list_action_requests", { request: { projectId } });
+}
+
+export async function saveActionRequest(
+  projectId: string,
+  input: { id?: string; name: string; request: ActionExecutionRequest },
+): Promise<SavedActionRequest> {
+  if (!isTauriRuntime) {
+    const existing = demoRequests.find((request) => request.id === input.id);
+    const saved: SavedActionRequest = {
+      id: existing?.id ?? `demo-request-${demoRequests.length + 1}`,
+      projectId,
+      packId: input.request.packId,
+      name: input.name.trim(),
+      file: input.request.file,
+      bindings: input.request.bindings,
+      body: input.request.body,
+      updatedAt: Date.now(),
+    };
+    if (existing) demoRequests.splice(demoRequests.indexOf(existing), 1, saved);
+    else demoRequests.push(saved);
+    return saved;
+  }
+  return call("save_action_request", { payload: { projectId, input } });
+}
+
+export async function deleteActionRequest(projectId: string, id: string): Promise<void> {
+  if (!isTauriRuntime) {
+    const index = demoRequests.findIndex((request) => request.id === id);
+    if (index >= 0) demoRequests.splice(index, 1);
+    return;
+  }
+  return call("delete_action_request", { payload: { projectId, id } });
+}
+
+export async function listActionHistory(projectId: string): Promise<ActionRunRecord[]> {
+  if (!isTauriRuntime) return demoHistory.filter((record) => record.projectId === projectId);
+  return call("list_action_history", { request: { projectId } });
+}
+
+export async function clearActionHistory(projectId: string): Promise<void> {
+  if (!isTauriRuntime) {
+    demoHistory.splice(0, demoHistory.length);
+    return;
+  }
+  return call("clear_action_history", { request: { projectId } });
 }
 
 

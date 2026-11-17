@@ -33,13 +33,11 @@
 }
 
 .source-line.pending-replace {
-  background: var(--amber-pale);
-  box-shadow: inset 3px 0 0 var(--amber);
+  box-shadow: inset 2px 0 0 var(--amber);
 }
 
 .source-line.pending-removal {
-  background: var(--red-pale);
-  box-shadow: inset 3px 0 0 var(--red);
+  box-shadow: inset 2px 0 0 var(--red);
 }
 
 .source-line.pending-removal .source-key {
@@ -95,23 +93,16 @@
 
 .source-empty,
 .source-withheld {
-  display: inline-flex;
-  align-items: center;
-  min-height: 20px;
   margin-left: 4px;
-  padding: 0 6px;
-  border-radius: var(--radius-sm);
   font-family: var(--font-sans);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-style: italic;
 }
 
 .source-empty {
   color: var(--red);
-  background: var(--red-pale);
 }
 
 .source-withheld {
-  color: var(--violet);
-  background: var(--violet-pale);
+  color: var(--muted);
 }

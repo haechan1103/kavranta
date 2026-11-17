@@ -33,6 +33,38 @@ pub fn prepare(
     Ok(pack_info(&resolved.manifest, Some(&resolved)))
 }
 
+/// Validates a request that is about to be saved for later reuse (ADR-0046). The body
+/// is checked against the bound managed values and the secret-pattern catalog, so a
+/// saved request never holds a value Kavranta manages or a recognizable credential.
+pub fn check_saved_request(
+    service: &ProjectService,
+    app_data: &std::path::Path,
+    request: &ActionExecutionRequest,
+) -> Result<(), ActionPackError> {
+    prepare(service.root(), app_data, request)?;
+    let Some(body) = request.body.as_deref() else {
+        return Ok(());
+    };
+    let keys = request
+        .bindings
+        .values()
+        .cloned()
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
+    let values = service.provider_values(&request.file, &keys)?;
+    let contains_bound = values
+        .iter()
+        .any(|value| !value.value().is_empty() && body.contains(value.value()));
+    if contains_bound || !env_core::secrets::detect(body).is_empty() {
+        return Err(ActionPackError::new(
+            "ACTION_BODY_REJECTED",
+            "요청 본문에 비밀 값을 넣을 수 없습니다.",
+        ));
+    }
+    Ok(())
+}
+
 fn ensure_body_shape(
     resolved: &ResolvedActionPack,
     request: &ActionExecutionRequest,
@@ -877,6 +909,121 @@ mod tests {
                 .expect("result")
                 .contains(canary)
         );
+    }
+
+    fn chat_request(body: &str) -> ActionExecutionRequest {
+        ActionExecutionRequest {
+            pack_id: "local.example.chat-gateway".to_owned(),
+            file: ".env.local".to_owned(),
+            bindings: BTreeMap::from([("Authorization".to_owned(), "SERVICE_API_KEY".to_owned())]),
+            body: Some(body.to_owned()),
+        }
+    }
+
+    fn unused_address() -> std::net::SocketAddr {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("listener");
+        listener.local_addr().expect("address")
+    }
+
+    #[test]
+    fn saved_requests_keep_names_and_body_and_overwrite_by_id() {
+        use crate::action_pack::{SaveActionRequestInput, list_requests, save_request};
+        let (service, app_data, _project) =
+            install_v2(&http_v2_manifest(unused_address(), "unused"));
+        let body = "{\"model\":\"fake/model\"}";
+
+        let saved = save_request(
+            &service,
+            app_data.path(),
+            "project-a",
+            SaveActionRequestInput {
+                id: None,
+                name: "  Chat smoke test ".to_owned(),
+                request: chat_request(body),
+            },
+        )
+        .expect("save");
+        assert_eq!(saved.name, "Chat smoke test");
+        assert_eq!(saved.body.as_deref(), Some(body));
+        assert!(list_requests(app_data.path(), "project-b").is_empty());
+
+        let renamed = save_request(
+            &service,
+            app_data.path(),
+            "project-a",
+            SaveActionRequestInput {
+                id: Some(saved.id.clone()),
+                name: "Renamed".to_owned(),
+                request: chat_request(body),
+            },
+        )
+        .expect("overwrite");
+        assert_eq!(renamed.id, saved.id);
+        let listed = list_requests(app_data.path(), "project-a");
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].name, "Renamed");
+        let stored = std::fs::read_to_string(app_data.path().join("action-packs/workspace.json"))
+            .expect("workspace");
+        assert!(!stored.contains("fake_ACTION_V2_SECRET_77"));
+    }
+
+    #[test]
+    fn saved_requests_refuse_bodies_with_bound_or_secret_shaped_values() {
+        use crate::action_pack::{SaveActionRequestInput, list_requests, save_request};
+        let (service, app_data, _project) =
+            install_v2(&http_v2_manifest(unused_address(), "unused"));
+        let token = format!("ghp_{}", "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8");
+        for body in [
+            "{\"model\":\"fake_ACTION_V2_SECRET_77\"}".to_owned(),
+            format!("{{\"model\":\"{token}\"}}"),
+        ] {
+            let error = save_request(
+                &service,
+                app_data.path(),
+                "project-a",
+                SaveActionRequestInput {
+                    id: None,
+                    name: "Leaky".to_owned(),
+                    request: chat_request(&body),
+                },
+            )
+            .expect_err("rejected");
+            assert_eq!(error.code, "ACTION_BODY_REJECTED");
+        }
+        assert!(list_requests(app_data.path(), "project-a").is_empty());
+        assert!(!app_data.path().join("action-packs/workspace.json").exists());
+    }
+
+    #[test]
+    fn run_history_redacts_output_caps_entries_and_clears_per_project() {
+        use crate::action_pack::{clear_history, list_history, record_run};
+        let app_data = tempfile::tempdir().expect("app data");
+        let token = format!("ghp_{}", "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8");
+        let result = ActionExecutionResult {
+            pack_id: "local.example.chat-gateway".to_owned(),
+            kind: ActionKind::Http,
+            succeeded: true,
+            status_code: Some(200),
+            duration_ms: Some(12),
+            exit_code: None,
+            result_code: "ACTION_SUCCEEDED".to_owned(),
+            output: Some(BTreeMap::from([(
+                "content".to_owned(),
+                format!("token {token}"),
+            )])),
+        };
+        for _ in 0..55 {
+            record_run(app_data.path(), "project-a", Some("Chat"), &result).expect("record");
+        }
+        record_run(app_data.path(), "project-b", None, &result).expect("record other");
+
+        let history = list_history(app_data.path(), "project-a");
+        assert_eq!(history.len(), 50);
+        assert_eq!(history[0].request_name.as_deref(), Some("Chat"));
+        assert!(!history[0].output["content"].contains(&token));
+        clear_history(app_data.path(), "project-a").expect("clear");
+        assert!(list_history(app_data.path(), "project-a").is_empty());
+        assert_eq!(list_history(app_data.path(), "project-b").len(), 1);
     }
 
     #[test]

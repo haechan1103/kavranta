@@ -11,6 +11,7 @@ import type {
   OccurrenceProjection,
   ProjectProjection,
 } from "../../lib/types";
+import { PencilIcon, PlusIcon } from "../../components/icons";
 import { SaveBar } from "./SaveBar";
 import { SourceView } from "./SourceView";
 import { usePendingChanges } from "./usePendingChanges";
@@ -481,16 +482,22 @@ export function FileEditor({
                     <span>{filtering ? groupVisible.length : group.variables.length}</span>
                   </button>
                   <div className="group-actions">
-                    <button className="group-action" onClick={() => setAdding(group.name)}>
-                      {t("file.addToGroup", { name })}
+                    <button
+                      className="group-action"
+                      aria-label={t("file.addToGroup", { name })}
+                      title={t("file.addToGroup", { name })}
+                      onClick={() => setAdding(group.name)}
+                    >
+                      <PlusIcon />
                     </button>
                     {group.name !== "기타" && (
                       <button
                         className="group-action"
                         aria-label={t("file.renameGroupNamed", { name })}
+                        title={t("file.renameGroupNamed", { name })}
                         onClick={() => setRenamingGroup(group.name)}
                       >
-                        {t("file.renameGroup")}
+                        <PencilIcon />
                       </button>
                     )}
                   </div>

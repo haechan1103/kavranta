@@ -1,0 +1,93 @@
+.access-button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.access-button .ui-svg {
+  width: 16px;
+  height: 16px;
+}
+
+.access-button:hover,
+.access-button[aria-expanded="true"] {
+  background: var(--panel);
+  border-color: var(--line);
+}
+
+.access-button.protected,
+.access-menu .protected .ui-svg {
+  color: var(--amber);
+}
+
+.access-button.read-write,
+.access-menu .read-write .ui-svg {
+  color: var(--green-strong);
+}
+
+.access-button.unclassified,
+.access-menu .unclassified .ui-svg {
+  color: var(--violet);
+}
+
+.access-menu {
+  position: fixed;
+  z-index: 30;
+  display: grid;
+  width: 264px;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+.access-menu button {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.access-menu button:hover,
+.access-menu button:focus-visible {
+  background: var(--surface-muted);
+  outline: none;
+}
+
+.access-menu button[aria-checked="true"] {
+  background: var(--surface-muted);
+}
+
+.access-menu .ui-svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+.access-menu strong {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.access-menu small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}

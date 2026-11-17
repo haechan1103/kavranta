@@ -24,7 +24,7 @@ jobs:
         target:
           - aarch64-apple-darwin
           - x86_64-apple-darwin
-    runs-on: macos-14
+    runs-on: macos-15
     env:
       KAVRANTA_TARGET: ${{ matrix.target }}
     steps:

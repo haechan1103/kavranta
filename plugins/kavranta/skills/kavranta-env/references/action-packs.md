@@ -35,10 +35,38 @@ alone grants no installation authority.
 ```
 
 - Use a fixed HTTPS URL. Loopback HTTP is for local development only.
-- Do not use URL placeholders, credentials, query strings, fragments, request
-  bodies, or response bodies.
+- Do not use URL placeholders, credentials, query strings, or fragments. A request
+  body or response output needs protocol `0.2.0` (below).
 - Define 1–16 header bindings. Each format contains exactly one `{value}`.
-- `body` must be `false`; redirects and body output are always unavailable.
+- `body` must be `false`; redirects and raw body output are always unavailable.
+
+### Request body and response fields (protocol 0.2.0)
+
+Use protocol `0.2.0` only when the API needs a JSON request body or the user needs
+part of the response, such as a chat completion. Add both closed clauses:
+
+```json
+{
+  "actionProtocolVersion": "0.2.0",
+  "method": "POST",
+  "url": "https://api.example.com/v1/chat/completions",
+  "requestBody": {
+    "contentType": "json",
+    "fields": ["model", "messages", "max_tokens"]
+  },
+  "responseProjection": {
+    "contentType": "json",
+    "fields": { "content": "choices.0.message.content", "model": "model" },
+    "maxBytes": 32768
+  }
+}
+```
+
+- `requestBody.fields` lists 1–32 allowed top-level JSON keys. The caller supplies a
+  non-empty subset; managed values are never substituted into the body.
+- `responseProjection.fields` maps 1–16 result keys to dotted selectors into the JSON
+  response; only those scalar values return, scrubbed of bound secrets.
+- Keep `resultPolicy.body` `false`; the projection is the only response output.
 
 ## CLI
 

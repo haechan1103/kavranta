@@ -1,6 +1,6 @@
 {
   "name": "kavranta",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "description": "Safely inspect, plan, and manage registered project env files through a redacted local broker shared by AI coding agents.",
   "author": {
     "name": "haechan1103",

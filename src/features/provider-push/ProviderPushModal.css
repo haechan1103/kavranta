@@ -260,27 +260,22 @@
 
 .push-review-kind {
   flex: none;
-  padding: 2px 7px;
-  color: var(--green-strong);
-  background: var(--green-pale);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-2xs);
-  font-weight: 700;
+  color: var(--muted);
+  font-size: var(--text-xs);
 }
 
 .push-review-kind.visible {
   color: var(--amber);
-  background: var(--amber-pale);
 }
 
 .push-review-warning {
   display: grid;
   gap: 4px;
-  padding: 12px 14px;
-  color: var(--amber);
-  background: var(--amber-pale);
-  border: 1px solid var(--amber-line);
-  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  color: var(--ink);
+  background: var(--surface-muted);
+  border-left: 2px solid var(--amber);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   font-size: var(--text-xs);
   line-height: 1.5;
 }

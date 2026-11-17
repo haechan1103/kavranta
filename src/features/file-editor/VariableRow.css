@@ -15,21 +15,22 @@
   background: var(--surface-muted);
 }
 
+/* State is carried by a thin left rule, not a tinted row, so color stays rare. */
 .variable-row.selected {
-  background: var(--green-pale);
-  box-shadow: inset 3px 0 0 var(--green-strong);
+  background: var(--surface-muted);
+  box-shadow: inset 2px 0 0 var(--ink);
 }
 
 .variable-row.checked {
-  background: var(--green-pale);
+  background: var(--surface-muted);
 }
 
 .variable-row.pending-replace {
-  background: var(--amber-pale);
+  box-shadow: inset 2px 0 0 var(--amber);
 }
 
 .variable-row.pending-removal {
-  background: var(--red-pale);
+  box-shadow: inset 2px 0 0 var(--red);
 }
 
 .variable-row.pending-removal .key-button {
@@ -149,9 +150,8 @@
 }
 
 .value-editor.empty {
-  background: var(--red-pale);
+  background: transparent;
   border-style: dashed;
-  border-color: var(--red-line);
 }
 
 .value-editor:focus-within {
@@ -182,7 +182,7 @@
 .value-editor.empty input::placeholder {
   color: var(--red);
   font-family: var(--font-sans);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .value-editor .revealed-value-field {
@@ -239,22 +239,17 @@
   display: inline-flex;
   flex: none;
   align-items: center;
-  min-height: 20px;
-  padding: 0 6px;
-  border-radius: var(--radius-sm);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .pending-chip.replace {
   color: var(--amber);
-  background: var(--amber-pale);
 }
 
 .pending-chip.remove {
   color: var(--red);
-  background: var(--red-pale);
 }
 
 .pending-impact {
@@ -276,35 +271,9 @@
 }
 
 .access-cell {
+  display: flex;
   min-width: 0;
-}
-
-.access-select {
-  width: 100%;
-  height: 30px;
-  padding: 0 22px 0 9px;
-  border-radius: var(--radius-pill);
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.access-select.protected {
-  color: var(--amber);
-  background: var(--amber-pale);
-  border: 1px solid var(--amber-line);
-}
-
-.access-select.unclassified {
-  color: var(--violet);
-  background: var(--violet-pale);
-  border: 1px solid var(--violet-line);
-}
-
-.access-select.read-write {
-  color: var(--green-strong);
-  background: var(--green-pale);
-  border: 1px solid var(--green-line);
+  align-items: center;
 }
 
 .links-cell {
@@ -312,23 +281,36 @@
   font-size: var(--text-xs);
 }
 
-.links-count {
+/* Icon plus count; the file names live in the tooltip and the details panel. */
+.links-count,
+.links-available {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: var(--green-strong);
+  gap: 4px;
+  color: var(--ink);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  cursor: default;
 }
 
-.links-count .ui-svg {
+.links-count .ui-svg,
+.links-available .ui-svg {
   width: 14px;
   height: 14px;
 }
 
+.links-count .ui-svg {
+  color: var(--green-strong);
+}
+
 .links-available {
-  color: var(--amber);
-  font-weight: 600;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.links-available .ui-svg {
+  color: var(--faint);
 }
 
 .links-none {

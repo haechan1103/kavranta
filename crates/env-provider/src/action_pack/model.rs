@@ -161,6 +161,12 @@ pub struct ActionPackInfo {
     pub target: String,
     pub cli_version: Option<String>,
     pub profile_id: Option<String>,
+    /// HTTP method of a fixed HTTP action; `None` for CLI actions.
+    pub method: Option<HttpActionMethod>,
+    /// Top-level JSON body fields the caller may supply (protocol v2), never values.
+    pub body_fields: Vec<String>,
+    /// Result keys the response projection may return (protocol v2).
+    pub output_fields: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
